@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light dark">
+  <title>maxeonyx agent-tools</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #fafafa;
+      --fg: #1a1a1a;
+      --muted: #666;
+      --border: #e0e0e0;
+      --code-bg: #f5f5f5;
+      --cmd: #1565c0;
+      --accent: #0f766e;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0d0d0d;
+        --fg: #e8e8e8;
+        --muted: #888;
+        --border: #2a2a2a;
+        --code-bg: #1a1a1a;
+        --cmd: #90caf9;
+        --accent: #5eead4;
+      }
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+      background: var(--bg);
+      color: var(--fg);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 4rem 2rem;
+    }
+    h1 {
+      font-size: 2.5rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.75rem;
+    }
+    .tagline {
+      color: var(--muted);
+      font-size: 1.08rem;
+      margin-bottom: 2.5rem;
+      max-width: 50rem;
+    }
+    .cards {
+      display: grid;
+      gap: 1.2rem;
+    }
+    .card {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem 1.2rem;
+      background: color-mix(in oklab, var(--bg) 92%, transparent);
+    }
+    .card-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 0.4rem;
+    }
+    .card h2 {
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+    .binary {
+      font-family: "SF Mono", "Fira Code", "Consolas", monospace;
+      font-size: 0.85rem;
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 0.15rem 0.45rem;
+      color: var(--cmd);
+      white-space: nowrap;
+    }
+    .desc {
+      color: var(--muted);
+      margin-bottom: 0.7rem;
+    }
+    .links {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-bottom: 0.8rem;
+      font-size: 0.95rem;
+    }
+    .links a {
+      color: var(--fg);
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+    }
+    .links a:hover {
+      border-bottom-color: var(--accent);
+    }
+    .install {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.8rem 1rem;
+      overflow-x: auto;
+      font-family: "SF Mono", "Fira Code", "Consolas", monospace;
+      font-size: 0.84rem;
+      white-space: pre;
+    }
+    footer {
+      margin-top: 2.2rem;
+      padding-top: 1.6rem;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+    footer a {
+      color: var(--fg);
+      text-decoration: none;
+    }
+    footer a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>maxeonyx agent-tools</h1>
+    <p class="tagline">A lightweight umbrella for Max's AI agent CLI tools: small focused binaries, pages, and skills that work well together.</p>
+
+    <section class="cards">
+      <article class="card">
+        <div class="card-head">
+          <h2>trunc</h2>
+          <span class="binary">trunc</span>
+        </div>
+        <p class="desc">Smart truncation for pipe output - bounded context for AI agents.</p>
+        <p class="links">
+          <a href="https://trunc.maxeonyx.com">Site</a>
+          <a href="https://github.com/maxeonyx/trunc">Repo</a>
+        </p>
+        <pre class="install">curl -Lo ~/.local/bin/trunc https://github.com/maxeonyx/trunc/releases/latest/download/trunc-linux-x86_64
+chmod +x ~/.local/bin/trunc</pre>
+      </article>
+
+      <article class="card">
+        <div class="card-head">
+          <h2>tmux-bridge</h2>
+          <span class="binary">tb</span>
+        </div>
+        <p class="desc">Let AI agents run commands in your interactive terminal session.</p>
+        <p class="links">
+          <a href="https://tmux-bridge.maxeonyx.com">Site</a>
+          <a href="https://github.com/maxeonyx/tmux-bridge">Repo</a>
+        </p>
+        <pre class="install">curl -Lo ~/.local/bin/tb https://github.com/maxeonyx/tmux-bridge/releases/latest/download/tb-linux-amd64
+chmod +x ~/.local/bin/tb</pre>
+      </article>
+
+      <article class="card">
+        <div class="card-head">
+          <h2>dotsync</h2>
+          <span class="binary">dotsync</span>
+        </div>
+        <p class="desc">Agent-first dotfile sync with scope branches and merge cascades.</p>
+        <p class="links">
+          <a href="https://dotsync.maxeonyx.com">Site</a>
+          <a href="https://github.com/maxeonyx/dotsync">Repo</a>
+        </p>
+        <pre class="install">cargo install --git https://github.com/maxeonyx/dotsync.git</pre>
+      </article>
+
+      <article class="card">
+        <div class="card-head">
+          <h2>tdd-ratchet</h2>
+          <span class="binary">cargo-ratchet</span>
+        </div>
+        <p class="desc">Enforce strict TDD workflow via git history.</p>
+        <p class="links">
+          <a href="https://tdd-ratchet.maxeonyx.com">Site</a>
+          <a href="https://github.com/maxeonyx/tdd-ratchet-rs">Repo</a>
+        </p>
+        <pre class="install">cargo install --git https://github.com/maxeonyx/tdd-ratchet-rs.git cargo-ratchet</pre>
+      </article>
+    </section>
+
+    <footer>
+      Pattern and skill: <a href="https://github.com/maxeonyx/agent-tools/blob/main/docs/SKILL.md">agent-tools/SKILL.md</a>
+    </footer>
+  </div>
+</body>
+</html>
