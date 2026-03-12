@@ -70,8 +70,8 @@ Include a small ecosystem footer section linking:
 
 ### Distribution: GitHub releases vs cargo publish
 
-- **End-user tools** (trunc, tmux-bridge, dotsync): distribute as **bare binaries via GitHub releases**. Users install with `curl -Lo ~/.local/bin/<tool> <url> && chmod +x`. Do NOT use `cargo install` or publish to crates.io — these are meant to be zero-dependency single-binary downloads.
-- **Developer tools** (tdd-ratchet / cargo-ratchet): `cargo install` is appropriate because the target audience already has a Rust toolchain. Publish to crates.io if it makes sense.
+- **End-user tools** (trunc, tmux-bridge, dotsync): distribute as **bare binaries via tool Pages release paths** (`https://<tool>.maxeonyx.com/releases/<asset>`), backed by GitHub Releases.
+- **Developer tools** (tdd-ratchet / cargo-ratchet): offer both bare binary download via Pages release path and `cargo install tdd-ratchet`.
 - **Release asset naming**: `<binary>-<arch>-<os>` for unix (e.g. `trunc-x86_64-linux`), `<binary>-<arch>-<os>.exe` for windows. No tarballs or zips — bare binaries only.
 
 ## OpenCode skill installation
