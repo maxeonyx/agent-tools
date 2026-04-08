@@ -48,6 +48,7 @@ Include a small ecosystem footer section linking:
 - tmux-bridge,
 - dotsync,
 - tdd-ratchet,
+- oc,
 - and umbrella site `https://tools.maxeonyx.com`.
 
 ## Workflow templates
@@ -70,7 +71,7 @@ Include a small ecosystem footer section linking:
 
 ### Distribution: GitHub releases vs cargo publish
 
-- **End-user tools** (trunc, tmux-bridge, dotsync): distribute as **bare binaries via tool Pages release paths** (`https://<tool>.maxeonyx.com/releases/<asset>`), backed by GitHub Releases.
+- **End-user tools** (trunc, tmux-bridge, dotsync, oc): distribute as **bare binaries via tool Pages release paths** (`https://<tool>.maxeonyx.com/releases/<asset>`), backed by GitHub Releases.
 - **Developer tools** (tdd-ratchet / cargo-ratchet): offer both bare binary download via Pages release path and `cargo install tdd-ratchet`.
 - **Release asset naming**: `<binary>-<arch>-<os>` for unix (e.g. `trunc-x86_64-linux`), `<binary>-<arch>-<os>.exe` for windows. No tarballs or zips — bare binaries only.
 
@@ -96,7 +97,7 @@ If this is a global reusable pattern skill, use `agent-tools` as skill name.
 
 When introducing a new tool, add/update a compact footer reference on each sibling landing page:
 
-`Part of maxeonyx agent-tools: trunc | tb | dotsync | tdd-ratchet`
+`Part of maxeonyx agent-tools: trunc | tb | dotsync | tdd-ratchet | oc`
 
 Link each label to its site and link umbrella text to `https://tools.maxeonyx.com`.
 

@@ -16,7 +16,7 @@ This repository is a lightweight umbrella for Max's AI agent CLI tools.
 
 ## Required website content
 
-- `docs/index.html` lists trunc, tmux-bridge, dotsync, and tdd-ratchet.
+- `docs/index.html` lists trunc, tmux-bridge, dotsync, tdd-ratchet, and oc.
 - Each tool entry includes description, binary name, repo link, site link, and install command.
 - `docs/CNAME` must contain `tools.maxeonyx.com`.
 
