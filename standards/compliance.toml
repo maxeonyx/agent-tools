@@ -2,73 +2,96 @@
 #
 # Valid statuses:
 #   "compliant"      — meets the standard, verified by checker
-#   "waived"         — explicitly excused (must have reason + exit_condition)
+#   "waived"         — explicitly excused (add a comment explaining why)
 #   "non-compliant"  — does not meet the standard, work needed
 #   "not-applicable" — standard does not apply to this tool
 #
-# Every tool MUST have a status for every concern. No gaps. No unknowns.
+# For non-auto concerns (agentic, gate), status is an object with:
+#   status   — the compliance status
+#   checked  — commit SHA in the tool repo when last verified
+#
+# The checker can flag stale reviews: if tool HEAD != checked commit,
+# the review needs re-running.
+#
+# Every tool MUST have a status for every concern. No gaps.
 
 [trunc]
 workspace-routing = "non-compliant"
 tdd-ratchet = "non-compliant"
-opencode-skill = "compliant"
-landing-page = "compliant"
-version-bump-guard = "compliant"
+black-box-tests = "compliant"
+code-standards = "non-compliant"
+help-text = { status = "non-compliant", checked = "" }
+error-messages = { status = "non-compliant", checked = "" }
+landing-page = { status = "non-compliant", checked = "" }
+release-pipeline = "non-compliant"
 auto-update = "non-compliant"
-shared-ci-pattern = "non-compliant"
+vision-and-process = { status = "non-compliant", checked = "" }
+opencode-skill = { status = "non-compliant", checked = "" }
+fast-slow-checks = "non-compliant"
+injectable-io = "non-compliant"
+code-review = { status = "non-compliant", checked = "" }
 
 [tb]
 workspace-routing = "non-compliant"
 tdd-ratchet = "non-compliant"
-opencode-skill = "compliant"
-landing-page = "compliant"
-version-bump-guard = "compliant"
+black-box-tests = "compliant"
+code-standards = "non-compliant"
+help-text = { status = "non-compliant", checked = "" }
+error-messages = { status = "non-compliant", checked = "" }
+landing-page = { status = "non-compliant", checked = "" }
+release-pipeline = "non-compliant"
 auto-update = "non-compliant"
-shared-ci-pattern = "non-compliant"
+vision-and-process = { status = "non-compliant", checked = "" }
+opencode-skill = { status = "non-compliant", checked = "" }
+fast-slow-checks = "non-compliant"
+injectable-io = "non-compliant"
+code-review = { status = "non-compliant", checked = "" }
 
 [dotsync]
 workspace-routing = "non-compliant"
 tdd-ratchet = "compliant"
-opencode-skill = "compliant"
-landing-page = "compliant"
-version-bump-guard = "compliant"
+black-box-tests = "non-compliant"
+code-standards = "non-compliant"
+help-text = { status = "non-compliant", checked = "" }
+error-messages = { status = "non-compliant", checked = "" }
+landing-page = { status = "non-compliant", checked = "" }
+release-pipeline = "non-compliant"
 auto-update = "non-compliant"
-shared-ci-pattern = "non-compliant"
+vision-and-process = { status = "non-compliant", checked = "" }
+opencode-skill = { status = "non-compliant", checked = "" }
+fast-slow-checks = "non-compliant"
+injectable-io = "non-compliant"
+code-review = { status = "non-compliant", checked = "" }
 
 [tdd-ratchet]
 workspace-routing = "non-compliant"
-tdd-ratchet = "not-applicable"
-opencode-skill = "non-compliant"
-landing-page = "compliant"
-version-bump-guard = "compliant"
+tdd-ratchet = "compliant"
+black-box-tests = "non-compliant"
+code-standards = "non-compliant"
+help-text = { status = "non-compliant", checked = "" }
+error-messages = { status = "non-compliant", checked = "" }
+landing-page = { status = "non-compliant", checked = "" }
+release-pipeline = "non-compliant"
+# Developer tool — installed via cargo install, not end-user binary
 auto-update = "not-applicable"
-shared-ci-pattern = "non-compliant"
+vision-and-process = { status = "non-compliant", checked = "" }
+opencode-skill = { status = "non-compliant", checked = "" }
+fast-slow-checks = "non-compliant"
+injectable-io = "non-compliant"
+code-review = { status = "non-compliant", checked = "" }
 
 [oc]
 workspace-routing = "non-compliant"
 tdd-ratchet = "compliant"
-opencode-skill = "compliant"
-landing-page = "compliant"
-version-bump-guard = "compliant"
+black-box-tests = "compliant"
+code-standards = "non-compliant"
+help-text = { status = "non-compliant", checked = "" }
+error-messages = { status = "non-compliant", checked = "" }
+landing-page = { status = "non-compliant", checked = "" }
+release-pipeline = "non-compliant"
 auto-update = "non-compliant"
-shared-ci-pattern = "non-compliant"
-
-# Waivers (when status is "waived", document here)
-[waivers]
-# [waivers.example]
-# tool = "trunc"
-# concern = "auto-update"
-# reason = "Updater crate not yet implemented"
-# exit_condition = "agent-tools-updater crate reaches v0.1.0"
-
-[waivers.tdd-ratchet-self]
-tool = "tdd-ratchet"
-concern = "tdd-ratchet"
-reason = "The ratchet tool cannot enforce ratchet on itself without bootstrapping issues"
-exit_condition = "permanent — not-applicable"
-
-[waivers.tdd-ratchet-update]
-tool = "tdd-ratchet"
-concern = "auto-update"
-reason = "Developer tool installed via cargo install, not a user-facing binary"
-exit_condition = "permanent — not-applicable"
+vision-and-process = { status = "non-compliant", checked = "" }
+opencode-skill = { status = "non-compliant", checked = "" }
+fast-slow-checks = "non-compliant"
+injectable-io = "non-compliant"
+code-review = { status = "non-compliant", checked = "" }

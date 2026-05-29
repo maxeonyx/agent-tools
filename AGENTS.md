@@ -166,14 +166,17 @@ python3 scripts/check-compliance.py
 ## Commands
 
 ```bash
-# Workspace Rust checks
-cargo fmt --check --all
-cargo clippy --all -- -D warnings
+# Fast checks (lint, format, build, tests — immediate feedback)
+cargo test -p standards              # compliance claims match reality
+cargo fmt --check --all              # formatting
+cargo clippy --all -- -D warnings    # linting
+cargo test -p trunc                  # tool tests (fast — spawns binary, checks output)
 
-# Compliance
-python3 scripts/check-compliance.py
+# Slow checks (containerized E2E, tests needing services/network)
+# None yet — these tools are simple CLI binaries. Slow checks will
+# come when tools need integration with external services.
 
-# Per-tool verification (from workspace root)
+# Per-tool verification (TDD ratchet)
 cd tools/<name> && cargo ratchet
 ```
 

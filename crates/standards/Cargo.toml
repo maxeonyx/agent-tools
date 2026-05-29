@@ -1,0 +1,10 @@
+[package]
+name = "standards"
+version = "0.0.0"
+edition = "2021"
+publish = false
+description = "Workspace compliance enforcement — the tests ARE the standards"
+
+[dependencies]
+toml = "0.8"
+serde = { version = "1", features = ["derive"] }
