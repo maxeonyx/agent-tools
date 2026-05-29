@@ -580,10 +580,11 @@ dependencies = [
 
 [[package]]
 name = "dotsync"
-version = "0.2.2"
+version = "0.3.3"
 dependencies = [
  "clap",
  "gix",
+ "help-test",
  "jj-lib",
  "serde",
  "serde_json",
