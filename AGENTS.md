@@ -104,10 +104,10 @@ Exit: all tools have the improvement, and enforcement prevents regression.
 ### Adding a new cross-cutting concern
 
 1. **Improve process first.** Write down what the concern IS and WHY it matters.
-2. Define compliance as an objective predicate (a checker can verify it mechanically)
-3. Write the checker. Add it to the workspace enforcement.
-4. Add every tool to the compliance matrix — mark current state honestly (most will be non-compliant)
-5. Land the enforcement. Now it's visible.
+2. Define compliance as an objective predicate where possible.
+3. Add a Rust integration test in `crates/standards/tests/<concern>.rs` with the concern definition in the doc comment and the checker in the test body.
+4. If there is no mechanical check yet, keep the concern visible in `meta.rs` as unenforced rather than inventing fake automation.
+5. Land the enforcement. Red tests are the visible work queue.
 6. Bring tools into compliance one by one via the generalize loop.
 
 The concern is not real until enforcement exists. Prose in AGENTS.md is not enforcement.
@@ -117,49 +117,43 @@ The concern is not real until enforcement exists. Prose in AGENTS.md is not enfo
 1. **Improve process first.** Is the concern definition clear enough to implement against?
 2. Pick ONE concern and ONE tool
 3. Follow the loops: investigate (what's the gap?) → design (what's the minimal change?) → test → implement → review
-4. Run the workspace compliance checker — does it pass for this tool + concern?
+4. Run the relevant standards test (`cargo test -p standards --test <concern_file>`) — does it pass for this tool + concern?
 5. If no → iterate
-6. If yes → commit, push tool, update submodule, re-run checker from workspace root
-7. Exit: the tool is compliant and the checker proves it
+6. If yes → commit, push tool, update submodule, re-run `cargo test -p standards` from workspace root
+7. Exit: the tool is compliant and the test proves it
 
 ### Adding a new tool
 
 1. **Improve process first.** Does the onboarding process need updating?
 2. Create the tool repo (follow existing patterns — MIT license, AGENTS.md, docs/, .github/workflows/)
 3. Add it as a submodule under `tools/`
-4. Add it to the compliance matrix for every existing concern (it will start non-compliant for most)
-5. Bring it into compliance concern by concern via the generalize loop
-6. Update the umbrella site (`docs/index.html`) and cross-references in sibling tools
+4. Add it to `standards::TOOLS`
+5. Run `cargo test -p standards` and use the failing concern tests as the compliance backlog
+6. Bring it into compliance concern by concern via the generalize loop
+7. Update the umbrella site (`docs/index.html`) and cross-references in sibling tools
 
 ---
 
 ## Enforcement
 
-A concern is not enforced until three things exist:
+A concern is not enforced until two things exist:
 
 1. **Definition** — what compliance means, precisely
-2. **Checker** — a script that can verify compliance mechanically
-3. **Status for every tool** — compliant, waived, or non-compliant
+2. **Checker** — a Rust integration test that can verify compliance mechanically
 
-Without all three, it's aspiration. Aspiration does not prevent drift.
+Without both, it's aspiration. Aspiration does not prevent drift.
 
 ### Current standards
 
-Defined in `standards/concerns.toml`. Compliance state in `standards/compliance.toml`.
+Defined in `crates/standards/tests/*.rs`.
 
-Run the checker:
+Run the standards suite:
 ```bash
-python3 scripts/check-compliance.py
+cargo test -p standards
 ```
 
-### Compliance statuses
-
-- **compliant** — meets the standard, verified by checker
-- **waived** — explicitly excused, with documented reason and exit condition
-- **non-compliant** — does not meet the standard, work needed
-- **not-applicable** — standard does not apply to this tool
-
-`unknown` is not a valid status. Every tool must have a status for every concern.
+Passing tests are the compliance state. Failing tests are the TODO list. `meta.rs`
+tracks known concerns that still lack mechanical enforcement.
 
 ---
 
@@ -167,7 +161,7 @@ python3 scripts/check-compliance.py
 
 ```bash
 # Fast checks (lint, format, build, tests — immediate feedback)
-cargo test -p standards              # compliance claims match reality
+cargo test -p standards              # standards fail until every applicable tool complies
 cargo fmt --check --all              # formatting
 cargo clippy --all -- -D warnings    # linting
 cargo test -p trunc                  # tool tests (fast — spawns binary, checks output)
@@ -196,9 +190,8 @@ cd tools/<name> && cargo ratchet
 | Content | Location |
 |---------|----------|
 | Development process, loops, discipline | This file |
-| Cross-cutting standards definitions | `standards/concerns.toml` |
-| Compliance state per tool | `standards/compliance.toml` |
-| Compliance checker | `scripts/check-compliance.py` |
+| Cross-cutting standards definitions and enforcement | `crates/standards/tests/*.rs` |
+| Concern registry / unenforced concern visibility | `crates/standards/tests/meta.rs` |
 | Shared Rust libraries | `crates/` |
 | Tool-specific product/architecture facts | `tools/<name>/AGENTS.md` |
 | Tool CI, releases, Pages | Tool's own repo |
