@@ -36,36 +36,44 @@ impl ComplianceEntry {
             Self::WithCommit { status, .. } => status,
         }
     }
-
-    pub fn checked_commit(&self) -> &str {
-        match self {
-            Self::Simple(_) => "",
-            Self::WithCommit { checked, .. } => checked,
-        }
-    }
 }
 
 #[derive(Debug, Deserialize)]
-pub struct ConcernDef {
+pub struct ConcernFrontmatter {
     pub title: String,
-    pub why: String,
-    pub applies_to: String,
     #[serde(rename = "type")]
     pub concern_type: String,
+    pub applies_to: String,
     pub checker: String,
 }
 
-#[derive(Debug, Deserialize)]
-pub struct ConcernsFile {
-    pub concerns: HashMap<String, ConcernDef>,
+pub fn load_concerns() -> HashMap<String, ConcernFrontmatter> {
+    let concerns_dir = workspace_root().join("standards/concerns");
+    let mut concerns = HashMap::new();
+
+    for entry in std::fs::read_dir(&concerns_dir)
+        .unwrap_or_else(|e| panic!("Failed to read {}: {e}", concerns_dir.display()))
+    {
+        let entry = entry.unwrap();
+        let path = entry.path();
+        if path.extension().is_some_and(|ext| ext == "md") {
+            let content = std::fs::read_to_string(&path).unwrap();
+            if let Some(frontmatter) = extract_frontmatter(&content) {
+                let fm: ConcernFrontmatter = serde_yaml::from_str(frontmatter)
+                    .unwrap_or_else(|e| panic!("Bad frontmatter in {}: {e}", path.display()));
+                let id = path.file_stem().unwrap().to_string_lossy().to_string();
+                concerns.insert(id, fm);
+            }
+        }
+    }
+
+    concerns
 }
 
-pub fn load_concerns() -> ConcernsFile {
-    let path = workspace_root().join("standards/concerns.toml");
-    let content = std::fs::read_to_string(&path)
-        .unwrap_or_else(|e| panic!("Failed to read {}: {e}", path.display()));
-    toml::from_str(&content)
-        .unwrap_or_else(|e| panic!("Failed to parse {}: {e}", path.display()))
+fn extract_frontmatter(content: &str) -> Option<&str> {
+    let content = content.strip_prefix("---\n")?;
+    let end = content.find("\n---")?;
+    Some(&content[..end])
 }
 
 pub fn load_compliance() -> HashMap<String, HashMap<String, ComplianceEntry>> {
@@ -93,7 +101,7 @@ mod tests {
                 continue;
             }
             let tool_entry = tool_entry.unwrap();
-            for concern_id in concerns.concerns.keys() {
+            for concern_id in concerns.keys() {
                 if !tool_entry.contains_key(concern_id) {
                     missing.push(format!("Tool '{tool}' missing status for '{concern_id}'"));
                 }

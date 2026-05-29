@@ -8,3 +8,4 @@ description = "Workspace compliance enforcement — the tests ARE the standards"
 [dependencies]
 toml = "0.8"
 serde = { version = "1", features = ["derive"] }
+serde_yaml = "0.9"
