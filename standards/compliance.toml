@@ -1,0 +1,74 @@
+# Compliance state for each tool against each concern.
+#
+# Valid statuses:
+#   "compliant"      — meets the standard, verified by checker
+#   "waived"         — explicitly excused (must have reason + exit_condition)
+#   "non-compliant"  — does not meet the standard, work needed
+#   "not-applicable" — standard does not apply to this tool
+#
+# Every tool MUST have a status for every concern. No gaps. No unknowns.
+
+[trunc]
+workspace-routing = "non-compliant"
+tdd-ratchet = "non-compliant"
+opencode-skill = "compliant"
+landing-page = "compliant"
+version-bump-guard = "compliant"
+auto-update = "non-compliant"
+shared-ci-pattern = "non-compliant"
+
+[tb]
+workspace-routing = "non-compliant"
+tdd-ratchet = "non-compliant"
+opencode-skill = "compliant"
+landing-page = "compliant"
+version-bump-guard = "compliant"
+auto-update = "non-compliant"
+shared-ci-pattern = "non-compliant"
+
+[dotsync]
+workspace-routing = "non-compliant"
+tdd-ratchet = "compliant"
+opencode-skill = "compliant"
+landing-page = "compliant"
+version-bump-guard = "compliant"
+auto-update = "non-compliant"
+shared-ci-pattern = "non-compliant"
+
+[tdd-ratchet]
+workspace-routing = "non-compliant"
+tdd-ratchet = "not-applicable"
+opencode-skill = "non-compliant"
+landing-page = "compliant"
+version-bump-guard = "compliant"
+auto-update = "not-applicable"
+shared-ci-pattern = "non-compliant"
+
+[oc]
+workspace-routing = "non-compliant"
+tdd-ratchet = "compliant"
+opencode-skill = "compliant"
+landing-page = "compliant"
+version-bump-guard = "compliant"
+auto-update = "non-compliant"
+shared-ci-pattern = "non-compliant"
+
+# Waivers (when status is "waived", document here)
+[waivers]
+# [waivers.example]
+# tool = "trunc"
+# concern = "auto-update"
+# reason = "Updater crate not yet implemented"
+# exit_condition = "agent-tools-updater crate reaches v0.1.0"
+
+[waivers.tdd-ratchet-self]
+tool = "tdd-ratchet"
+concern = "tdd-ratchet"
+reason = "The ratchet tool cannot enforce ratchet on itself without bootstrapping issues"
+exit_condition = "permanent — not-applicable"
+
+[waivers.tdd-ratchet-update]
+tool = "tdd-ratchet"
+concern = "auto-update"
+reason = "Developer tool installed via cargo install, not a user-facing binary"
+exit_condition = "permanent — not-applicable"

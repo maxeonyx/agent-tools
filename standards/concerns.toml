@@ -1,0 +1,51 @@
+# Cross-cutting concerns for the agent-tools suite.
+#
+# A concern is not real until it has:
+# 1. A definition here
+# 2. A checker in scripts/check-compliance.py
+# 3. A status for every tool in compliance.toml
+#
+# When adding a new concern: add it here FIRST, then add the checker,
+# then add statuses. Enforcement before compliance.
+
+[concerns.workspace-routing]
+title = "Develop from workspace"
+why = "All development happens from agent-tools. Tool AGENTS.md must say this."
+applies_to = "all"
+checker = "tool AGENTS.md contains canonical workspace-routing line"
+
+[concerns.tdd-ratchet]
+title = "TDD ratchet enforcement"
+why = "New tests must fail before they pass. Prevents trivial/wrong tests and regressions."
+applies_to = "all"
+checker = ".test-status.json exists AND CI runs cargo ratchet (not cargo test)"
+
+[concerns.opencode-skill]
+title = "OpenCode skill published"
+why = "Each tool should be usable by agents via its skill."
+applies_to = "all"
+checker = "docs/SKILL.md exists with valid frontmatter"
+
+[concerns.landing-page]
+title = "Landing page with ecosystem links"
+why = "Each tool needs a discoverable site with install instructions and sibling links."
+applies_to = "all"
+checker = "docs/index.html exists AND contains ecosystem footer"
+
+[concerns.version-bump-guard]
+title = "Version bump enforced in CI"
+why = "Each release must map to exactly one commit. CI blocks pushes that reuse versions."
+applies_to = "all"
+checker = "CI workflow contains version-bump enforcement step"
+
+[concerns.auto-update]
+title = "Auto-update mechanism"
+why = "Tools should self-update from GitHub Releases so users stay current."
+applies_to = "all"
+checker = "depends on agent-tools-updater crate AND calls update check at startup"
+
+[concerns.shared-ci-pattern]
+title = "Standardized CI workflow"
+why = "All tools should follow the same CI pattern: check → build → release → pages."
+applies_to = "all"
+checker = "CI workflow matches canonical structure"

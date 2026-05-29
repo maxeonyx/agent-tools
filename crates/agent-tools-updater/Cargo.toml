@@ -1,0 +1,9 @@
+[package]
+name = "agent-tools-updater"
+version = "0.1.0"
+edition = "2021"
+description = "Shared auto-update mechanism for maxeonyx agent-tools"
+license = "MIT"
+repository = "https://github.com/maxeonyx/agent-tools"
+
+[dependencies]

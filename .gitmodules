@@ -1,0 +1,15 @@
+[submodule "tools/trunc"]
+	path = tools/trunc
+	url = git@github.com:maxeonyx/trunc.git
+[submodule "tools/tb"]
+	path = tools/tb
+	url = git@github.com:maxeonyx/tmux-bridge.git
+[submodule "tools/dotsync"]
+	path = tools/dotsync
+	url = git@github.com:maxeonyx/dotsync.git
+[submodule "tools/tdd-ratchet"]
+	path = tools/tdd-ratchet
+	url = git@github.com:maxeonyx/tdd-ratchet-rs.git
+[submodule "tools/oc"]
+	path = tools/oc
+	url = git@github.com:maxeonyx/oc.git
