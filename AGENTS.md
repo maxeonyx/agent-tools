@@ -114,13 +114,31 @@ The concern is not real until enforcement exists. Prose in AGENTS.md is not enfo
 
 ### Bringing a tool into compliance
 
-1. **Improve process first.** Is the concern definition clear enough to implement against?
-2. Pick ONE concern and ONE tool
-3. Follow the loops: investigate (what's the gap?) → design (what's the minimal change?) → test → implement → review
-4. Run the relevant standards test (`cargo test -p standards <concern_name> -- --exact`) — does it pass for this tool + concern?
-5. If no → iterate
-6. If yes → commit, push tool, update submodule, re-run `cargo test -p standards` from workspace root
-7. Exit: the tool is compliant and the test proves it
+Two tracks run in parallel: mechanical fixes and agentic review.
+
+**Mechanical fixes** (workspace-routing, tdd-ratchet, black-box-tests, etc.):
+Pick one concern, fix it, run the test, see it pass. Simple loop.
+
+**Agentic review pass** (code-review, error-messages, help-text, injectable-io):
+These are batched per tool — one review pass covers ALL applicable agentic concerns.
+
+Review loop:
+1. Pick a tool. Derive applicable agentic concerns from NOT_APPLICABLE lists.
+2. Fresh review session: read source, run the tool, trigger errors, read help.
+   Evaluate against ALL applicable REVIEW_INSTRUCTIONS. Produce findings by concern.
+3. Shape findings into an implementation backlog (group by design seam, not concern).
+4. Implement in stages. Each stage verified before the next.
+5. Fresh re-review of the whole tool (not just what you fixed).
+6. If findings remain → back to step 3.
+7. Exit: zero findings. Write attestation files, tests go green.
+
+Rules:
+- Review and implementation are different agent sessions (independence).
+- injectable-io applicability is precomputed from NOT_APPLICABLE, not debated.
+- Mechanical failures can join the implementation backlog if the same change fixes them.
+- Attestation files: `docs/reviews/<concern>.json` with `reviewed_commit` field.
+
+Tool order: trunc → tdd-ratchet → dotsync → tb → oc (simplest first).
 
 ### Adding a new tool
 
