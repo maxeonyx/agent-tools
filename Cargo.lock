@@ -582,6 +582,8 @@ dependencies = [
 name = "dotsync"
 version = "0.3.3"
 dependencies = [
+ "agent-tools-updater",
+ "assert_cmd",
  "clap",
  "gix",
  "help-test",
@@ -2688,6 +2690,7 @@ dependencies = [
 name = "oc"
 version = "0.3.21"
 dependencies = [
+ "agent-tools-updater",
  "anyhow",
  "assert_cmd",
  "clap",
@@ -3608,6 +3611,7 @@ dependencies = [
 name = "tb"
 version = "0.1.22"
 dependencies = [
+ "agent-tools-updater",
  "assert_cmd",
  "clap",
  "help-test",
@@ -3620,6 +3624,7 @@ dependencies = [
 name = "tdd-ratchet"
 version = "0.3.1"
 dependencies = [
+ "assert_cmd",
  "git2",
  "help-test",
  "jsonschema",
@@ -3904,6 +3909,7 @@ dependencies = [
 name = "trunc"
 version = "0.4.2"
 dependencies = [
+ "agent-tools-updater",
  "assert_cmd",
  "clap",
  "help-test",
