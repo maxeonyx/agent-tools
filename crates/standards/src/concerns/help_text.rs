@@ -8,8 +8,14 @@
 //! - `--help` at top level exits 0 and contains an Examples section
 //! - Subcommands (where they exist) each have their own `--help`
 //! - Examples are in `$ command args` format and are parsed and executed by the
-//!   tool's own test suite
+//!   tool's own test suite via the shared `help-test` crate
+//! - Examples must use long flags (self-documenting), not short flags
 //! - Help text is succinct, explains why and when (not just what)
+//!
+//! ## Short-flag allowlist (per tool)
+//!
+//! Some short flags are self-explanatory and may appear in examples:
+//! - dotsync: `-m` (message, like git commit -m)
 
 /// Tools where this concern does not apply.
 pub const NOT_APPLICABLE: &[&str] = &[];
@@ -27,7 +33,8 @@ Review the tool's help text as a new user would:
 #[cfg(test)]
 mod tests {
     use super::NOT_APPLICABLE;
-    use crate::{TOOLS, concerns, tools_dir};
+    use crate::{concerns, tools_dir, TOOLS};
+    use std::fs;
 
     #[test]
     fn help_text() {
@@ -35,12 +42,22 @@ mod tests {
 
         for tool in TOOLS.iter().filter(|tool| !NOT_APPLICABLE.contains(tool)) {
             let tool_path = tools_dir().join(tool);
+            let cargo_toml = tool_path.join("Cargo.toml");
+
+            let cargo_toml_content = fs::read_to_string(&cargo_toml)
+                .unwrap_or_else(|error| panic!("failed to read {}: {error}", cargo_toml.display()));
+
+            if !cargo_toml_content.contains("help-test") {
+                failures.push(format!(
+                    "{tool}: Cargo.toml missing help-test dev-dependency"
+                ));
+            }
 
             let tests_dir = tool_path.join("tests");
             if !tests_dir.exists() {
                 failures.push(format!("{tool}: no tests/ directory"));
             } else {
-                let has_help_tests = std::fs::read_dir(&tests_dir)
+                let has_help_tests = fs::read_dir(&tests_dir)
                     .unwrap_or_else(|error| {
                         panic!("failed to read {}: {error}", tests_dir.display())
                     })
@@ -50,13 +67,13 @@ mod tests {
                         if !name.ends_with(".rs") {
                             return false;
                         }
-                        let content = std::fs::read_to_string(entry.path()).unwrap_or_default();
-                        content.contains("--help") && content.contains("example")
+                        let content = fs::read_to_string(entry.path()).unwrap_or_default();
+                        content.contains("help_test::")
                     });
 
                 if !has_help_tests {
                     failures.push(format!(
-                        "{tool}: no help text tests found (need a test file in tests/ that exercises --help examples)"
+                        "{tool}: no help text tests found (need a test file in tests/ using help_test::)"
                     ));
                 }
             }
