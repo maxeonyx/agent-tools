@@ -2686,13 +2686,14 @@ dependencies = [
 
 [[package]]
 name = "oc"
-version = "0.3.20"
+version = "0.3.21"
 dependencies = [
  "anyhow",
  "assert_cmd",
  "clap",
  "clap_complete",
  "crossterm",
+ "help-test",
  "palette",
  "predicates",
  "rand 0.8.6",
@@ -3605,10 +3606,11 @@ dependencies = [
 
 [[package]]
 name = "tb"
-version = "0.1.21"
+version = "0.1.22"
 dependencies = [
  "assert_cmd",
  "clap",
+ "help-test",
  "predicates",
  "rand 0.8.6",
  "tempfile",

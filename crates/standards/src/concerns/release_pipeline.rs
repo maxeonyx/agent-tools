@@ -19,7 +19,7 @@ pub const REVIEW_INSTRUCTIONS: &str = "";
 #[cfg(test)]
 mod tests {
     use super::NOT_APPLICABLE;
-    use crate::{TOOLS, tools_dir};
+    use crate::{tools_dir, TOOLS};
 
     #[test]
     fn release_pipeline() {

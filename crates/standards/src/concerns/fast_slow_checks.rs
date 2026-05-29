@@ -25,7 +25,7 @@ const MAX_FAST_CHECK_DURATION: std::time::Duration = std::time::Duration::from_s
 #[cfg(test)]
 mod tests {
     use super::{MAX_FAST_CHECK_DURATION, NOT_APPLICABLE};
-    use crate::{TOOLS, workspace_root};
+    use crate::{workspace_root, TOOLS};
     use std::time::Instant;
 
     #[test]
@@ -38,7 +38,9 @@ mod tests {
                 .args(["test", "--lib", "-p", tool, "--", "--quiet"])
                 .current_dir(workspace_root())
                 .output()
-                .unwrap_or_else(|error| panic!("failed to run cargo test --lib -p {tool}: {error}"));
+                .unwrap_or_else(|error| {
+                    panic!("failed to run cargo test --lib -p {tool}: {error}")
+                });
 
             if !output.status.success() {
                 let stderr = String::from_utf8_lossy(&output.stderr);

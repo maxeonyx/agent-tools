@@ -3,20 +3,20 @@
 //! Each submodule defines one concern: what it is, why it matters,
 //! review instructions (if agentic), and a mechanical test.
 
-pub mod workspace_routing;
-pub mod tdd_ratchet;
-pub mod black_box_tests;
-pub mod code_standards;
-pub mod help_text;
-pub mod landing_page;
-pub mod release_pipeline;
 pub mod auto_update;
-pub mod vision_and_process;
-pub mod opencode_skill;
-pub mod fast_slow_checks;
-pub mod injectable_io;
+pub mod black_box_tests;
 pub mod code_review;
+pub mod code_standards;
 pub mod error_messages;
+pub mod fast_slow_checks;
+pub mod help_text;
+pub mod injectable_io;
+pub mod landing_page;
+pub mod opencode_skill;
+pub mod release_pipeline;
+pub mod tdd_ratchet;
+pub mod vision_and_process;
+pub mod workspace_routing;
 
 /// All known concern IDs.
 pub const ALL_CONCERNS: &[&str] = &[
@@ -76,10 +76,9 @@ pub(crate) fn review_attestation_failures(
 #[cfg(test)]
 mod tests {
     use super::{
-        AGENTIC_CONCERNS, ALL_CONCERNS, auto_update, black_box_tests, code_review,
-        code_standards, error_messages, fast_slow_checks, help_text, injectable_io,
-        landing_page, opencode_skill, release_pipeline, tdd_ratchet, vision_and_process,
-        workspace_routing,
+        auto_update, black_box_tests, code_review, code_standards, error_messages,
+        fast_slow_checks, help_text, injectable_io, landing_page, opencode_skill, release_pipeline,
+        tdd_ratchet, vision_and_process, workspace_routing, AGENTIC_CONCERNS, ALL_CONCERNS,
     };
     use std::collections::BTreeSet;
 

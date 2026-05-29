@@ -32,10 +32,8 @@ mod tests {
 
     #[test]
     fn code_review() {
-        let failures = concerns::review_attestation_failures(
-            "docs/reviews/code-quality.json",
-            NOT_APPLICABLE,
-        );
+        let failures =
+            concerns::review_attestation_failures("docs/reviews/code-quality.json", NOT_APPLICABLE);
 
         if !failures.is_empty() {
             panic!("code-review non-compliant:\n  {}", failures.join("\n  "));
