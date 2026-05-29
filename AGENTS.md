@@ -105,8 +105,8 @@ Exit: all tools have the improvement, and enforcement prevents regression.
 
 1. **Improve process first.** Write down what the concern IS and WHY it matters.
 2. Define compliance as an objective predicate where possible.
-3. Add a Rust integration test in `crates/standards/tests/<concern>.rs` with the concern definition in the doc comment and the checker in the test body.
-4. If there is no mechanical check yet, keep the concern visible in `meta.rs` as unenforced rather than inventing fake automation.
+3. Add a Rust concern module in `crates/standards/src/concerns/<concern>.rs` with the concern definition in the module docs, any review instructions it exports, and the checker in a `#[cfg(test)]` module.
+4. Keep `crates/standards/src/concerns/mod.rs` in sync so the concern registry and agentic concern list match the modules.
 5. Land the enforcement. Red tests are the visible work queue.
 6. Bring tools into compliance one by one via the generalize loop.
 
@@ -117,7 +117,7 @@ The concern is not real until enforcement exists. Prose in AGENTS.md is not enfo
 1. **Improve process first.** Is the concern definition clear enough to implement against?
 2. Pick ONE concern and ONE tool
 3. Follow the loops: investigate (what's the gap?) → design (what's the minimal change?) → test → implement → review
-4. Run the relevant standards test (`cargo test -p standards --test <concern_file>`) — does it pass for this tool + concern?
+4. Run the relevant standards test (`cargo test -p standards <concern_name> -- --exact`) — does it pass for this tool + concern?
 5. If no → iterate
 6. If yes → commit, push tool, update submodule, re-run `cargo test -p standards` from workspace root
 7. Exit: the tool is compliant and the test proves it
@@ -139,21 +139,20 @@ The concern is not real until enforcement exists. Prose in AGENTS.md is not enfo
 A concern is not enforced until two things exist:
 
 1. **Definition** — what compliance means, precisely
-2. **Checker** — a Rust integration test that can verify compliance mechanically
+2. **Checker** — a Rust test that can verify compliance mechanically
 
 Without both, it's aspiration. Aspiration does not prevent drift.
 
 ### Current standards
 
-Defined in `crates/standards/tests/*.rs`.
+Defined in `crates/standards/src/concerns/*.rs`.
 
 Run the standards suite:
 ```bash
 cargo test -p standards
 ```
 
-Passing tests are the compliance state. Failing tests are the TODO list. `meta.rs`
-tracks known concerns that still lack mechanical enforcement.
+Passing tests are the compliance state. Failing tests are the TODO list. `crates/standards/src/concerns/mod.rs` tracks the concern registry and which concerns are agentic.
 
 ---
 
@@ -166,9 +165,8 @@ cargo fmt --check --all              # formatting
 cargo clippy --all -- -D warnings    # linting
 cargo test -p trunc                  # tool tests (fast — spawns binary, checks output)
 
-# Slow checks (containerized E2E, tests needing services/network)
-# None yet — these tools are simple CLI binaries. Slow checks will
-# come when tools need integration with external services.
+# Slow checks (black-box tests — spawn binaries, real filesystem)
+cargo test --test '*' -p trunc       # example: trunc integration tests
 
 # Per-tool verification (TDD ratchet)
 cd tools/<name> && cargo ratchet
@@ -190,8 +188,8 @@ cd tools/<name> && cargo ratchet
 | Content | Location |
 |---------|----------|
 | Development process, loops, discipline | This file |
-| Cross-cutting standards definitions and enforcement | `crates/standards/tests/*.rs` |
-| Concern registry / unenforced concern visibility | `crates/standards/tests/meta.rs` |
+| Cross-cutting standards definitions and enforcement | `crates/standards/src/concerns/*.rs` |
+| Concern registry / agentic concern visibility | `crates/standards/src/concerns/mod.rs` |
 | Shared Rust libraries | `crates/` |
 | Tool-specific product/architecture facts | `tools/<name>/AGENTS.md` |
 | Tool CI, releases, Pages | Tool's own repo |

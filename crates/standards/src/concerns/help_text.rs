@@ -1,0 +1,74 @@
+//! # Help Text Standards
+//!
+//! Every tool must have help text tests that verify `--help` examples are
+//! runnable, and every tool must have a recorded quality review of that help
+//! text.
+//!
+//! Requirements:
+//! - `--help` at top level exits 0 and contains an Examples section
+//! - Subcommands (where they exist) each have their own `--help`
+//! - Examples are in `$ command args` format and are parsed and executed by the
+//!   tool's own test suite
+//! - Help text is succinct, explains why and when (not just what)
+
+/// Tools where this concern does not apply.
+pub const NOT_APPLICABLE: &[&str] = &[];
+
+/// Instructions for an agent performing this review.
+pub const REVIEW_INSTRUCTIONS: &str = r#"
+Review the tool's help text as a new user would:
+1. Read the top-level help and any important subcommand help
+2. Is it succinct?
+3. Does it explain why and when to use the tool, not just what flags exist?
+4. Are flag names consistent with sibling tools in the suite?
+5. Would a new user understand how to get started from the help alone?
+"#;
+
+#[cfg(test)]
+mod tests {
+    use super::NOT_APPLICABLE;
+    use crate::{TOOLS, concerns, tools_dir};
+
+    #[test]
+    fn help_text() {
+        let mut failures = Vec::new();
+
+        for tool in TOOLS.iter().filter(|tool| !NOT_APPLICABLE.contains(tool)) {
+            let tool_path = tools_dir().join(tool);
+
+            let tests_dir = tool_path.join("tests");
+            if !tests_dir.exists() {
+                failures.push(format!("{tool}: no tests/ directory"));
+            } else {
+                let has_help_tests = std::fs::read_dir(&tests_dir)
+                    .unwrap_or_else(|error| {
+                        panic!("failed to read {}: {error}", tests_dir.display())
+                    })
+                    .filter_map(|entry| entry.ok())
+                    .any(|entry| {
+                        let name = entry.file_name().to_string_lossy().to_string();
+                        if !name.ends_with(".rs") {
+                            return false;
+                        }
+                        let content = std::fs::read_to_string(entry.path()).unwrap_or_default();
+                        content.contains("--help") && content.contains("example")
+                    });
+
+                if !has_help_tests {
+                    failures.push(format!(
+                        "{tool}: no help text tests found (need a test file in tests/ that exercises --help examples)"
+                    ));
+                }
+            }
+        }
+
+        failures.extend(concerns::review_attestation_failures(
+            "docs/reviews/help-text.json",
+            NOT_APPLICABLE,
+        ));
+
+        if !failures.is_empty() {
+            panic!("help-text non-compliant:\n  {}", failures.join("\n  "));
+        }
+    }
+}

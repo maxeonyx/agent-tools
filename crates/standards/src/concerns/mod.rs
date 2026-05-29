@@ -1,0 +1,129 @@
+//! Cross-cutting concerns for the agent-tools workspace.
+//!
+//! Each submodule defines one concern: what it is, why it matters,
+//! review instructions (if agentic), and a mechanical test.
+
+pub mod workspace_routing;
+pub mod tdd_ratchet;
+pub mod black_box_tests;
+pub mod code_standards;
+pub mod help_text;
+pub mod landing_page;
+pub mod release_pipeline;
+pub mod auto_update;
+pub mod vision_and_process;
+pub mod opencode_skill;
+pub mod fast_slow_checks;
+pub mod injectable_io;
+pub mod code_review;
+pub mod error_messages;
+
+/// All known concern IDs.
+pub const ALL_CONCERNS: &[&str] = &[
+    "workspace-routing",
+    "tdd-ratchet",
+    "black-box-tests",
+    "code-standards",
+    "help-text",
+    "error-messages",
+    "landing-page",
+    "release-pipeline",
+    "auto-update",
+    "vision-and-process",
+    "opencode-skill",
+    "fast-slow-checks",
+    "injectable-io",
+    "code-review",
+];
+
+/// Concerns that require agentic review (have non-empty REVIEW_INSTRUCTIONS).
+pub const AGENTIC_CONCERNS: &[&str] = &[
+    "code-review",
+    "error-messages",
+    "injectable-io",
+    "help-text",
+];
+
+#[cfg(test)]
+pub(crate) fn review_attestation_failures(
+    review_file_name: &str,
+    not_applicable: &[&str],
+) -> Vec<String> {
+    let mut failures = Vec::new();
+
+    for tool in crate::TOOLS
+        .iter()
+        .filter(|tool| !not_applicable.contains(tool))
+    {
+        let review_file = crate::tools_dir().join(tool).join(review_file_name);
+
+        if !review_file.exists() {
+            failures.push(format!("{tool}: {review_file_name} missing"));
+            continue;
+        }
+
+        let content = std::fs::read_to_string(&review_file).unwrap_or_default();
+        if !content.contains("reviewed_commit") {
+            failures.push(format!(
+                "{tool}: {review_file_name} missing reviewed_commit"
+            ));
+        }
+    }
+
+    failures
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{
+        AGENTIC_CONCERNS, ALL_CONCERNS, auto_update, black_box_tests, code_review,
+        code_standards, error_messages, fast_slow_checks, help_text, injectable_io,
+        landing_page, opencode_skill, release_pipeline, tdd_ratchet, vision_and_process,
+        workspace_routing,
+    };
+    use std::collections::BTreeSet;
+
+    fn declared_concerns() -> [(&'static str, &'static str); 14] {
+        [
+            ("workspace-routing", workspace_routing::REVIEW_INSTRUCTIONS),
+            ("tdd-ratchet", tdd_ratchet::REVIEW_INSTRUCTIONS),
+            ("black-box-tests", black_box_tests::REVIEW_INSTRUCTIONS),
+            ("code-standards", code_standards::REVIEW_INSTRUCTIONS),
+            ("help-text", help_text::REVIEW_INSTRUCTIONS),
+            ("error-messages", error_messages::REVIEW_INSTRUCTIONS),
+            ("landing-page", landing_page::REVIEW_INSTRUCTIONS),
+            ("release-pipeline", release_pipeline::REVIEW_INSTRUCTIONS),
+            ("auto-update", auto_update::REVIEW_INSTRUCTIONS),
+            (
+                "vision-and-process",
+                vision_and_process::REVIEW_INSTRUCTIONS,
+            ),
+            ("opencode-skill", opencode_skill::REVIEW_INSTRUCTIONS),
+            ("fast-slow-checks", fast_slow_checks::REVIEW_INSTRUCTIONS),
+            ("injectable-io", injectable_io::REVIEW_INSTRUCTIONS),
+            ("code-review", code_review::REVIEW_INSTRUCTIONS),
+        ]
+    }
+
+    #[test]
+    fn all_concerns_list_matches_declared_modules() {
+        let actual: Vec<_> = declared_concerns().into_iter().map(|(id, _)| id).collect();
+        assert_eq!(actual, ALL_CONCERNS, "all concern IDs must stay in sync");
+    }
+
+    #[test]
+    fn agentic_concerns_are_exactly_modules_with_review_instructions() {
+        let actual: BTreeSet<_> = declared_concerns()
+            .into_iter()
+            .filter_map(|(id, review_instructions)| {
+                (!review_instructions.trim().is_empty()).then_some(id)
+            })
+            .collect();
+        let expected: BTreeSet<_> = AGENTIC_CONCERNS.iter().copied().collect();
+
+        assert_eq!(
+            actual, expected,
+            "agentic concerns must stay in sync with review instructions"
+        );
+    }
+}
