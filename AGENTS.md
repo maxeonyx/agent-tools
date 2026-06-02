@@ -17,7 +17,7 @@ If a step was confusing, the process should have been clearer. Fix the process.
 If something was skipped, the process should have enforced it. Fix the process.
 If you're about to do work and the process doesn't describe how, STOP. Write the process first. Then follow it.
 
-Update this file, the standards, or the compliance checks IMMEDIATELY when you notice a gap. Process fixes are high leverage. They compound. Implementation fixes are local. They don't.
+Update this file, the standards, or the compliance checks IMMEDIATELY when you notice a gap. Process fixes are high leverage, and the entire point of this project. They compound. Implementation fixes are local. They are needed but don't compound.
 
 ---
 
