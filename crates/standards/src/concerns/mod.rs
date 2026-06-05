@@ -8,6 +8,7 @@ pub mod auto_update_integration;
 pub mod black_box_tests;
 pub mod code_review;
 pub mod code_standards;
+pub mod devenv_check;
 pub mod error_messages;
 pub mod fast_slow_checks;
 pub mod help_text;
@@ -28,6 +29,7 @@ pub const ALL_CONCERNS: &[&str] = &[
     "tdd-ratchet",
     "black-box-tests",
     "code-standards",
+    "devenv-check",
     "help-text",
     "error-messages",
     "landing-page",
@@ -125,19 +127,20 @@ fn reviewed_commit(content: &str) -> Option<&str> {
 mod tests {
     use super::{
         auto_update, auto_update_integration, black_box_tests, code_review, code_standards,
-        error_messages, fast_slow_checks, help_text, injectable_io, landing_page, opencode_skill,
-        release_freshness, release_pipeline, standalone_publishability, tdd_ratchet,
-        vision_and_process, website_install_links, workspace_routing, AGENTIC_CONCERNS,
-        ALL_CONCERNS,
+        devenv_check, error_messages, fast_slow_checks, help_text, injectable_io, landing_page,
+        opencode_skill, release_freshness, release_pipeline, standalone_publishability,
+        tdd_ratchet, vision_and_process, website_install_links, workspace_routing,
+        AGENTIC_CONCERNS, ALL_CONCERNS,
     };
     use std::collections::BTreeSet;
 
-    fn declared_concerns() -> [(&'static str, &'static str); 18] {
+    fn declared_concerns() -> [(&'static str, &'static str); 19] {
         [
             ("workspace-routing", workspace_routing::REVIEW_INSTRUCTIONS),
             ("tdd-ratchet", tdd_ratchet::REVIEW_INSTRUCTIONS),
             ("black-box-tests", black_box_tests::REVIEW_INSTRUCTIONS),
             ("code-standards", code_standards::REVIEW_INSTRUCTIONS),
+            ("devenv-check", devenv_check::REVIEW_INSTRUCTIONS),
             ("help-text", help_text::REVIEW_INSTRUCTIONS),
             ("error-messages", error_messages::REVIEW_INSTRUCTIONS),
             ("landing-page", landing_page::REVIEW_INSTRUCTIONS),
