@@ -4,6 +4,7 @@
 //! review instructions (if agentic), and a mechanical test.
 
 pub mod auto_update;
+pub mod auto_update_integration;
 pub mod black_box_tests;
 pub mod code_review;
 pub mod code_standards;
@@ -13,9 +14,12 @@ pub mod help_text;
 pub mod injectable_io;
 pub mod landing_page;
 pub mod opencode_skill;
+pub mod release_freshness;
 pub mod release_pipeline;
+pub mod standalone_publishability;
 pub mod tdd_ratchet;
 pub mod vision_and_process;
+pub mod website_install_links;
 pub mod workspace_routing;
 
 /// All known concern IDs.
@@ -28,7 +32,11 @@ pub const ALL_CONCERNS: &[&str] = &[
     "error-messages",
     "landing-page",
     "release-pipeline",
+    "release-freshness",
+    "standalone-publishability",
     "auto-update",
+    "auto-update-integration",
+    "website-install-links",
     "vision-and-process",
     "opencode-skill",
     "fast-slow-checks",
@@ -116,13 +124,15 @@ fn reviewed_commit(content: &str) -> Option<&str> {
 #[cfg(test)]
 mod tests {
     use super::{
-        auto_update, black_box_tests, code_review, code_standards, error_messages,
-        fast_slow_checks, help_text, injectable_io, landing_page, opencode_skill, release_pipeline,
-        tdd_ratchet, vision_and_process, workspace_routing, AGENTIC_CONCERNS, ALL_CONCERNS,
+        auto_update, auto_update_integration, black_box_tests, code_review, code_standards,
+        error_messages, fast_slow_checks, help_text, injectable_io, landing_page, opencode_skill,
+        release_freshness, release_pipeline, standalone_publishability, tdd_ratchet,
+        vision_and_process, website_install_links, workspace_routing, AGENTIC_CONCERNS,
+        ALL_CONCERNS,
     };
     use std::collections::BTreeSet;
 
-    fn declared_concerns() -> [(&'static str, &'static str); 14] {
+    fn declared_concerns() -> [(&'static str, &'static str); 18] {
         [
             ("workspace-routing", workspace_routing::REVIEW_INSTRUCTIONS),
             ("tdd-ratchet", tdd_ratchet::REVIEW_INSTRUCTIONS),
@@ -132,7 +142,20 @@ mod tests {
             ("error-messages", error_messages::REVIEW_INSTRUCTIONS),
             ("landing-page", landing_page::REVIEW_INSTRUCTIONS),
             ("release-pipeline", release_pipeline::REVIEW_INSTRUCTIONS),
+            ("release-freshness", release_freshness::REVIEW_INSTRUCTIONS),
+            (
+                "standalone-publishability",
+                standalone_publishability::REVIEW_INSTRUCTIONS,
+            ),
             ("auto-update", auto_update::REVIEW_INSTRUCTIONS),
+            (
+                "auto-update-integration",
+                auto_update_integration::REVIEW_INSTRUCTIONS,
+            ),
+            (
+                "website-install-links",
+                website_install_links::REVIEW_INSTRUCTIONS,
+            ),
             (
                 "vision-and-process",
                 vision_and_process::REVIEW_INSTRUCTIONS,
