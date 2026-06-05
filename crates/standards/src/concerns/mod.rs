@@ -55,7 +55,8 @@ pub(crate) fn review_attestation_failures(
         .iter()
         .filter(|tool| !not_applicable.contains(tool))
     {
-        let review_file = crate::tools_dir().join(tool).join(review_file_name);
+        let tool_dir = crate::tools_dir().join(tool);
+        let review_file = tool_dir.join(review_file_name);
 
         if !review_file.exists() {
             failures.push(format!("{tool}: {review_file_name} missing"));
@@ -63,14 +64,53 @@ pub(crate) fn review_attestation_failures(
         }
 
         let content = std::fs::read_to_string(&review_file).unwrap_or_default();
-        if !content.contains("reviewed_commit") {
+        let Some(reviewed_commit) = reviewed_commit(&content) else {
             failures.push(format!(
                 "{tool}: {review_file_name} missing reviewed_commit"
+            ));
+            continue;
+        };
+
+        let output = std::process::Command::new("git")
+            .args(["rev-parse", "HEAD"])
+            .current_dir(&tool_dir)
+            .output()
+            .unwrap_or_else(|error| {
+                panic!(
+                    "failed to read current commit for {}: {error}",
+                    tool_dir.display()
+                )
+            });
+
+        if !output.status.success() {
+            let stderr = String::from_utf8_lossy(&output.stderr);
+            failures.push(format!(
+                "{tool}: failed to read current commit for attestation check: {}",
+                stderr.trim()
+            ));
+            continue;
+        }
+
+        let current_commit = String::from_utf8_lossy(&output.stdout);
+        let current_commit = current_commit.trim();
+        if reviewed_commit != current_commit {
+            failures.push(format!(
+                "{tool}: {review_file_name} reviewed {reviewed_commit}, current commit is {current_commit}"
             ));
         }
     }
 
     failures
+}
+
+#[cfg(test)]
+fn reviewed_commit(content: &str) -> Option<&str> {
+    let key = "\"reviewed_commit\"";
+    let after_key = content.split_once(key)?.1;
+    let after_colon = after_key.split_once(':')?.1.trim_start();
+    let after_quote = after_colon.strip_prefix('"')?;
+    let (commit, _) = after_quote.split_once('"')?;
+    Some(commit)
 }
 
 #[cfg(test)]
