@@ -17,7 +17,6 @@ pub const SPEC: crate::concerns::ConcernSpec = crate::concerns::ConcernSpec {
     id: "concern-module-coverage",
     definition_summary: "Concern modules must expose stable metadata and the checker must be tested with pass/fail fixtures.",
     review_instructions: REVIEW_INSTRUCTIONS,
-    review_file_name: None,
     applies_to_workspace: true,
     applicability_note: "Applies to the workspace standards system itself because it governs how every concern is defined and validated.",
 };

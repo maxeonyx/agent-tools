@@ -19,7 +19,6 @@ pub const SPEC: crate::concerns::ConcernSpec = crate::concerns::ConcernSpec {
     id: "release-freshness",
     definition_summary: "Each tool's latest GitHub release must match the current workspace version and pinned commit.",
     review_instructions: REVIEW_INSTRUCTIONS,
-    review_file_name: None,
     applies_to_workspace: false,
     applicability_note: "Applies to tool release state on GitHub, not to the workspace repo itself.",
 };

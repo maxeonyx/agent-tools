@@ -29,7 +29,6 @@ pub const SPEC: crate::concerns::ConcernSpec = crate::concerns::ConcernSpec {
     id: "code-review",
     definition_summary: "Substantive code must have a current recorded code-quality review attestation.",
     review_instructions: REVIEW_INSTRUCTIONS,
-    review_file_name: Some("docs/reviews/code-quality.json"),
     applies_to_workspace: true,
     applicability_note: "Applies to tool repos and to substantive workspace-owned code such as standards and shared crates.",
 };
@@ -41,13 +40,12 @@ mod tests {
 
     #[test]
     fn code_review() {
-        let mut failures =
-            concerns::review_attestation_failures("docs/reviews/code-quality.json", NOT_APPLICABLE);
+        let mut failures = concerns::review_attestation_failures("code-review", NOT_APPLICABLE);
 
         if let Some(failure) = concerns::review_attestation_failure_for_repo(
             "workspace",
             &workspace_root(),
-            "docs/reviews/code-quality.json",
+            "code-review",
         ) {
             failures.push(failure);
         }

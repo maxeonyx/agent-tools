@@ -18,7 +18,6 @@ pub const SPEC: crate::concerns::ConcernSpec = crate::concerns::ConcernSpec {
     id: "opencode-skill",
     definition_summary: "Each tool repo must include the shared SKILL.md entrypoint.",
     review_instructions: REVIEW_INSTRUCTIONS,
-    review_file_name: None,
     applies_to_workspace: false,
     applicability_note: "Applies to tool repos; the workspace is not itself a tool skill package.",
 };

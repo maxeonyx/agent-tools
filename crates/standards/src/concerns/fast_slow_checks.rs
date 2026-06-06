@@ -24,7 +24,6 @@ pub const SPEC: crate::concerns::ConcernSpec = crate::concerns::ConcernSpec {
     definition_summary:
         "Each tool should keep its fast verification loop under the wall-clock budget.",
     review_instructions: REVIEW_INSTRUCTIONS,
-    review_file_name: None,
     applies_to_workspace: false,
     applicability_note: "Applies to per-tool check loops rather than the workspace control plane.",
 };

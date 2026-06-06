@@ -22,7 +22,6 @@ pub const SPEC: crate::concerns::ConcernSpec = crate::concerns::ConcernSpec {
     id: "tdd-ratchet",
     definition_summary: "Each tool repo must maintain its ratchet test-status state.",
     review_instructions: REVIEW_INSTRUCTIONS,
-    review_file_name: None,
     applies_to_workspace: false,
     applicability_note:
         "Applies to tool repos with their own ratchet state, not to the workspace root.",

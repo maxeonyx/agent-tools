@@ -19,7 +19,6 @@ pub const SPEC: crate::concerns::ConcernSpec = crate::concerns::ConcernSpec {
     id: "vision-and-process",
     definition_summary: "Repos should have clear vision and development-process documents.",
     review_instructions: REVIEW_INSTRUCTIONS,
-    review_file_name: None,
     applies_to_workspace: true,
     applicability_note: "Applies to tool repos and to the workspace itself because both need explicit product and process guidance.",
 };

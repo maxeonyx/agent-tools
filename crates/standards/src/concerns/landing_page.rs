@@ -18,7 +18,6 @@ pub const SPEC: crate::concerns::ConcernSpec = crate::concerns::ConcernSpec {
     id: "landing-page",
     definition_summary: "Each tool repo must ship a landing page package in docs/index.html.",
     review_instructions: REVIEW_INSTRUCTIONS,
-    review_file_name: None,
     applies_to_workspace: false,
     applicability_note:
         "Applies to individual tool websites; the umbrella site has separate root packaging checks.",

@@ -18,7 +18,6 @@ pub const SPEC: crate::concerns::ConcernSpec = crate::concerns::ConcernSpec {
     definition_summary:
         "Pinned submodule commits must be equal to or ahead of each tool's remote main branch.",
     review_instructions: REVIEW_INSTRUCTIONS,
-    review_file_name: None,
     applies_to_workspace: false,
     applicability_note:
         "Applies to how the workspace pins subrepos, not to the workspace repo in isolation.",

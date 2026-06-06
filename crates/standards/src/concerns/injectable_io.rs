@@ -30,7 +30,6 @@ pub const SPEC: crate::concerns::ConcernSpec = crate::concerns::ConcernSpec {
     definition_summary:
         "Applicable tools must have a current review attestation for injectable I/O design.",
     review_instructions: REVIEW_INSTRUCTIONS,
-    review_file_name: Some("docs/reviews/injectable-io.json"),
     applies_to_workspace: false,
     applicability_note:
         "Applies only to tools with meaningful I/O seams; some tools are explicitly not applicable.",
@@ -43,10 +42,7 @@ mod tests {
 
     #[test]
     fn injectable_io() {
-        let failures = concerns::review_attestation_failures(
-            "docs/reviews/injectable-io.json",
-            NOT_APPLICABLE,
-        );
+        let failures = concerns::review_attestation_failures("injectable-io", NOT_APPLICABLE);
 
         if !failures.is_empty() {
             panic!("injectable-io non-compliant:\n  {}", failures.join("\n  "));

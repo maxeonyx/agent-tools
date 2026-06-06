@@ -17,7 +17,6 @@ pub const SPEC: crate::concerns::ConcernSpec = crate::concerns::ConcernSpec {
     id: "standalone-publishability",
     definition_summary: "Standalone tool repos must not depend on workspace-relative path crates for release builds.",
     review_instructions: REVIEW_INSTRUCTIONS,
-    review_file_name: None,
     applies_to_workspace: false,
     applicability_note: "Applies to standalone tool publishing, not to the umbrella workspace checkout.",
 };

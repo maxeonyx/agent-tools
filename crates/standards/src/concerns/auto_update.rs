@@ -22,7 +22,6 @@ pub const SPEC: crate::concerns::ConcernSpec = crate::concerns::ConcernSpec {
     id: "auto-update",
     definition_summary: "Applicable CLI tools must include the shared updater dependency.",
     review_instructions: REVIEW_INSTRUCTIONS,
-    review_file_name: None,
     applies_to_workspace: false,
     applicability_note: "Applies to installed CLI tools; not to the workspace itself or cargo-install-first tools like tdd-ratchet.",
 };

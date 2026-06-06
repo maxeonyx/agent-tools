@@ -21,7 +21,6 @@ pub const SPEC: crate::concerns::ConcernSpec = crate::concerns::ConcernSpec {
     definition_summary:
         "Each tool repo must include the expected release and Pages workflow structure.",
     review_instructions: REVIEW_INSTRUCTIONS,
-    review_file_name: None,
     applies_to_workspace: false,
     applicability_note: "Applies to standalone tool repos where release CI runs.",
 };

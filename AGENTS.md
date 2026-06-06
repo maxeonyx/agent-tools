@@ -142,7 +142,8 @@ Rules:
 - Attestation command:
   - prompt: `cargo run -p standards --bin review-attest -- prompt <workspace|tool> <concern>`
   - record: `cargo run -p standards --bin review-attest -- record <workspace|tool> <concern>`
-- Attestation files: `docs/reviews/<concern>.json` with `reviewed_commit` plus metadata written by the tool.
+- Attestation state is centralized in `state.json` at the workspace root.
+- `state.json` entries are keyed by reviewed repo and concern; they are process state, not product docs.
 
 Tool order: trunc → tdd-ratchet → dotsync → tb → oc (simplest first).
 

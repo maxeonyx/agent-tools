@@ -30,7 +30,6 @@ pub const SPEC: crate::concerns::ConcernSpec = crate::concerns::ConcernSpec {
     definition_summary:
         "Each tool must have a current review attestation covering error-message quality.",
     review_instructions: REVIEW_INSTRUCTIONS,
-    review_file_name: Some("docs/reviews/error-messages.json"),
     applies_to_workspace: false,
     applicability_note:
         "Applies to tool user interfaces; the workspace is not an end-user CLI surface.",
@@ -43,10 +42,7 @@ mod tests {
 
     #[test]
     fn error_messages() {
-        let failures = concerns::review_attestation_failures(
-            "docs/reviews/error-messages.json",
-            NOT_APPLICABLE,
-        );
+        let failures = concerns::review_attestation_failures("error-messages", NOT_APPLICABLE);
 
         if !failures.is_empty() {
             panic!("error-messages non-compliant:\n  {}", failures.join("\n  "));

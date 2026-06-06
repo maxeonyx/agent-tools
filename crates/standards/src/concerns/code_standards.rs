@@ -20,7 +20,6 @@ pub const SPEC: crate::concerns::ConcernSpec = crate::concerns::ConcernSpec {
     definition_summary:
         "Tools should inherit shared formatting standards rather than overriding them locally.",
     review_instructions: REVIEW_INSTRUCTIONS,
-    review_file_name: None,
     applies_to_workspace: false,
     applicability_note:
         "This check is about tool repos not drifting from workspace rustfmt configuration.",

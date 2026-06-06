@@ -1,4 +1,7 @@
-use crate::concerns::{concern_spec, latest_substantive_commit, ConcernSpec, ReviewAttestation};
+use crate::concerns::{
+    concern_spec, latest_substantive_commit, load_state_file, parse_review_attestation,
+    state_file_path, ConcernSpec, ReviewAttestation, StateFile,
+};
 use std::path::PathBuf;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -36,7 +39,7 @@ pub fn resolve_target(name: &str) -> Result<ReviewTarget, String> {
 
 pub fn resolve_agentic_concern(id: &str) -> Result<&'static ConcernSpec, String> {
     let spec = concern_spec(id).ok_or_else(|| format!("unknown concern `{id}`"))?;
-    if spec.review_instructions.trim().is_empty() || spec.review_file_name.is_none() {
+    if spec.review_instructions.trim().is_empty() {
         return Err(format!(
             "concern `{id}` is not an agentic/manual review concern"
         ));
@@ -46,11 +49,11 @@ pub fn resolve_agentic_concern(id: &str) -> Result<&'static ConcernSpec, String>
 
 pub fn render_prompt(target: &ReviewTarget, spec: &ConcernSpec, reviewed_commit: &str) -> String {
     format!(
-        "Review target: {repo}\nPath: {path}\nConcern: {concern}\nAttestation file: {file}\nReviewed commit: {commit}\n\nProcess:\n1. Start a fresh review session.\n2. Evaluate the target against the instructions below.\n3. Produce findings and implement/fix them before recording an attestation.\n4. Only record an attestation when the re-review is clean.\n\nInstructions:\n{instructions}",
+        "Review target: {repo}\nPath: {path}\nConcern: {concern}\nState file: {file}\nReviewed commit: {commit}\n\nProcess:\n1. Start a fresh review session.\n2. Evaluate the target against the instructions below.\n3. Produce findings and implement/fix them before recording an attestation.\n4. Only record an attestation when the re-review is clean.\n\nInstructions:\n{instructions}",
         repo = target.repo_name,
         path = target.repo_dir.display(),
         concern = spec.id,
-        file = spec.review_file_name.unwrap_or(""),
+        file = state_file_path().display(),
         commit = reviewed_commit,
         instructions = spec.review_instructions.trim()
     )
@@ -82,20 +85,31 @@ pub fn perform(
     match action {
         ReviewAction::Prompt => Ok(render_prompt(&target, spec, &reviewed_commit)),
         ReviewAction::Record => {
-            let review_file = target.repo_dir.join(
-                spec.review_file_name
-                    .expect("agentic concern must have review file"),
-            );
-            if let Some(parent) = review_file.parent() {
-                std::fs::create_dir_all(parent).map_err(|error| error.to_string())?;
-            }
+            let state_path = state_file_path();
+            let mut state = match load_state_file() {
+                Ok(state) => state,
+                Err(error) if !state_path.exists() => {
+                    let _ = error;
+                    StateFile::default()
+                }
+                Err(error) => {
+                    return Err(format!("failed to load {}: {error}", state_path.display()))
+                }
+            };
+            state
+                .reviews
+                .retain(|entry| !(entry.repo == target.repo_name && entry.concern == spec.id));
             let attestation = render_attestation(&target, spec, &reviewed_commit);
-            std::fs::write(&review_file, &attestation).map_err(|error| error.to_string())?;
+            let parsed = parse_review_attestation(&attestation)?;
+            state.reviews.push(parsed);
+            let content =
+                serde_json::to_string_pretty(&state).map_err(|error| error.to_string())? + "\n";
+            std::fs::write(&state_path, content).map_err(|error| error.to_string())?;
             Ok(format!(
-                "Recorded attestation for {repo} {concern} at {path}\n{attestation}",
+                "Recorded attestation for {repo} {concern} in {path}\n{attestation}",
                 repo = target.repo_name,
                 concern = spec.id,
-                path = review_file.display()
+                path = state_path.display()
             ))
         }
     }
@@ -110,7 +124,6 @@ pub fn usage(program: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::concerns::parse_review_attestation;
     use std::fs;
     use std::process::Command;
 
@@ -128,7 +141,7 @@ mod tests {
             repo_dir: PathBuf::from("/tmp/workspace"),
         };
         let prompt = render_prompt(&target, spec, "abc123");
-        assert!(prompt.contains("docs/reviews/code-quality.json"));
+        assert!(prompt.contains("state.json"));
         assert!(prompt.contains("abc123"));
     }
 
@@ -162,14 +175,8 @@ mod tests {
             repo_dir: repo.clone(),
         };
         let spec = resolve_agentic_concern("code-review").unwrap();
-        let path = repo.join(spec.review_file_name.unwrap());
-        if let Some(parent) = path.parent() {
-            fs::create_dir_all(parent).unwrap();
-        }
         let json = render_attestation(&target, spec, &reviewed_commit);
-        fs::write(&path, &json).unwrap();
-
-        let parsed = parse_review_attestation(&fs::read_to_string(&path).unwrap()).unwrap();
+        let parsed = parse_review_attestation(&json).unwrap();
         assert_eq!(parsed.reviewed_commit, reviewed_commit);
         assert_eq!(parsed.concern, "code-review");
         assert_eq!(parsed.repo, "workspace");

@@ -35,7 +35,6 @@ pub const SPEC: crate::concerns::ConcernSpec = crate::concerns::ConcernSpec {
     definition_summary:
         "Each tool needs tested help examples and a current help-text quality review.",
     review_instructions: REVIEW_INSTRUCTIONS,
-    review_file_name: Some("docs/reviews/help-text.json"),
     applies_to_workspace: false,
     applicability_note: "Applies to user-facing tool CLIs rather than the workspace control plane.",
 };
@@ -90,7 +89,7 @@ mod tests {
         }
 
         failures.extend(concerns::review_attestation_failures(
-            "docs/reviews/help-text.json",
+            "help-text",
             NOT_APPLICABLE,
         ));
 

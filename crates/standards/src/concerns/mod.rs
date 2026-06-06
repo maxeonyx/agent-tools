@@ -32,7 +32,6 @@ pub struct ConcernSpec {
     pub id: &'static str,
     pub definition_summary: &'static str,
     pub review_instructions: &'static str,
-    pub review_file_name: Option<&'static str>,
     pub applies_to_workspace: bool,
     pub applicability_note: &'static str,
 }
@@ -110,9 +109,19 @@ pub struct ReviewAttestation {
     pub attested_via: String,
 }
 
+#[derive(Debug, Default, serde::Deserialize, serde::Serialize, Eq, PartialEq)]
+pub struct StateFile {
+    #[serde(default)]
+    pub reviews: Vec<ReviewAttestation>,
+}
+
+pub fn state_file_path() -> std::path::PathBuf {
+    crate::workspace_root().join("state.json")
+}
+
 #[cfg(test)]
 pub(crate) fn review_attestation_failures(
-    review_file_name: &str,
+    concern_id: &str,
     not_applicable: &[&str],
 ) -> Vec<String> {
     let mut failures = Vec::new();
@@ -122,9 +131,7 @@ pub(crate) fn review_attestation_failures(
         .filter(|tool| !not_applicable.contains(tool))
     {
         let tool_dir = crate::tools_dir().join(tool);
-        if let Some(failure) =
-            review_attestation_failure_for_repo(tool, &tool_dir, review_file_name)
-        {
+        if let Some(failure) = review_attestation_failure_for_repo(tool, &tool_dir, concern_id) {
             failures.push(failure);
         }
     }
@@ -136,53 +143,53 @@ pub(crate) fn review_attestation_failures(
 pub(crate) fn review_attestation_failure_for_repo(
     repo_name: &str,
     repo_dir: &std::path::Path,
-    review_file_name: &str,
+    concern_id: &str,
 ) -> Option<String> {
-    let review_file = repo_dir.join(review_file_name);
+    let state = match load_state_file() {
+        Ok(state) => state,
+        Err(error) => return Some(format!("state.json invalid: {error}")),
+    };
+    review_attestation_failure_for_repo_in_state(repo_name, repo_dir, concern_id, &state)
+}
 
-    if !review_file.exists() {
-        return Some(format!("{repo_name}: {review_file_name} missing"));
-    }
-
-    let content = std::fs::read_to_string(&review_file).unwrap_or_default();
-    let attestation = match parse_review_attestation(&content) {
-        Ok(attestation) => attestation,
-        Err(error) => {
-            return Some(format!("{repo_name}: {review_file_name} invalid: {error}"));
-        }
+#[cfg(test)]
+pub(crate) fn review_attestation_failure_for_repo_in_state(
+    repo_name: &str,
+    repo_dir: &std::path::Path,
+    concern_id: &str,
+    state: &StateFile,
+) -> Option<String> {
+    let Some(attestation) = state
+        .reviews
+        .iter()
+        .find(|entry| entry.repo == repo_name && entry.concern == concern_id)
+    else {
+        return Some(format!("{repo_name}: {concern_id} missing from state.json"));
     };
 
-    let expected_concern = ALL_CONCERN_SPECS
-        .iter()
-        .find(|spec| spec.review_file_name == Some(review_file_name))
-        .map(|spec| spec.id)
-        .unwrap_or("");
-
-    if attestation.concern != expected_concern {
+    if attestation.concern != concern_id {
         return Some(format!(
-            "{repo_name}: {review_file_name} recorded concern {}, expected {expected_concern}",
+            "{repo_name}: state.json recorded concern {}, expected {concern_id}",
             attestation.concern
         ));
     }
 
     if attestation.repo != repo_name {
         return Some(format!(
-            "{repo_name}: {review_file_name} recorded repo {}, expected {repo_name}",
+            "{repo_name}: state.json recorded repo {}, expected {repo_name}",
             attestation.repo
         ));
     }
 
     if attestation.attested_via != "review-attest" {
         return Some(format!(
-            "{repo_name}: {review_file_name} recorded attested_via {}, expected review-attest",
+            "{repo_name}: state.json recorded attested_via {}, expected review-attest",
             attestation.attested_via
         ));
     }
 
     if attestation.reviewed_commit.trim().is_empty() {
-        return Some(format!(
-            "{repo_name}: {review_file_name} missing reviewed_commit"
-        ));
+        return Some(format!("{repo_name}: state.json missing reviewed_commit"));
     };
 
     let current_commit = latest_substantive_commit(repo_dir).unwrap_or_else(|error| {
@@ -194,7 +201,7 @@ pub(crate) fn review_attestation_failure_for_repo(
 
     if attestation.reviewed_commit != current_commit {
         return Some(format!(
-            "{repo_name}: {review_file_name} reviewed {}, current substantive commit is {current_commit}",
+            "{repo_name}: state.json reviewed {}, current substantive commit is {current_commit}",
             attestation.reviewed_commit
         ));
     }
@@ -206,6 +213,19 @@ pub fn parse_review_attestation(content: &str) -> Result<ReviewAttestation, Stri
     serde_json::from_str(content).map_err(|error| error.to_string())
 }
 
+pub fn parse_state_file(content: &str) -> Result<StateFile, String> {
+    serde_json::from_str(content).map_err(|error| error.to_string())
+}
+
+pub fn load_state_file() -> Result<StateFile, String> {
+    load_state_file_from_path(&state_file_path())
+}
+
+pub fn load_state_file_from_path(path: &std::path::Path) -> Result<StateFile, String> {
+    let content = std::fs::read_to_string(path).map_err(|error| error.to_string())?;
+    parse_state_file(&content)
+}
+
 pub fn latest_substantive_commit(repo_dir: &std::path::Path) -> Result<String, String> {
     let output = std::process::Command::new("git")
         .args([
@@ -215,6 +235,7 @@ pub fn latest_substantive_commit(repo_dir: &std::path::Path) -> Result<String, S
             "--",
             ".",
             ":(exclude)docs/reviews",
+            ":(exclude)state.json",
         ])
         .current_dir(repo_dir)
         .output()
@@ -236,8 +257,9 @@ pub fn latest_substantive_commit(repo_dir: &std::path::Path) -> Result<String, S
 #[cfg(test)]
 mod tests {
     use super::{
-        concern_spec, latest_substantive_commit, parse_review_attestation,
-        review_attestation_failure_for_repo, AGENTIC_CONCERNS, ALL_CONCERNS, ALL_CONCERN_SPECS,
+        concern_spec, latest_substantive_commit, parse_review_attestation, parse_state_file,
+        review_attestation_failure_for_repo_in_state, StateFile, AGENTIC_CONCERNS, ALL_CONCERNS,
+        ALL_CONCERN_SPECS,
     };
     use std::collections::BTreeSet;
     use std::fs;
@@ -278,14 +300,8 @@ mod tests {
         for spec in ALL_CONCERN_SPECS {
             if AGENTIC_CONCERNS.contains(&spec.id) {
                 assert!(
-                    spec.review_file_name.is_some(),
-                    "{} must declare review_file_name",
-                    spec.id
-                );
-            } else {
-                assert!(
-                    spec.review_file_name.is_none(),
-                    "{} should not declare review_file_name",
+                    !spec.review_instructions.trim().is_empty(),
+                    "{} must have review instructions",
                     spec.id
                 );
             }
@@ -295,10 +311,7 @@ mod tests {
     #[test]
     fn concern_spec_lookup_finds_known_concern() {
         let spec = concern_spec("code-review").expect("code-review spec should exist");
-        assert_eq!(
-            spec.review_file_name,
-            Some("docs/reviews/code-quality.json")
-        );
+        assert!(spec.applies_to_workspace);
     }
 
     #[test]
@@ -312,6 +325,16 @@ mod tests {
     }
 
     #[test]
+    fn parse_state_file_extracts_reviews() {
+        let state = parse_state_file(
+            r#"{"reviews":[{"reviewed_commit":"abc123","concern":"code-review","repo":"workspace","attested_via":"review-attest"}]}"#,
+        )
+        .unwrap();
+        assert_eq!(state.reviews.len(), 1);
+        assert_eq!(state.reviews[0].repo, "workspace");
+    }
+
+    #[test]
     fn latest_substantive_commit_ignores_review_only_followup_commits() {
         let repo = test_repo_dir("latest_substantive_commit");
         init_git_repo(&repo);
@@ -321,13 +344,8 @@ mod tests {
         git(&repo, &["commit", "-m", "substantive"]);
         let substantive = git_output(&repo, &["rev-parse", "HEAD"]);
 
-        fs::create_dir_all(repo.join("docs/reviews")).unwrap();
-        fs::write(
-            repo.join("docs/reviews/code-quality.json"),
-            format!("{{\"reviewed_commit\":\"{}\"}}\n", substantive),
-        )
-        .unwrap();
-        git(&repo, &["add", "docs/reviews/code-quality.json"]);
+        fs::write(repo.join("note.txt"), "review only\n").unwrap();
+        git(&repo, &["add", "note.txt"]);
         git(&repo, &["commit", "-m", "review only"]);
 
         let latest = latest_substantive_commit(&repo).unwrap();
@@ -343,20 +361,26 @@ mod tests {
         git(&repo, &["add", "src.txt"]);
         git(&repo, &["commit", "-m", "substantive"]);
 
-        fs::create_dir_all(repo.join("docs/reviews")).unwrap();
-        fs::write(
-            repo.join("docs/reviews/code-quality.json"),
-            "{\"reviewed_commit\":\"abc123\"}\n",
-        )
-        .unwrap();
+        let state =
+            parse_state_file("{\"reviews\":[{\"reviewed_commit\":\"abc123\"}]}\n").unwrap_err();
 
-        let failure = review_attestation_failure_for_repo(
-            "workspace",
-            &repo,
-            "docs/reviews/code-quality.json",
-        )
-        .unwrap();
-        assert!(failure.contains("invalid"));
+        assert!(state.contains("missing field"));
+    }
+
+    #[test]
+    fn review_attestation_failure_rejects_missing_concern_entry() {
+        let repo = test_repo_dir("missing_state_entry");
+        init_git_repo(&repo);
+
+        fs::write(repo.join("src.txt"), "v1\n").unwrap();
+        git(&repo, &["add", "src.txt"]);
+        git(&repo, &["commit", "-m", "substantive"]);
+
+        let state = StateFile::default();
+        let failure =
+            review_attestation_failure_for_repo_in_state("workspace", &repo, "code-review", &state)
+                .unwrap();
+        assert!(failure.contains("missing from state.json"));
     }
 
     fn test_repo_dir(name: &str) -> std::path::PathBuf {

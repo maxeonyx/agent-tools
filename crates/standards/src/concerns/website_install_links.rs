@@ -16,7 +16,6 @@ pub const SPEC: crate::concerns::ConcernSpec = crate::concerns::ConcernSpec {
     id: "website-install-links",
     definition_summary: "Documented public install links on published websites must resolve successfully.",
     review_instructions: REVIEW_INSTRUCTIONS,
-    review_file_name: None,
     applies_to_workspace: false,
     applicability_note: "Applies to published tool-install links gathered from site packages, not to generic workspace docs alone.",
 };
