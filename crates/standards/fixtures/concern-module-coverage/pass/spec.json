@@ -1,0 +1,9 @@
+{
+  "id": "example-concern",
+  "definition_summary": "A real concern has a precise summary.",
+  "applicability_note": "It explains where the concern applies and why.",
+  "applies_to_workspace": true,
+  "in_registry": true,
+  "has_checker": true,
+  "has_fixture_tests": true
+}

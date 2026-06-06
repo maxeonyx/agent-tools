@@ -25,6 +25,17 @@ Review the tool's architecture for injectable IO:
 Reference the `programming` skill and `tests` skill Tier 2 guidance.
 "#;
 
+pub const SPEC: crate::concerns::ConcernSpec = crate::concerns::ConcernSpec {
+    id: "injectable-io",
+    definition_summary:
+        "Applicable tools must have a current review attestation for injectable I/O design.",
+    review_instructions: REVIEW_INSTRUCTIONS,
+    review_file_name: Some("docs/reviews/injectable-io.json"),
+    applies_to_workspace: false,
+    applicability_note:
+        "Applies only to tools with meaningful I/O seams; some tools are explicitly not applicable.",
+};
+
 #[cfg(test)]
 mod tests {
     use super::NOT_APPLICABLE;

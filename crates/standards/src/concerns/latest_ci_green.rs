@@ -14,6 +14,17 @@ pub const NOT_APPLICABLE: &[&str] = &[];
 /// Instructions for an agent performing this review.
 pub const REVIEW_INSTRUCTIONS: &str = "";
 
+pub const SPEC: crate::concerns::ConcernSpec = crate::concerns::ConcernSpec {
+    id: "latest-ci-green",
+    definition_summary:
+        "Pinned tool commits must have a successful ci.yml run on the exact recorded commit.",
+    review_instructions: REVIEW_INSTRUCTIONS,
+    review_file_name: None,
+    applies_to_workspace: false,
+    applicability_note:
+        "Applies to subrepo commits pinned by the workspace, not to the workspace repo itself.",
+};
+
 #[cfg(test)]
 mod tests {
     use super::NOT_APPLICABLE;

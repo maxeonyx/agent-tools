@@ -18,6 +18,15 @@ pub const NOT_APPLICABLE: &[&str] = &[];
 /// Instructions for an agent performing this review.
 pub const REVIEW_INSTRUCTIONS: &str = "";
 
+pub const SPEC: crate::concerns::ConcernSpec = crate::concerns::ConcernSpec {
+    id: "version-artifacts",
+    definition_summary: "Website packages and built binaries must expose machine-readable version artifacts.",
+    review_instructions: REVIEW_INSTRUCTIONS,
+    review_file_name: None,
+    applies_to_workspace: true,
+    applicability_note: "Applies to tool websites and binaries, and to the umbrella site package at the workspace root.",
+};
+
 #[cfg(test)]
 mod tests {
     use super::NOT_APPLICABLE;

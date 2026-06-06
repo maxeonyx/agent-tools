@@ -8,6 +8,7 @@ pub mod auto_update_integration;
 pub mod black_box_tests;
 pub mod code_review;
 pub mod code_standards;
+pub mod concern_module_coverage;
 pub mod devenv_check;
 pub mod error_messages;
 pub mod fast_slow_checks;
@@ -25,6 +26,42 @@ pub mod version_artifacts;
 pub mod vision_and_process;
 pub mod website_install_links;
 pub mod workspace_routing;
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct ConcernSpec {
+    pub id: &'static str,
+    pub definition_summary: &'static str,
+    pub review_instructions: &'static str,
+    pub review_file_name: Option<&'static str>,
+    pub applies_to_workspace: bool,
+    pub applicability_note: &'static str,
+}
+
+pub const ALL_CONCERN_SPECS: &[ConcernSpec] = &[
+    workspace_routing::SPEC,
+    tdd_ratchet::SPEC,
+    black_box_tests::SPEC,
+    code_standards::SPEC,
+    devenv_check::SPEC,
+    version_artifacts::SPEC,
+    help_text::SPEC,
+    error_messages::SPEC,
+    landing_page::SPEC,
+    release_pipeline::SPEC,
+    release_freshness::SPEC,
+    latest_ci_green::SPEC,
+    pinned_main_parity::SPEC,
+    standalone_publishability::SPEC,
+    auto_update::SPEC,
+    auto_update_integration::SPEC,
+    website_install_links::SPEC,
+    vision_and_process::SPEC,
+    opencode_skill::SPEC,
+    fast_slow_checks::SPEC,
+    injectable_io::SPEC,
+    code_review::SPEC,
+    concern_module_coverage::SPEC,
+];
 
 /// All known concern IDs.
 pub const ALL_CONCERNS: &[&str] = &[
@@ -50,6 +87,7 @@ pub const ALL_CONCERNS: &[&str] = &[
     "fast-slow-checks",
     "injectable-io",
     "code-review",
+    "concern-module-coverage",
 ];
 
 /// Concerns that require agentic review (have non-empty REVIEW_INSTRUCTIONS).
@@ -59,6 +97,18 @@ pub const AGENTIC_CONCERNS: &[&str] = &[
     "injectable-io",
     "help-text",
 ];
+
+pub fn concern_spec(id: &str) -> Option<&'static ConcernSpec> {
+    ALL_CONCERN_SPECS.iter().find(|spec| spec.id == id)
+}
+
+#[derive(Debug, serde::Deserialize, serde::Serialize, Eq, PartialEq)]
+pub struct ReviewAttestation {
+    pub reviewed_commit: String,
+    pub concern: String,
+    pub repo: String,
+    pub attested_via: String,
+}
 
 #[cfg(test)]
 pub(crate) fn review_attestation_failures(
@@ -72,47 +122,10 @@ pub(crate) fn review_attestation_failures(
         .filter(|tool| !not_applicable.contains(tool))
     {
         let tool_dir = crate::tools_dir().join(tool);
-        let review_file = tool_dir.join(review_file_name);
-
-        if !review_file.exists() {
-            failures.push(format!("{tool}: {review_file_name} missing"));
-            continue;
-        }
-
-        let content = std::fs::read_to_string(&review_file).unwrap_or_default();
-        let Some(reviewed_commit) = reviewed_commit(&content) else {
-            failures.push(format!(
-                "{tool}: {review_file_name} missing reviewed_commit"
-            ));
-            continue;
-        };
-
-        let output = std::process::Command::new("git")
-            .args(["rev-parse", "HEAD"])
-            .current_dir(&tool_dir)
-            .output()
-            .unwrap_or_else(|error| {
-                panic!(
-                    "failed to read current commit for {}: {error}",
-                    tool_dir.display()
-                )
-            });
-
-        if !output.status.success() {
-            let stderr = String::from_utf8_lossy(&output.stderr);
-            failures.push(format!(
-                "{tool}: failed to read current commit for attestation check: {}",
-                stderr.trim()
-            ));
-            continue;
-        }
-
-        let current_commit = String::from_utf8_lossy(&output.stdout);
-        let current_commit = current_commit.trim();
-        if reviewed_commit != current_commit {
-            failures.push(format!(
-                "{tool}: {review_file_name} reviewed {reviewed_commit}, current commit is {current_commit}"
-            ));
+        if let Some(failure) =
+            review_attestation_failure_for_repo(tool, &tool_dir, review_file_name)
+        {
+            failures.push(failure);
         }
     }
 
@@ -120,66 +133,122 @@ pub(crate) fn review_attestation_failures(
 }
 
 #[cfg(test)]
-fn reviewed_commit(content: &str) -> Option<&str> {
-    let key = "\"reviewed_commit\"";
-    let after_key = content.split_once(key)?.1;
-    let after_colon = after_key.split_once(':')?.1.trim_start();
-    let after_quote = after_colon.strip_prefix('"')?;
-    let (commit, _) = after_quote.split_once('"')?;
-    Some(commit)
+pub(crate) fn review_attestation_failure_for_repo(
+    repo_name: &str,
+    repo_dir: &std::path::Path,
+    review_file_name: &str,
+) -> Option<String> {
+    let review_file = repo_dir.join(review_file_name);
+
+    if !review_file.exists() {
+        return Some(format!("{repo_name}: {review_file_name} missing"));
+    }
+
+    let content = std::fs::read_to_string(&review_file).unwrap_or_default();
+    let attestation = match parse_review_attestation(&content) {
+        Ok(attestation) => attestation,
+        Err(error) => {
+            return Some(format!("{repo_name}: {review_file_name} invalid: {error}"));
+        }
+    };
+
+    let expected_concern = ALL_CONCERN_SPECS
+        .iter()
+        .find(|spec| spec.review_file_name == Some(review_file_name))
+        .map(|spec| spec.id)
+        .unwrap_or("");
+
+    if attestation.concern != expected_concern {
+        return Some(format!(
+            "{repo_name}: {review_file_name} recorded concern {}, expected {expected_concern}",
+            attestation.concern
+        ));
+    }
+
+    if attestation.repo != repo_name {
+        return Some(format!(
+            "{repo_name}: {review_file_name} recorded repo {}, expected {repo_name}",
+            attestation.repo
+        ));
+    }
+
+    if attestation.attested_via != "review-attest" {
+        return Some(format!(
+            "{repo_name}: {review_file_name} recorded attested_via {}, expected review-attest",
+            attestation.attested_via
+        ));
+    }
+
+    if attestation.reviewed_commit.trim().is_empty() {
+        return Some(format!(
+            "{repo_name}: {review_file_name} missing reviewed_commit"
+        ));
+    };
+
+    let current_commit = latest_substantive_commit(repo_dir).unwrap_or_else(|error| {
+        panic!(
+            "failed to read current substantive commit for {}: {error}",
+            repo_dir.display()
+        )
+    });
+
+    if attestation.reviewed_commit != current_commit {
+        return Some(format!(
+            "{repo_name}: {review_file_name} reviewed {}, current substantive commit is {current_commit}",
+            attestation.reviewed_commit
+        ));
+    }
+
+    None
+}
+
+pub fn parse_review_attestation(content: &str) -> Result<ReviewAttestation, String> {
+    serde_json::from_str(content).map_err(|error| error.to_string())
+}
+
+pub fn latest_substantive_commit(repo_dir: &std::path::Path) -> Result<String, String> {
+    let output = std::process::Command::new("git")
+        .args([
+            "log",
+            "-1",
+            "--format=%H",
+            "--",
+            ".",
+            ":(exclude)docs/reviews",
+        ])
+        .current_dir(repo_dir)
+        .output()
+        .map_err(|error| error.to_string())?;
+
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(stderr.trim().to_string());
+    }
+
+    let commit = String::from_utf8_lossy(&output.stdout).trim().to_string();
+    if commit.is_empty() {
+        return Err("git log returned no substantive commit".to_string());
+    }
+
+    Ok(commit)
 }
 
 #[cfg(test)]
 mod tests {
     use super::{
-        auto_update, auto_update_integration, black_box_tests, code_review, code_standards,
-        devenv_check, error_messages, fast_slow_checks, help_text, injectable_io, landing_page,
-        latest_ci_green, opencode_skill, pinned_main_parity, release_freshness, release_pipeline,
-        standalone_publishability, tdd_ratchet, version_artifacts, vision_and_process,
-        website_install_links, workspace_routing, AGENTIC_CONCERNS, ALL_CONCERNS,
+        concern_spec, latest_substantive_commit, parse_review_attestation,
+        review_attestation_failure_for_repo, AGENTIC_CONCERNS, ALL_CONCERNS, ALL_CONCERN_SPECS,
     };
     use std::collections::BTreeSet;
+    use std::fs;
+    use std::path::Path;
+    use std::process::Command;
 
-    fn declared_concerns() -> [(&'static str, &'static str); 22] {
-        [
-            ("workspace-routing", workspace_routing::REVIEW_INSTRUCTIONS),
-            ("tdd-ratchet", tdd_ratchet::REVIEW_INSTRUCTIONS),
-            ("black-box-tests", black_box_tests::REVIEW_INSTRUCTIONS),
-            ("code-standards", code_standards::REVIEW_INSTRUCTIONS),
-            ("devenv-check", devenv_check::REVIEW_INSTRUCTIONS),
-            ("version-artifacts", version_artifacts::REVIEW_INSTRUCTIONS),
-            ("help-text", help_text::REVIEW_INSTRUCTIONS),
-            ("error-messages", error_messages::REVIEW_INSTRUCTIONS),
-            ("landing-page", landing_page::REVIEW_INSTRUCTIONS),
-            ("release-pipeline", release_pipeline::REVIEW_INSTRUCTIONS),
-            ("release-freshness", release_freshness::REVIEW_INSTRUCTIONS),
-            ("latest-ci-green", latest_ci_green::REVIEW_INSTRUCTIONS),
-            (
-                "pinned-main-parity",
-                pinned_main_parity::REVIEW_INSTRUCTIONS,
-            ),
-            (
-                "standalone-publishability",
-                standalone_publishability::REVIEW_INSTRUCTIONS,
-            ),
-            ("auto-update", auto_update::REVIEW_INSTRUCTIONS),
-            (
-                "auto-update-integration",
-                auto_update_integration::REVIEW_INSTRUCTIONS,
-            ),
-            (
-                "website-install-links",
-                website_install_links::REVIEW_INSTRUCTIONS,
-            ),
-            (
-                "vision-and-process",
-                vision_and_process::REVIEW_INSTRUCTIONS,
-            ),
-            ("opencode-skill", opencode_skill::REVIEW_INSTRUCTIONS),
-            ("fast-slow-checks", fast_slow_checks::REVIEW_INSTRUCTIONS),
-            ("injectable-io", injectable_io::REVIEW_INSTRUCTIONS),
-            ("code-review", code_review::REVIEW_INSTRUCTIONS),
-        ]
+    fn declared_concerns() -> Vec<(&'static str, &'static str)> {
+        ALL_CONCERN_SPECS
+            .iter()
+            .map(|spec| (spec.id, spec.review_instructions))
+            .collect()
     }
 
     #[test]
@@ -202,5 +271,138 @@ mod tests {
             actual, expected,
             "agentic concerns must stay in sync with review instructions"
         );
+    }
+
+    #[test]
+    fn agentic_concerns_have_review_files_and_non_agentic_concerns_do_not() {
+        for spec in ALL_CONCERN_SPECS {
+            if AGENTIC_CONCERNS.contains(&spec.id) {
+                assert!(
+                    spec.review_file_name.is_some(),
+                    "{} must declare review_file_name",
+                    spec.id
+                );
+            } else {
+                assert!(
+                    spec.review_file_name.is_none(),
+                    "{} should not declare review_file_name",
+                    spec.id
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn concern_spec_lookup_finds_known_concern() {
+        let spec = concern_spec("code-review").expect("code-review spec should exist");
+        assert_eq!(
+            spec.review_file_name,
+            Some("docs/reviews/code-quality.json")
+        );
+    }
+
+    #[test]
+    fn parse_review_attestation_extracts_fields() {
+        let attestation = parse_review_attestation(
+            r#"{"reviewed_commit":"abc123","concern":"code-review","repo":"workspace","attested_via":"review-attest"}"#,
+        )
+        .unwrap();
+        assert_eq!(attestation.reviewed_commit, "abc123");
+        assert_eq!(attestation.concern, "code-review");
+    }
+
+    #[test]
+    fn latest_substantive_commit_ignores_review_only_followup_commits() {
+        let repo = test_repo_dir("latest_substantive_commit");
+        init_git_repo(&repo);
+
+        fs::write(repo.join("src.txt"), "v1\n").unwrap();
+        git(&repo, &["add", "src.txt"]);
+        git(&repo, &["commit", "-m", "substantive"]);
+        let substantive = git_output(&repo, &["rev-parse", "HEAD"]);
+
+        fs::create_dir_all(repo.join("docs/reviews")).unwrap();
+        fs::write(
+            repo.join("docs/reviews/code-quality.json"),
+            format!("{{\"reviewed_commit\":\"{}\"}}\n", substantive),
+        )
+        .unwrap();
+        git(&repo, &["add", "docs/reviews/code-quality.json"]);
+        git(&repo, &["commit", "-m", "review only"]);
+
+        let latest = latest_substantive_commit(&repo).unwrap();
+        assert_eq!(latest, substantive);
+    }
+
+    #[test]
+    fn review_attestation_failure_rejects_legacy_schema() {
+        let repo = test_repo_dir("legacy_attestation_schema");
+        init_git_repo(&repo);
+
+        fs::write(repo.join("src.txt"), "v1\n").unwrap();
+        git(&repo, &["add", "src.txt"]);
+        git(&repo, &["commit", "-m", "substantive"]);
+
+        fs::create_dir_all(repo.join("docs/reviews")).unwrap();
+        fs::write(
+            repo.join("docs/reviews/code-quality.json"),
+            "{\"reviewed_commit\":\"abc123\"}\n",
+        )
+        .unwrap();
+
+        let failure = review_attestation_failure_for_repo(
+            "workspace",
+            &repo,
+            "docs/reviews/code-quality.json",
+        )
+        .unwrap();
+        assert!(failure.contains("invalid"));
+    }
+
+    fn test_repo_dir(name: &str) -> std::path::PathBuf {
+        let path = crate::workspace_root()
+            .join("target")
+            .join("standards-fixtures")
+            .join(name);
+        if path.exists() {
+            fs::remove_dir_all(&path).unwrap();
+        }
+        fs::create_dir_all(&path).unwrap();
+        path
+    }
+
+    fn init_git_repo(path: &Path) {
+        git(path, &["init", "-b", "main"]);
+        git(path, &["config", "user.name", "Fixture User"]);
+        git(path, &["config", "user.email", "fixture@example.com"]);
+    }
+
+    fn git(path: &Path, args: &[&str]) {
+        let status = Command::new("git")
+            .args(args)
+            .current_dir(path)
+            .status()
+            .unwrap();
+        assert!(
+            status.success(),
+            "git {:?} failed in {}",
+            args,
+            path.display()
+        );
+    }
+
+    fn git_output(path: &Path, args: &[&str]) -> String {
+        let output = Command::new("git")
+            .args(args)
+            .current_dir(path)
+            .output()
+            .unwrap();
+        assert!(
+            output.status.success(),
+            "git {:?} failed in {}",
+            args,
+            path.display()
+        );
+        String::from_utf8_lossy(&output.stdout).trim().to_string()
     }
 }

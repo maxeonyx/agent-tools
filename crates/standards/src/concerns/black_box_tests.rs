@@ -17,6 +17,16 @@ pub const NOT_APPLICABLE: &[&str] = &[];
 /// Instructions for an agent performing this review.
 pub const REVIEW_INSTRUCTIONS: &str = "";
 
+pub const SPEC: crate::concerns::ConcernSpec = crate::concerns::ConcernSpec {
+    id: "black-box-tests",
+    definition_summary: "Each tool must have integration-style tests that spawn the built binary.",
+    review_instructions: REVIEW_INSTRUCTIONS,
+    review_file_name: None,
+    applies_to_workspace: false,
+    applicability_note:
+        "Applies to tool binaries; the workspace itself is not a shipped CLI product.",
+};
+
 #[cfg(test)]
 mod tests {
     use super::NOT_APPLICABLE;

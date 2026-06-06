@@ -12,6 +12,15 @@ pub const NOT_APPLICABLE: &[&str] = &[];
 /// Instructions for an agent performing this review.
 pub const REVIEW_INSTRUCTIONS: &str = "";
 
+pub const SPEC: crate::concerns::ConcernSpec = crate::concerns::ConcernSpec {
+    id: "website-install-links",
+    definition_summary: "Documented public install links on published websites must resolve successfully.",
+    review_instructions: REVIEW_INSTRUCTIONS,
+    review_file_name: None,
+    applies_to_workspace: false,
+    applicability_note: "Applies to published tool-install links gathered from site packages, not to generic workspace docs alone.",
+};
+
 #[cfg(test)]
 mod tests {
     use super::NOT_APPLICABLE;

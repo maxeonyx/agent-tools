@@ -14,6 +14,15 @@ pub const NOT_APPLICABLE: &[&str] = &["tdd-ratchet"];
 /// Instructions for an agent performing this review.
 pub const REVIEW_INSTRUCTIONS: &str = "";
 
+pub const SPEC: crate::concerns::ConcernSpec = crate::concerns::ConcernSpec {
+    id: "auto-update-integration",
+    definition_summary: "Applicable CLI tools must actually call and test the shared updater.",
+    review_instructions: REVIEW_INSTRUCTIONS,
+    review_file_name: None,
+    applies_to_workspace: false,
+    applicability_note: "Applies to installed CLI tools; not to the workspace itself or cargo-install-first tools like tdd-ratchet.",
+};
+
 #[cfg(test)]
 mod tests {
     use super::NOT_APPLICABLE;

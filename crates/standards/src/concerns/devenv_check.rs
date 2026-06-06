@@ -14,6 +14,15 @@ pub const NOT_APPLICABLE: &[&str] = &[];
 /// Instructions for an agent performing this review.
 pub const REVIEW_INSTRUCTIONS: &str = "";
 
+pub const SPEC: crate::concerns::ConcernSpec = crate::concerns::ConcernSpec {
+    id: "devenv-check",
+    definition_summary: "The workspace and each tool repo must provide a working Nix devenv shell and test entrypoint.",
+    review_instructions: REVIEW_INSTRUCTIONS,
+    review_file_name: None,
+    applies_to_workspace: true,
+    applicability_note: "Applies to the workspace and to each tool repo because all development and CI setup depends on it.",
+};
+
 #[cfg(test)]
 mod tests {
     use super::NOT_APPLICABLE;

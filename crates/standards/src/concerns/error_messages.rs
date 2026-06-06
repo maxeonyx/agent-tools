@@ -25,6 +25,17 @@ For each error path in the tool:
 Reference the `error-handling` skill for the full standard.
 "#;
 
+pub const SPEC: crate::concerns::ConcernSpec = crate::concerns::ConcernSpec {
+    id: "error-messages",
+    definition_summary:
+        "Each tool must have a current review attestation covering error-message quality.",
+    review_instructions: REVIEW_INSTRUCTIONS,
+    review_file_name: Some("docs/reviews/error-messages.json"),
+    applies_to_workspace: false,
+    applicability_note:
+        "Applies to tool user interfaces; the workspace is not an end-user CLI surface.",
+};
+
 #[cfg(test)]
 mod tests {
     use super::NOT_APPLICABLE;

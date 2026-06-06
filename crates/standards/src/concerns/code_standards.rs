@@ -15,6 +15,17 @@ pub const NOT_APPLICABLE: &[&str] = &[];
 /// Instructions for an agent performing this review.
 pub const REVIEW_INSTRUCTIONS: &str = "";
 
+pub const SPEC: crate::concerns::ConcernSpec = crate::concerns::ConcernSpec {
+    id: "code-standards",
+    definition_summary:
+        "Tools should inherit shared formatting standards rather than overriding them locally.",
+    review_instructions: REVIEW_INSTRUCTIONS,
+    review_file_name: None,
+    applies_to_workspace: false,
+    applicability_note:
+        "This check is about tool repos not drifting from workspace rustfmt configuration.",
+};
+
 #[cfg(test)]
 mod tests {
     use super::NOT_APPLICABLE;

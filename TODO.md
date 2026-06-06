@@ -1,3 +1,21 @@
 # TODO
 
 - Add a website-package concern for path independence: every website package should build and deploy correctly under an arbitrary root path rather than assuming `/`. This should be enforced mechanically against the packaged site, not just documented.
+- Add workspace self-coverage where it is materially useful, rather than a blanket "self-coverage" concern:
+  - apply `code-review` to this repo's own substantive code (`crates/standards`, shared crates, and root-owned package/build logic)
+  - enforce version artifacts on the umbrella site package too, since it is a site
+  - keep `devenv-check` and `vision-and-process` applying to the workspace
+  - do not add a separate workspace `latest-ci-green` concern; the repo's own CI state is already the top-level signal
+- Add `concern-module-coverage`:
+  - every concern module must have a precise definition, a checker, registry wiring, and documented applicability or non-applicability reasoning where relevant
+  - every concern must have fixture-backed tests that prove both true positives and true negatives
+  - use one or more fixture repos/directories that intentionally fail in different ways so concern tests validate detection accuracy rather than only happy paths
+  - roll the fixture pattern through older concerns incrementally until every checker has explicit pass/fail fixtures or an equally rigorous live-environment justification
+- Expand the reusable package idea as `crosscut`:
+  - a reusable tool for defining, running, and triaging cross-cutting concern checks across a workspace or repo family
+  - library layer: concern definitions, common check helpers, attestation schema, fixture harnesses, and applicability logic
+  - config layer: repo inventory, concern applicability, website/binary metadata, CI/release locators, and policy knobs
+  - runner/CLI: execute checks, surface failures as backlog, and support setup/bootstrap for a new repo family
+  - agentic integration: headless use of a chosen agentic tool for manual-review concerns, with pluggable review backends rather than hard-coding one assistant
+  - packaging goal: another repo should adopt `crosscut` by configuration and fixtures, not by copying `agent-tools`
+  - later, when `crosscut` is a real Rust library with a public API, add semver-compatibility enforcement via `cargo semver-checks`; do not treat that as a current concern for this repo until there is an actual reusable library surface to preserve

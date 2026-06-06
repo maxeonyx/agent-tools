@@ -18,6 +18,15 @@ pub const NOT_APPLICABLE: &[&str] = &[];
 /// Instructions for an agent performing this review.
 pub const REVIEW_INSTRUCTIONS: &str = "";
 
+pub const SPEC: crate::concerns::ConcernSpec = crate::concerns::ConcernSpec {
+    id: "workspace-routing",
+    definition_summary: "Tool repos must direct development back to the umbrella workspace.",
+    review_instructions: REVIEW_INSTRUCTIONS,
+    review_file_name: None,
+    applies_to_workspace: false,
+    applicability_note: "Applies to tool repo development docs, not to the workspace root itself.",
+};
+
 #[cfg(test)]
 mod tests {
     use super::NOT_APPLICABLE;

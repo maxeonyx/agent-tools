@@ -107,8 +107,10 @@ Exit: all tools have the improvement, and enforcement prevents regression.
 2. Define compliance as an objective predicate where possible.
 3. Add a Rust concern module in `crates/standards/src/concerns/<concern>.rs` with the concern definition in the module docs, any review instructions it exports, and the checker in a `#[cfg(test)]` module.
 4. Keep `crates/standards/src/concerns/mod.rs` in sync so the concern registry and agentic concern list match the modules.
-5. Land the enforcement. Red tests are the visible work queue.
-6. Bring tools into compliance one by one via the generalize loop.
+5. Ask whether the concern should also apply to the workspace itself (`crates/`, `docs/`, and other root-owned code). If yes, encode workspace compliance in the checker instead of enforcing only on tool repos.
+6. Add checker tests that prove both success and failure. Prefer explicit fixtures for pure/mechanical checks so the checker is validated for true positives and true negatives, not just exercised on the live repo.
+7. Land the enforcement. Red tests are the visible work queue.
+8. Bring tools into compliance one by one via the generalize loop.
 
 The concern is not real until enforcement exists. Prose in AGENTS.md is not enforcement.
 
@@ -130,13 +132,17 @@ Review loop:
 4. Implement in stages. Each stage verified before the next.
 5. Fresh re-review of the whole tool (not just what you fixed).
 6. If findings remain → back to step 3.
-7. Exit: zero findings. Write attestation files, tests go green.
+7. Exit: zero findings. Record attestations via the review-attestation tool, then tests go green.
 
 Rules:
 - Review and implementation are different agent sessions (independence).
 - injectable-io applicability is precomputed from NOT_APPLICABLE, not debated.
 - Mechanical failures can join the implementation backlog if the same change fixes them.
-- Attestation files: `docs/reviews/<concern>.json` with `reviewed_commit` field.
+- Do not hand-write attestation files. Trigger the review prompt explicitly, perform the review, then record the attestation explicitly.
+- Attestation command:
+  - prompt: `cargo run -p standards --bin review-attest -- prompt <workspace|tool> <concern>`
+  - record: `cargo run -p standards --bin review-attest -- record <workspace|tool> <concern>`
+- Attestation files: `docs/reviews/<concern>.json` with `reviewed_commit` plus metadata written by the tool.
 
 Tool order: trunc → tdd-ratchet → dotsync → tb → oc (simplest first).
 

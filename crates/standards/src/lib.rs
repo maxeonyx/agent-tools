@@ -7,6 +7,7 @@
 use std::path::{Path, PathBuf};
 
 pub mod concerns;
+pub mod review_attest;
 
 pub fn workspace_root() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR"))

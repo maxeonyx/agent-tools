@@ -1,0 +1,9 @@
+{
+  "id": "missing-definition",
+  "definition_summary": "",
+  "applicability_note": "Still explains applicability.",
+  "applies_to_workspace": false,
+  "in_registry": true,
+  "has_checker": true,
+  "has_fixture_tests": true
+}

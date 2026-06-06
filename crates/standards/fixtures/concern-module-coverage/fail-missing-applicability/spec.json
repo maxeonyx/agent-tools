@@ -1,0 +1,9 @@
+{
+  "id": "missing-applicability",
+  "definition_summary": "Has a definition.",
+  "applicability_note": "",
+  "applies_to_workspace": false,
+  "in_registry": true,
+  "has_checker": true,
+  "has_fixture_tests": true
+}

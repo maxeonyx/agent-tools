@@ -14,6 +14,16 @@ pub const NOT_APPLICABLE: &[&str] = &[];
 /// Instructions for an agent performing this review.
 pub const REVIEW_INSTRUCTIONS: &str = "";
 
+pub const SPEC: crate::concerns::ConcernSpec = crate::concerns::ConcernSpec {
+    id: "landing-page",
+    definition_summary: "Each tool repo must ship a landing page package in docs/index.html.",
+    review_instructions: REVIEW_INSTRUCTIONS,
+    review_file_name: None,
+    applies_to_workspace: false,
+    applicability_note:
+        "Applies to individual tool websites; the umbrella site has separate root packaging checks.",
+};
+
 #[cfg(test)]
 mod tests {
     use super::NOT_APPLICABLE;

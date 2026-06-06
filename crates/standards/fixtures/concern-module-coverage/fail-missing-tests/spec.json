@@ -1,0 +1,9 @@
+{
+  "id": "missing-tests",
+  "definition_summary": "Has a definition.",
+  "applicability_note": "Has an applicability explanation.",
+  "applies_to_workspace": true,
+  "in_registry": true,
+  "has_checker": false,
+  "has_fixture_tests": false
+}
