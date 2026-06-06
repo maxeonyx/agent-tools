@@ -6,3 +6,4 @@ publish = false
 description = "Workspace compliance enforcement — the tests ARE the standards"
 
 [dependencies]
+serde_json = "1"

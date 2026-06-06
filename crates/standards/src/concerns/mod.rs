@@ -14,11 +14,14 @@ pub mod fast_slow_checks;
 pub mod help_text;
 pub mod injectable_io;
 pub mod landing_page;
+pub mod latest_ci_green;
 pub mod opencode_skill;
+pub mod pinned_main_parity;
 pub mod release_freshness;
 pub mod release_pipeline;
 pub mod standalone_publishability;
 pub mod tdd_ratchet;
+pub mod version_artifacts;
 pub mod vision_and_process;
 pub mod website_install_links;
 pub mod workspace_routing;
@@ -30,11 +33,14 @@ pub const ALL_CONCERNS: &[&str] = &[
     "black-box-tests",
     "code-standards",
     "devenv-check",
+    "version-artifacts",
     "help-text",
     "error-messages",
     "landing-page",
     "release-pipeline",
     "release-freshness",
+    "latest-ci-green",
+    "pinned-main-parity",
     "standalone-publishability",
     "auto-update",
     "auto-update-integration",
@@ -128,24 +134,30 @@ mod tests {
     use super::{
         auto_update, auto_update_integration, black_box_tests, code_review, code_standards,
         devenv_check, error_messages, fast_slow_checks, help_text, injectable_io, landing_page,
-        opencode_skill, release_freshness, release_pipeline, standalone_publishability,
-        tdd_ratchet, vision_and_process, website_install_links, workspace_routing,
-        AGENTIC_CONCERNS, ALL_CONCERNS,
+        latest_ci_green, opencode_skill, pinned_main_parity, release_freshness, release_pipeline,
+        standalone_publishability, tdd_ratchet, version_artifacts, vision_and_process,
+        website_install_links, workspace_routing, AGENTIC_CONCERNS, ALL_CONCERNS,
     };
     use std::collections::BTreeSet;
 
-    fn declared_concerns() -> [(&'static str, &'static str); 19] {
+    fn declared_concerns() -> [(&'static str, &'static str); 22] {
         [
             ("workspace-routing", workspace_routing::REVIEW_INSTRUCTIONS),
             ("tdd-ratchet", tdd_ratchet::REVIEW_INSTRUCTIONS),
             ("black-box-tests", black_box_tests::REVIEW_INSTRUCTIONS),
             ("code-standards", code_standards::REVIEW_INSTRUCTIONS),
             ("devenv-check", devenv_check::REVIEW_INSTRUCTIONS),
+            ("version-artifacts", version_artifacts::REVIEW_INSTRUCTIONS),
             ("help-text", help_text::REVIEW_INSTRUCTIONS),
             ("error-messages", error_messages::REVIEW_INSTRUCTIONS),
             ("landing-page", landing_page::REVIEW_INSTRUCTIONS),
             ("release-pipeline", release_pipeline::REVIEW_INSTRUCTIONS),
             ("release-freshness", release_freshness::REVIEW_INSTRUCTIONS),
+            ("latest-ci-green", latest_ci_green::REVIEW_INSTRUCTIONS),
+            (
+                "pinned-main-parity",
+                pinned_main_parity::REVIEW_INSTRUCTIONS,
+            ),
             (
                 "standalone-publishability",
                 standalone_publishability::REVIEW_INSTRUCTIONS,

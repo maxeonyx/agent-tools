@@ -3535,6 +3535,9 @@ checksum = "6ce2be8dc25455e1f91df71bfa12ad37d7af1092ae736f3a6cd0e37bc7810596"
 [[package]]
 name = "standards"
 version = "0.0.0"
+dependencies = [
+ "serde_json",
+]
 
 [[package]]
 name = "static_assertions"
@@ -3617,6 +3620,7 @@ dependencies = [
  "help-test",
  "predicates",
  "rand 0.8.6",
+ "serde_json",
  "tempfile",
 ]
 
@@ -3916,6 +3920,7 @@ dependencies = [
  "libc",
  "predicates",
  "regex",
+ "serde_json",
 ]
 
 [[package]]

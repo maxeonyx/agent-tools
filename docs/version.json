@@ -1,0 +1,10 @@
+{
+  "site": "agent-tools",
+  "tools": {
+    "dotsync": "0.3.3",
+    "oc": "0.3.21",
+    "tb": "0.1.22",
+    "tdd-ratchet": "0.3.1",
+    "trunc": "0.4.2"
+  }
+}
