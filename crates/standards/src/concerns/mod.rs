@@ -11,6 +11,7 @@ pub mod code_standards;
 pub mod concern_module_coverage;
 pub mod devenv_check;
 pub mod error_messages;
+pub mod experiments;
 pub mod fast_slow_checks;
 pub mod help_text;
 pub mod injectable_io;
@@ -54,6 +55,7 @@ pub const ALL_CONCERN_SPECS: &[ConcernSpec] = &[
     auto_update::SPEC,
     auto_update_integration::SPEC,
     website_install_links::SPEC,
+    experiments::SPEC,
     vision_and_process::SPEC,
     opencode_skill::SPEC,
     fast_slow_checks::SPEC,
@@ -81,6 +83,7 @@ pub const ALL_CONCERNS: &[&str] = &[
     "auto-update",
     "auto-update-integration",
     "website-install-links",
+    "experiments",
     "vision-and-process",
     "opencode-skill",
     "fast-slow-checks",
