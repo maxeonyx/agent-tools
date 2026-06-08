@@ -588,7 +588,7 @@ dependencies = [
 
 [[package]]
 name = "dotsync"
-version = "0.3.4"
+version = "0.3.5"
 dependencies = [
  "agent-tools-updater",
  "assert_cmd",
@@ -3621,7 +3621,7 @@ dependencies = [
 
 [[package]]
 name = "tb"
-version = "0.1.23"
+version = "0.1.24"
 dependencies = [
  "agent-tools-updater",
  "assert_cmd",
@@ -3635,7 +3635,7 @@ dependencies = [
 
 [[package]]
 name = "tdd-ratchet"
-version = "0.3.2"
+version = "0.3.3"
 dependencies = [
  "assert_cmd",
  "git2",
@@ -3920,7 +3920,7 @@ dependencies = [
 
 [[package]]
 name = "trunc"
-version = "0.4.3"
+version = "0.4.4"
 dependencies = [
  "agent-tools-updater",
  "assert_cmd",

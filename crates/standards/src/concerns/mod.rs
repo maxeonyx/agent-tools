@@ -5,6 +5,7 @@
 
 pub mod auto_update;
 pub mod auto_update_integration;
+pub mod black_box_test_quality;
 pub mod black_box_tests;
 pub mod code_review;
 pub mod code_standards;
@@ -41,6 +42,7 @@ pub const ALL_CONCERN_SPECS: &[ConcernSpec] = &[
     workspace_routing::SPEC,
     tdd_ratchet::SPEC,
     black_box_tests::SPEC,
+    black_box_test_quality::SPEC,
     code_standards::SPEC,
     devenv_check::SPEC,
     version_artifacts::SPEC,
@@ -68,7 +70,8 @@ pub const ALL_CONCERN_SPECS: &[ConcernSpec] = &[
 pub const ALL_CONCERNS: &[&str] = &[
     "workspace-routing",
     "tdd-ratchet",
-    "black-box-tests",
+    "tests-present",
+    "black-box-test-quality",
     "code-standards",
     "devenv-check",
     "version-artifacts",
@@ -96,6 +99,7 @@ pub const ALL_CONCERNS: &[&str] = &[
 pub const AGENTIC_CONCERNS: &[&str] = &[
     "code-review",
     "error-messages",
+    "black-box-test-quality",
     "injectable-io",
     "help-text",
 ];
@@ -347,8 +351,9 @@ mod tests {
         git(&repo, &["commit", "-m", "substantive"]);
         let substantive = git_output(&repo, &["rev-parse", "HEAD"]);
 
-        fs::write(repo.join("note.txt"), "review only\n").unwrap();
-        git(&repo, &["add", "note.txt"]);
+        fs::create_dir_all(repo.join("docs/reviews")).unwrap();
+        fs::write(repo.join("docs/reviews/note.txt"), "review only\n").unwrap();
+        git(&repo, &["add", "docs/reviews/note.txt"]);
         git(&repo, &["commit", "-m", "review only"]);
 
         let latest = latest_substantive_commit(&repo).unwrap();

@@ -1,17 +1,22 @@
 //! # Fast and Slow Check Separation
 //!
-//! Fast checks (fmt, clippy, in-memory or unit tests) across all repos must
-//! complete in under 10 seconds on a warm build. Slow checks (black-box tests
-//! that spawn subprocesses) run separately.
+//! Fast checks (fmt, clippy, in-memory or unit tests) must complete quickly for
+//! each tool on a warm build. Slow checks (black-box tests that spawn
+//! subprocesses) run separately.
 //!
 //! This ensures tight feedback loops during development. If fast checks take too
 //! long, agents and developers stop running them between edits.
 //!
-//! The mechanical enforcement: run fast checks across all tools and verify total
-//! wall-clock time is under 10 seconds.
+//! The mechanical enforcement: run each tool's fast command twice and enforce
+//! the second, warm run is under 5 seconds.
 //!
-//! Fast = `cargo test --lib -p <tool>`
-//! Slow = `cargo test --test '*' -p <tool>`
+//! Fast command pattern:
+//! - library tools: `cargo test -p <tool> --lib -- --quiet`
+//! - binary-only tools: `cargo test -p <tool> --bins -- --quiet`
+//!
+//! Slow entrypoint pattern:
+//! - workspace: `cargo test -p <tool> --test '*'`
+//! - standalone tool repo: `cargo test --test '*'`
 
 /// Tools where this concern does not apply.
 pub const NOT_APPLICABLE: &[&str] = &[];
@@ -29,51 +34,92 @@ pub const SPEC: crate::concerns::ConcernSpec = crate::concerns::ConcernSpec {
 };
 
 #[cfg(test)]
-const MAX_FAST_CHECK_DURATION: std::time::Duration = std::time::Duration::from_secs(10);
+const MAX_WARM_FAST_CHECK_DURATION: std::time::Duration = std::time::Duration::from_secs(5);
 
 #[cfg(test)]
 mod tests {
-    use super::{MAX_FAST_CHECK_DURATION, NOT_APPLICABLE};
-    use crate::{workspace_root, TOOLS};
+    use super::{MAX_WARM_FAST_CHECK_DURATION, NOT_APPLICABLE};
+    use crate::{tools_dir, workspace_root, TOOLS};
     use std::time::Instant;
 
     #[test]
     fn fast_slow_checks() {
-        let start = Instant::now();
         let mut failures = Vec::new();
 
         for tool in TOOLS.iter().filter(|tool| !NOT_APPLICABLE.contains(tool)) {
-            let output = std::process::Command::new("cargo")
-                .args(["test", "--lib", "-p", tool, "--", "--quiet"])
-                .current_dir(workspace_root())
-                .output()
-                .unwrap_or_else(|error| {
-                    panic!("failed to run cargo test --lib -p {tool}: {error}")
-                });
+            let args = fast_command_args(tool);
 
-            if !output.status.success() {
-                let stderr = String::from_utf8_lossy(&output.stderr);
-                if !stderr.contains("no library targets") {
-                    failures.push(format!("{tool}: fast tests failed"));
-                }
+            let warmup = run_fast_command(&args);
+            if !warmup.status.success() {
+                failures.push(format!(
+                    "{tool}: warm-up fast command failed: cargo {}\n{}",
+                    args.join(" "),
+                    command_output(&warmup)
+                ));
+                continue;
+            }
+
+            let start = Instant::now();
+            let warm = run_fast_command(&args);
+            let elapsed = start.elapsed();
+
+            if !warm.status.success() {
+                failures.push(format!(
+                    "{tool}: warm fast command failed: cargo {}\n{}",
+                    args.join(" "),
+                    command_output(&warm)
+                ));
+                continue;
+            }
+
+            if elapsed > MAX_WARM_FAST_CHECK_DURATION {
+                failures.push(format!(
+                    "{tool}: warm fast command took {:.1}s (limit: {}s): cargo {}",
+                    elapsed.as_secs_f64(),
+                    MAX_WARM_FAST_CHECK_DURATION.as_secs(),
+                    args.join(" ")
+                ));
             }
         }
 
-        let elapsed = start.elapsed();
-
         if !failures.is_empty() {
             panic!(
-                "fast-slow-checks non-compliant (test failures):\n  {}",
+                "fast-slow-checks non-compliant:\n  {}",
                 failures.join("\n  ")
             );
         }
+    }
 
-        if elapsed > MAX_FAST_CHECK_DURATION {
-            panic!(
-                "fast-slow-checks non-compliant: fast checks took {:.1}s (limit: {}s)",
-                elapsed.as_secs_f64(),
-                MAX_FAST_CHECK_DURATION.as_secs()
-            );
+    fn fast_command_args(tool: &str) -> Vec<&str> {
+        if tools_dir().join(tool).join("src/lib.rs").exists() {
+            vec!["test", "-p", tool, "--lib", "--", "--quiet"]
+        } else {
+            vec!["test", "-p", tool, "--bins", "--", "--quiet"]
+        }
+    }
+
+    fn run_fast_command(args: &[&str]) -> std::process::Output {
+        std::process::Command::new("cargo")
+            .args(args)
+            .current_dir(workspace_root())
+            .output()
+            .unwrap_or_else(|error| panic!("failed to run cargo {}: {error}", args.join(" ")))
+    }
+
+    fn command_output(output: &std::process::Output) -> String {
+        let stdout = String::from_utf8_lossy(&output.stdout);
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        let mut parts = Vec::new();
+        if !stdout.trim().is_empty() {
+            parts.push(format!("stdout:\n{}", stdout.trim()));
+        }
+        if !stderr.trim().is_empty() {
+            parts.push(format!("stderr:\n{}", stderr.trim()));
+        }
+        if parts.is_empty() {
+            format!("exit status: {}", output.status)
+        } else {
+            parts.join("\n")
         }
     }
 }

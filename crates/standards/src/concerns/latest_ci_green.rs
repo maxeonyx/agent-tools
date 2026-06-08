@@ -27,7 +27,8 @@ pub const SPEC: crate::concerns::ConcernSpec = crate::concerns::ConcernSpec {
 #[cfg(test)]
 mod tests {
     use super::NOT_APPLICABLE;
-    use crate::{tools_dir, TOOLS};
+    use crate::evidence::{self, EvidenceKey};
+    use crate::{tools_dir, workspace_root, TOOLS};
     use serde_json::Value;
 
     #[test]
@@ -38,18 +39,19 @@ mod tests {
             let tool_dir = tools_dir().join(tool);
             let cargo_toml = std::fs::read_to_string(tool_dir.join("Cargo.toml"))
                 .unwrap_or_else(|error| panic!("failed to read {tool} Cargo.toml: {error}"));
-            let repo_url = package_field(&cargo_toml, "repository")
+            let repo_url = evidence::package_field(&cargo_toml, "repository")
                 .unwrap_or_else(|| panic!("{tool}: Cargo.toml missing repository URL"));
             let repo = repo_url
                 .strip_prefix("https://github.com/")
                 .unwrap_or_else(|| panic!("{tool}: repository is not a GitHub URL"));
-            let head = command_stdout(
-                "git",
-                &["-C", tool_dir.to_str().unwrap(), "rev-parse", "HEAD"],
-            )
-            .unwrap_or_else(|error| panic!("{tool}: failed to read HEAD: {error}"));
+            let head = evidence::tool_commit(&tool_dir)
+                .unwrap_or_else(|error| panic!("{tool}: failed to read HEAD: {error}"));
 
             let runs = command_stdout(
+                EvidenceKey::new("github-ci-runs", format!("{repo}:{head}"))
+                    .repo(repo)
+                    .tool(tool)
+                    .commit(&head),
                 "gh",
                 &[
                     "run",
@@ -115,25 +117,13 @@ mod tests {
         }
     }
 
-    fn package_field<'a>(cargo_toml: &'a str, field: &str) -> Option<&'a str> {
-        let prefix = format!("{field} = \"");
-        cargo_toml.lines().find_map(|line| {
-            line.strip_prefix(&prefix)?
-                .split_once('"')
-                .map(|(value, _)| value)
-        })
-    }
+    fn command_stdout(key: EvidenceKey, command: &str, args: &[&str]) -> Result<String, String> {
+        let output = evidence::context().command(key, command, args, &workspace_root());
 
-    fn command_stdout(command: &str, args: &[&str]) -> Result<String, String> {
-        let output = std::process::Command::new(command)
-            .args(args)
-            .output()
-            .map_err(|error| format!("{command} failed to start: {error}"))?;
-
-        if !output.status.success() {
-            return Err(String::from_utf8_lossy(&output.stderr).trim().to_string());
+        if !output.status_success {
+            return Err(output.stderr.trim().to_string());
         }
 
-        Ok(String::from_utf8_lossy(&output.stdout).trim().to_string())
+        Ok(output.stdout.trim().to_string())
     }
 }

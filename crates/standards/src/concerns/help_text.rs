@@ -22,12 +22,27 @@ pub const NOT_APPLICABLE: &[&str] = &[];
 
 /// Instructions for an agent performing this review.
 pub const REVIEW_INSTRUCTIONS: &str = r#"
-Review the tool's help text as a new user would:
-1. Read the top-level help and any important subcommand help
-2. Is it succinct?
-3. Does it explain why and when to use the tool, not just what flags exist?
-4. Are flag names consistent with sibling tools in the suite?
-5. Would a new user understand how to get started from the help alone?
+Review the tool's help text as a user trying to complete real work without
+opening the source.
+
+Required review method:
+1. Run the top-level `--help`, every documented subcommand `--help`, and the
+   examples shown in help where they are safe to run.
+2. Compare option names, examples, and tone with sibling tools in this suite.
+3. Produce findings with the exact command and help text location. If there are
+   no findings, say which help surfaces and examples you exercised.
+
+Check for:
+1. The help explains what the tool is for, when to use it, and the expected
+   workflow without becoming a manual.
+2. Examples are copy-pasteable, realistic, and use long flags unless a short
+   flag is explicitly allowed by this concern.
+3. Subcommand help stands on its own and does not require reading top-level help
+   first.
+4. Terminology, flag names, exit behavior, and output descriptions are
+   consistent with sibling tools.
+5. The first-time path is obvious and dangerous or destructive operations are
+   clearly signposted.
 "#;
 
 pub const SPEC: crate::concerns::ConcernSpec = crate::concerns::ConcernSpec {

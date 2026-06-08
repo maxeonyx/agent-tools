@@ -26,7 +26,8 @@ pub const SPEC: crate::concerns::ConcernSpec = crate::concerns::ConcernSpec {
 #[cfg(test)]
 mod tests {
     use super::NOT_APPLICABLE;
-    use crate::{tools_dir, TOOLS};
+    use crate::evidence::{self, EvidenceKey};
+    use crate::{tools_dir, workspace_root, TOOLS};
 
     #[test]
     fn release_freshness() {
@@ -36,21 +37,23 @@ mod tests {
             let tool_dir = tools_dir().join(tool);
             let cargo_toml = std::fs::read_to_string(tool_dir.join("Cargo.toml"))
                 .unwrap_or_else(|error| panic!("failed to read {tool} Cargo.toml: {error}"));
-            let version = package_field(&cargo_toml, "version")
+            let version = evidence::package_field(&cargo_toml, "version")
                 .unwrap_or_else(|| panic!("{tool}: Cargo.toml missing package version"));
-            let repository = package_field(&cargo_toml, "repository")
+            let repository = evidence::package_field(&cargo_toml, "repository")
                 .unwrap_or_else(|| panic!("{tool}: Cargo.toml missing repository URL"));
             let repo = repository
                 .strip_prefix("https://github.com/")
                 .unwrap_or_else(|| panic!("{tool}: repository is not a GitHub URL"));
             let tag = format!("v{version}");
-            let head = command_stdout(
-                "git",
-                &["-C", tool_dir.to_str().unwrap(), "rev-parse", "HEAD"],
-            )
-            .unwrap_or_else(|error| panic!("{tool}: failed to read HEAD: {error}"));
+            let head = evidence::tool_commit(&tool_dir)
+                .unwrap_or_else(|error| panic!("{tool}: failed to read HEAD: {error}"));
 
             let release = command_stdout(
+                EvidenceKey::new("github-release-tag", format!("{repo}:{tag}"))
+                    .repo(repo)
+                    .tool(tool)
+                    .version(version)
+                    .commit(&head),
                 "gh",
                 &[
                     "release", "view", &tag, "--repo", repo, "--json", "tagName", "-q", ".tagName",
@@ -62,6 +65,11 @@ mod tests {
             }
 
             let remote_tag = command_stdout(
+                EvidenceKey::new("remote-release-tag", format!("{repo}:{tag}"))
+                    .repo(repo)
+                    .tool(tool)
+                    .version(version)
+                    .commit(&head),
                 "git",
                 &[
                     "ls-remote",
@@ -80,6 +88,10 @@ mod tests {
             }
 
             let latest = command_stdout(
+                EvidenceKey::new("github-latest-release", repo)
+                    .repo(repo)
+                    .tool(tool)
+                    .commit(&head),
                 "gh",
                 &[
                     "release", "view", "--repo", repo, "--json", "tagName", "-q", ".tagName",
@@ -101,25 +113,13 @@ mod tests {
         }
     }
 
-    fn package_field<'a>(cargo_toml: &'a str, field: &str) -> Option<&'a str> {
-        let prefix = format!("{field} = \"");
-        cargo_toml.lines().find_map(|line| {
-            line.strip_prefix(&prefix)?
-                .split_once('"')
-                .map(|(value, _)| value)
-        })
-    }
+    fn command_stdout(key: EvidenceKey, command: &str, args: &[&str]) -> Result<String, String> {
+        let output = evidence::context().command(key, command, args, &workspace_root());
 
-    fn command_stdout(command: &str, args: &[&str]) -> Result<String, String> {
-        let output = std::process::Command::new(command)
-            .args(args)
-            .output()
-            .map_err(|error| format!("{command} failed to start: {error}"))?;
-
-        if !output.status.success() {
-            return Err(String::from_utf8_lossy(&output.stderr).trim().to_string());
+        if !output.status_success {
+            return Err(output.stderr.trim().to_string());
         }
 
-        Ok(String::from_utf8_lossy(&output.stdout).trim().to_string())
+        Ok(output.stdout.trim().to_string())
     }
 }

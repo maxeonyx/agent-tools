@@ -111,6 +111,10 @@ Standard release targets are `x86_64-unknown-linux-gnu` and
 targets unless the user explicitly reopens that support. `oc` is intentionally
 Linux-only for now.
 
+After changing tool versions or submodule pointers, regenerate the umbrella
+version file with `python3 scripts/generate-version-json.py`; do not edit
+`docs/version.json` by hand.
+
 ### Adding a new cross-cutting concern
 
 1. **Improve process first.** Write down what the concern IS and WHY it matters.
@@ -128,25 +132,51 @@ The concern is not real until enforcement exists. Prose in AGENTS.md is not enfo
 
 Two tracks run in parallel: mechanical fixes and agentic review.
 
-**Mechanical fixes** (workspace-routing, tdd-ratchet, black-box-tests, etc.):
+**Mechanical fixes** (workspace-routing, tdd-ratchet, tests-present, etc.):
 Pick one concern, fix it, run the test, see it pass. Simple loop.
 
-**Agentic review pass** (code-review, error-messages, help-text, injectable-io):
-These are batched per tool — one review pass covers ALL applicable agentic concerns.
+**Agentic review pass** (code-review, error-messages, help-text, injectable-io, black-box-test-quality):
+Manual concerns require independent review. A review agent can only do two
+things:
+- If the target satisfies the concern, record the attestation with
+  `review-attest`.
+- If the target does not satisfy the concern, return detailed findings. It does
+  not implement fixes and it does not write partial review state.
+
+Only `state.json` records successful manual review state. Findings are the
+review agent's handoff back to the implementer; keep them in the conversation or
+the implementation backlog unless the user explicitly asks to persist review
+notes.
+
+Manual concerns may be reviewed one concern at a time or batched for one target.
+When batched, the review agent evaluates each applicable concern independently
+and records only the concerns that are clean. Findings are grouped by concern.
+An implementer may batch findings across concerns and fix them by design area,
+but after any fix the implementer must call a separate review agent before
+recording or refreshing any attestation.
 
 Review loop:
 1. Pick a tool. Derive applicable agentic concerns from NOT_APPLICABLE lists.
-2. Fresh review session: read source, run the tool, trigger errors, read help.
-   Evaluate against ALL applicable REVIEW_INSTRUCTIONS. Produce findings by concern.
-3. Shape findings into an implementation backlog (group by design seam, not concern).
-4. Implement in stages. Each stage verified before the next.
-5. Fresh re-review of the whole tool (not just what you fixed).
-6. If findings remain → back to step 3.
-7. Exit: zero findings. Record attestations via the review-attestation tool, then tests go green.
+2. Implementer requests an independent review agent with the relevant
+   `review-attest prompt` output.
+3. Review agent evaluates the target against the applicable
+   REVIEW_INSTRUCTIONS.
+4. If clean: review agent records the attestation and reports what it reviewed.
+5. If not clean: review agent returns detailed findings by concern and does not
+   record an attestation.
+6. Implementer shapes findings into an implementation backlog, grouping by
+   design area rather than by concern where that is more efficient.
+7. Implementer fixes in stages, verifying each stage.
+8. After any fix, implementer requests a fresh independent review agent for the
+   affected concern(s). Do not reuse the implementer as the reviewer.
+9. Exit: every applicable manual concern has a current clean attestation in
+   `state.json`, so the standards tests go green.
 
 Rules:
-- Review and implementation are different agent sessions (independence).
-- injectable-io applicability is precomputed from NOT_APPLICABLE, not debated.
+- Review and implementation are different agent sessions. The agent that made a
+  fix cannot attest to that fix.
+- Applicability is precomputed from NOT_APPLICABLE lists, not debated during the
+  review.
 - Mechanical failures can join the implementation backlog if the same change fixes them.
 - Do not hand-write attestation files. Trigger the review prompt explicitly, perform the review, then record the attestation explicitly.
 - Attestation command:
@@ -181,6 +211,12 @@ A concern is not enforced until two things exist:
 2. **Checker** — a Rust test that can verify compliance mechanically
 
 Without both, it's aspiration. Aspiration does not prevent drift.
+
+Prefer outcome and evidence checks over file-shape checks. When multiple
+concerns need the same observation — live site response, release metadata,
+version output, build result, downloaded binary behavior — factor that
+observation into reusable evidence so one standards run observes it once and
+each concern interprets the evidence in its own policy language.
 
 ### Current standards
 

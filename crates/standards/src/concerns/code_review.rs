@@ -11,16 +11,28 @@ pub const NOT_APPLICABLE: &[&str] = &[];
 
 /// Instructions for an agent performing this review.
 pub const REVIEW_INSTRUCTIONS: &str = r#"
-Perform a thermonuclear code review of the tool.
+Perform a fresh code-quality review of the repo as if you were deciding whether
+to maintain it next month.
+
+Required review method:
+1. Read the entry points, core modules, tests, and error paths before judging.
+2. Run the normal fast test command and at least one representative tool command.
+3. Trace one successful workflow and one failure workflow from CLI boundary to
+   core logic and back.
+4. Produce findings by concrete file/line references. If there are no findings,
+   say so and name the highest-risk paths you inspected.
+
 Check for:
-1. Code judo: are there simpler shapes that eliminate incidental complexity?
-2. Size and spaghetti: are modules and flows too tangled or too large?
-3. Boring over clever: does the implementation choose straightforward patterns?
-4. Type cleanliness and ownership clarity
-5. Concurrency model correctness and unnecessary coordination
-6. Functions over 50 lines that should be split
-7. Boolean parameters and stringly-typed interfaces
-8. Dead code, stale abstractions, and unnecessary wrappers
+1. Simpler shapes that would remove incidental complexity.
+2. Modules or flows that are tangled, oversized, or hard to change safely.
+3. Cleverness where boring, explicit Rust would be clearer.
+4. Type boundaries, ownership, and error types that either clarify or obscure
+   the domain.
+5. Unnecessary coordination, global state, hidden IO, or concurrency risks.
+6. Functions over 50 lines, boolean parameters, stringly-typed interfaces, dead
+   code, stale abstractions, and unnecessary wrappers.
+7. Tests that assert behavior at the right boundary and would catch realistic
+   regressions.
 
 Reference the `thermonuclear-review` skill for the full standard.
 "#;

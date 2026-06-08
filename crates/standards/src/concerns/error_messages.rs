@@ -12,15 +12,26 @@ pub const NOT_APPLICABLE: &[&str] = &[];
 
 /// Instructions for an agent performing this review.
 pub const REVIEW_INSTRUCTIONS: &str = r#"
-For each error path in the tool:
-1. Trigger the error (bad input, missing file, invalid state)
-2. Read the message
-3. Can you fix the problem from the message alone, without reading source?
-4. Does it start with business context (what the tool was trying to do)?
-5. Does it state actual values (what was found vs what was expected)?
-6. Does it suggest a next action?
-7. Is the error chain preserved (context at each layer)?
-8. Is it verbose enough for someone with no context?
+Review user-facing errors by triggering them, not by inspecting strings alone.
+
+Required review method:
+1. Trigger representative failures: bad input, missing files, permission or
+   environment problems where practical, invalid state, and failed subprocess or
+   network boundaries if the tool has them.
+2. Capture the exact command, exit status, stderr/stdout split, and message.
+3. Produce findings by error path. If there are no findings, list the failure
+   classes you exercised.
+
+Check each error for:
+1. Business context first: what the tool was trying to do.
+2. Concrete facts and values: what path, command, value, status, or response was
+   observed, and what was expected.
+3. A useful next action that does not require reading source.
+4. Preserved causal chain with context at each layer rather than a bare low-level
+   error.
+5. Correct output channel and nonzero exit behavior for failures.
+6. Enough detail for a user with no prior context; errors should be clear before
+   they are brief.
 
 Reference the `error-handling` skill for the full standard.
 "#;

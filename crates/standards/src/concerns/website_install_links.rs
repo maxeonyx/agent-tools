@@ -5,6 +5,8 @@
 //! Pages can deploy successfully while still advertising a binary path that was
 //! never produced. Compliance means every documented `https://*.maxeonyx.com`
 //! release URL in the umbrella site and tool docs returns a successful response.
+//! When `STANDARDS_DOWNLOAD_INSTALL_BINARIES=1` is set, advertised binaries are
+//! also downloaded and executed with `--version --json`.
 
 /// Tools where this concern does not apply.
 pub const NOT_APPLICABLE: &[&str] = &[];
@@ -23,6 +25,7 @@ pub const SPEC: crate::concerns::ConcernSpec = crate::concerns::ConcernSpec {
 #[cfg(test)]
 mod tests {
     use super::NOT_APPLICABLE;
+    use crate::evidence::{self, EvidenceKey};
     use crate::{tools_dir, workspace_root, TOOLS};
     use std::collections::BTreeSet;
     use std::path::PathBuf;
@@ -47,14 +50,20 @@ mod tests {
 
         let mut failures = Vec::new();
         for url in urls {
-            let output = std::process::Command::new("curl")
-                .args(["-fsSIL", "--max-time", "10", &url])
-                .output()
-                .unwrap_or_else(|error| panic!("failed to run curl for {url}: {error}"));
+            let output = evidence::context().command(
+                EvidenceKey::new("install-url-head", &url),
+                "curl",
+                &["-fsSIL", "--max-time", "10", &url],
+                &workspace_root(),
+            );
 
-            if !output.status.success() {
-                let stderr = String::from_utf8_lossy(&output.stderr);
-                failures.push(format!("{url}: {}", stderr.trim()));
+            if !output.status_success {
+                failures.push(format!("{url}: {}", output.stderr.trim()));
+                continue;
+            }
+
+            if std::env::var_os("STANDARDS_DOWNLOAD_INSTALL_BINARIES").is_some() {
+                verify_downloaded_binary(&url, &mut failures);
             }
         }
 
@@ -85,6 +94,59 @@ mod tests {
             {
                 urls.insert(url.to_string());
             }
+        }
+    }
+
+    fn verify_downloaded_binary(url: &str, failures: &mut Vec<String>) {
+        let binary = url
+            .rsplit('/')
+            .next()
+            .unwrap_or("downloaded-tool")
+            .trim_end_matches("</span>");
+        let path = std::env::temp_dir().join(format!("standards-{binary}"));
+        let path_string = path.to_string_lossy().to_string();
+        let download = evidence::context().command(
+            EvidenceKey::new("install-url-download", url),
+            "curl",
+            &["-fsSL", "--max-time", "30", "-o", &path_string, url],
+            &workspace_root(),
+        );
+        if !download.status_success {
+            failures.push(format!(
+                "{url}: download failed: {}",
+                download.stderr.trim()
+            ));
+            return;
+        }
+
+        let chmod = evidence::context().command(
+            EvidenceKey::new("install-url-chmod", &path_string),
+            "chmod",
+            &["+x", &path_string],
+            &workspace_root(),
+        );
+        if !chmod.status_success {
+            failures.push(format!("{url}: chmod failed: {}", chmod.stderr.trim()));
+            return;
+        }
+
+        let version = evidence::context().command(
+            EvidenceKey::new("downloaded-binary-version-json", url),
+            &path_string,
+            &["--version", "--json"],
+            &workspace_root(),
+        );
+        if !version.status_success {
+            failures.push(format!(
+                "{url}: downloaded binary --version --json failed: {}",
+                version.stderr.trim()
+            ));
+            return;
+        }
+        if let Err(error) = serde_json::from_str::<serde_json::Value>(&version.stdout) {
+            failures.push(format!(
+                "{url}: downloaded binary --version --json invalid JSON: {error}"
+            ));
         }
     }
 }

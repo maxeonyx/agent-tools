@@ -1,6 +1,6 @@
 use crate::concerns::{
     concern_spec, latest_substantive_commit, load_state_file, parse_review_attestation,
-    state_file_path, ConcernSpec, ReviewAttestation, StateFile,
+    state_file_path, ConcernSpec, ReviewAttestation, StateFile, AGENTIC_CONCERNS,
 };
 use std::path::PathBuf;
 
@@ -49,7 +49,7 @@ pub fn resolve_agentic_concern(id: &str) -> Result<&'static ConcernSpec, String>
 
 pub fn render_prompt(target: &ReviewTarget, spec: &ConcernSpec, reviewed_commit: &str) -> String {
     format!(
-        "Review target: {repo}\nPath: {path}\nConcern: {concern}\nState file: {file}\nReviewed commit: {commit}\n\nProcess:\n1. Start a fresh review session.\n2. Evaluate the target against the instructions below.\n3. Produce findings and implement/fix them before recording an attestation.\n4. Only record an attestation when the re-review is clean.\n\nInstructions:\n{instructions}",
+        "Review target: {repo}\nPath: {path}\nConcern: {concern}\nState file: {file}\nReviewed commit: {commit}\n\nProcess:\n1. Start a fresh review session independent from any implementer that changed this target.\n2. Evaluate the target against the instructions below.\n3. If the target satisfies the concern, record the attestation with `cargo run -p standards --bin review-attest -- record {repo} {concern}` and report what you reviewed.\n4. If the target does not satisfy the concern, do not record an attestation. Return detailed findings by concern with concrete files, commands, observed behavior, and expected behavior.\n5. Do not implement fixes in the review session. After fixes, a fresh independent review is required before attestation.\n\nInstructions:\n{instructions}",
         repo = target.repo_name,
         path = target.repo_dir.display(),
         concern = spec.id,
@@ -117,7 +117,8 @@ pub fn perform(
 
 pub fn usage(program: &str) -> String {
     format!(
-        "Usage:\n  {program} prompt <workspace|tool> <agentic-concern>\n  {program} record <workspace|tool> <agentic-concern>\n\nAgentic concerns: code-review, error-messages, help-text, injectable-io",
+        "Usage:\n  {program} prompt <workspace|tool> <agentic-concern>\n  {program} record <workspace|tool> <agentic-concern>\n\nAgentic concerns: {}",
+        AGENTIC_CONCERNS.join(", ")
     )
 }
 
@@ -143,6 +144,8 @@ mod tests {
         let prompt = render_prompt(&target, spec, "abc123");
         assert!(prompt.contains("state.json"));
         assert!(prompt.contains("abc123"));
+        assert!(prompt.contains("Do not implement fixes in the review session"));
+        assert!(prompt.contains("fresh independent review is required"));
     }
 
     #[test]

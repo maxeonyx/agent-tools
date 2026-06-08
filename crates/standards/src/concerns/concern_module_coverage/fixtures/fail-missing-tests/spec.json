@@ -5,5 +5,7 @@
   "applies_to_workspace": true,
   "in_registry": true,
   "has_checker": false,
-  "has_fixture_tests": false
+  "has_adjacent_pass_fixture": false,
+  "has_adjacent_fail_fixture": false,
+  "fixtures_impractical_reason": ""
 }
