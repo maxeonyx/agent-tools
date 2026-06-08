@@ -2,7 +2,7 @@
   "site": "agent-tools",
   "tools": {
     "dotsync": "0.3.3",
-    "agent-harness": "0.1.0",
+    "agent-harness": "0.1.1",
     "oc": "0.3.21",
     "tb": "0.1.22",
     "tdd-ratchet": "0.3.1",
