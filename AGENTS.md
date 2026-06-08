@@ -56,6 +56,11 @@ Prove the requirement before satisfying it.
 4. If no → fix the test
 5. Exit: you have a failing test that will pass when and only when the requirement is met
 
+**For ratcheted tools, never grandfather a new passing test. If a new test
+would already pass, introduce the test in the same commit as a deliberately
+corrupted implementation that proves the test fails, commit that red state, then
+fix the implementation in the subsequent commit.**
+
 ### Implement loop
 
 Satisfy the test.
@@ -100,6 +105,11 @@ Exit: all tools have the improvement, and enforcement prevents regression.
 3. Follow the loops: investigate → design → test → implement → review
 4. After review: does this change represent a pattern other tools should follow? If yes → generalize loop
 5. Commit and push the tool repo, then update the submodule pointer here
+
+Standard release targets are `x86_64-unknown-linux-gnu` and
+`x86_64-pc-windows-msvc` only. Do not add musl, macOS, or aarch64 release
+targets unless the user explicitly reopens that support. `oc` is intentionally
+Linux-only for now.
 
 ### Adding a new cross-cutting concern
 
