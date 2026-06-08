@@ -13,3 +13,6 @@
 [submodule "tools/oc"]
 	path = tools/oc
 	url = git@github.com:maxeonyx/oc.git
+[submodule "tools/agent-harness"]
+	path = tools/agent-harness
+	url = git@github.com:maxeonyx/agent-harness.git

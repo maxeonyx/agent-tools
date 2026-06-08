@@ -150,12 +150,16 @@ Tool order: trunc → tdd-ratchet → dotsync → tb → oc (simplest first).
 ### Adding a new tool
 
 1. **Improve process first.** Does the onboarding process need updating?
-2. Create the tool repo (follow existing patterns — MIT license, AGENTS.md, docs/, .github/workflows/)
-3. Add it as a submodule under `tools/`
-4. Add it to `standards::TOOLS`
-5. Run `cargo test -p standards` and use the failing concern tests as the compliance backlog
-6. Bring it into compliance concern by concern via the generalize loop
-7. Update the umbrella site (`docs/index.html`) and cross-references in sibling tools
+2. If the tool starts from external design/process notes, import those notes into
+   the tool repo as source material and create a process handoff before product
+   implementation. The handoff records the active loop, first verification
+   target, user-gated decisions, and what is explicitly experimental.
+3. Create the tool repo (follow existing patterns — MIT license, AGENTS.md, docs/, .github/workflows/)
+4. Add it as a submodule under `tools/`
+5. Add it to `standards::TOOLS`
+6. Run `cargo test -p standards` and use the failing concern tests as the compliance backlog
+7. Bring it into compliance concern by concern via the generalize loop
+8. Update the umbrella site (`docs/index.html`) and cross-references in sibling tools
 
 ---
 
