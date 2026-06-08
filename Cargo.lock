@@ -588,7 +588,7 @@ dependencies = [
 
 [[package]]
 name = "dotsync"
-version = "0.3.8"
+version = "0.3.11"
 dependencies = [
  "agent-tools-updater",
  "assert_cmd",
