@@ -23,4 +23,11 @@ pub fn tools_dir() -> PathBuf {
     workspace_root().join("tools")
 }
 
-pub const TOOLS: &[&str] = &["trunc", "tb", "dotsync", "tdd-ratchet", "oc", "agent-harness"];
+pub const TOOLS: &[&str] = &[
+    "trunc",
+    "tb",
+    "dotsync",
+    "tdd-ratchet",
+    "oc",
+    "agent-harness",
+];

@@ -4,7 +4,7 @@ version = 4
 
 [[package]]
 name = "agent-harness"
-version = "0.1.4"
+version = "0.1.8"
 dependencies = [
  "assert_cmd",
  "help-test",
@@ -588,7 +588,7 @@ dependencies = [
 
 [[package]]
 name = "dotsync"
-version = "0.3.11"
+version = "0.3.12"
 dependencies = [
  "agent-tools-updater",
  "assert_cmd",
@@ -2696,7 +2696,7 @@ dependencies = [
 
 [[package]]
 name = "oc"
-version = "0.3.21"
+version = "0.3.22"
 dependencies = [
  "agent-tools-updater",
  "anyhow",
@@ -3621,7 +3621,7 @@ dependencies = [
 
 [[package]]
 name = "tb"
-version = "0.1.24"
+version = "0.1.25"
 dependencies = [
  "agent-tools-updater",
  "assert_cmd",
@@ -3635,7 +3635,7 @@ dependencies = [
 
 [[package]]
 name = "tdd-ratchet"
-version = "0.3.3"
+version = "0.3.4"
 dependencies = [
  "assert_cmd",
  "git2",
@@ -3920,7 +3920,7 @@ dependencies = [
 
 [[package]]
 name = "trunc"
-version = "0.4.4"
+version = "0.4.5"
 dependencies = [
  "agent-tools-updater",
  "assert_cmd",

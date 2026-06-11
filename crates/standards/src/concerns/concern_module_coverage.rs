@@ -55,12 +55,20 @@ mod tests {
             "The current checker shells out to formatting policy over live tool repos; isolated fixtures need command-runner evidence injection first.",
         ),
         (
+            "ci-triggers",
+            "The current checker inspects live workflow files across tool repos; fixtures need a synthetic tool-repo harness.",
+        ),
+        (
             "devenv-check",
             "The current checker inspects live repo environment files and build commands; fixtures need a synthetic repo harness.",
         ),
         (
             "error-messages",
             "The checker validates centralized attestation state and live git commits; fixture coverage belongs in review-attestation unit tests.",
+        ),
+        (
+            "experiments",
+            "The current checker inspects live tool source trees and experiment directories; fixtures need a synthetic workspace harness with tool repos.",
         ),
         (
             "fast-slow-checks",

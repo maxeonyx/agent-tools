@@ -27,7 +27,7 @@ pub const SPEC: crate::concerns::ConcernSpec = crate::concerns::ConcernSpec {
 #[cfg(test)]
 mod tests {
     use super::NOT_APPLICABLE;
-    use crate::{TOOLS, tools_dir, workspace_root};
+    use crate::{tools_dir, workspace_root, TOOLS};
     use std::path::{Path, PathBuf};
     use std::time::{SystemTime, UNIX_EPOCH};
 

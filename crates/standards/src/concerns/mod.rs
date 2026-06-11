@@ -7,6 +7,7 @@ pub mod auto_update;
 pub mod auto_update_integration;
 pub mod black_box_test_quality;
 pub mod black_box_tests;
+pub mod ci_triggers;
 pub mod code_review;
 pub mod code_standards;
 pub mod concern_module_coverage;
@@ -44,6 +45,7 @@ pub const ALL_CONCERN_SPECS: &[ConcernSpec] = &[
     black_box_tests::SPEC,
     black_box_test_quality::SPEC,
     code_standards::SPEC,
+    ci_triggers::SPEC,
     devenv_check::SPEC,
     version_artifacts::SPEC,
     help_text::SPEC,
@@ -73,6 +75,7 @@ pub const ALL_CONCERNS: &[&str] = &[
     "tests-present",
     "black-box-test-quality",
     "code-standards",
+    "ci-triggers",
     "devenv-check",
     "version-artifacts",
     "help-text",
