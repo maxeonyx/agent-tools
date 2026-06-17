@@ -17,6 +17,7 @@ pub mod experiments;
 pub mod fast_slow_checks;
 pub mod help_text;
 pub mod injectable_io;
+pub mod interactive_usage;
 pub mod landing_page;
 pub mod latest_ci_green;
 pub mod opencode_skill;
@@ -64,6 +65,7 @@ pub const ALL_CONCERN_SPECS: &[ConcernSpec] = &[
     opencode_skill::SPEC,
     fast_slow_checks::SPEC,
     injectable_io::SPEC,
+    interactive_usage::SPEC,
     code_review::SPEC,
     concern_module_coverage::SPEC,
 ];
@@ -94,6 +96,7 @@ pub const ALL_CONCERNS: &[&str] = &[
     "opencode-skill",
     "fast-slow-checks",
     "injectable-io",
+    "interactive-usage",
     "code-review",
     "concern-module-coverage",
 ];
@@ -104,6 +107,7 @@ pub const AGENTIC_CONCERNS: &[&str] = &[
     "error-messages",
     "black-box-test-quality",
     "injectable-io",
+    "interactive-usage",
     "help-text",
 ];
 

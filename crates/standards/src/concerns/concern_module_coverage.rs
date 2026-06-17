@@ -83,6 +83,10 @@ mod tests {
             "The checker validates centralized attestation state and live git commits; fixture coverage belongs in review-attestation unit tests.",
         ),
         (
+            "interactive-usage",
+            "The checker validates centralized attestation state and live git commits; fixture coverage belongs in review-attestation unit tests.",
+        ),
+        (
             "landing-page",
             "The current checker inspects live website files and will move to live-site evidence; fixtures should wait for the shared evidence harness.",
         ),
