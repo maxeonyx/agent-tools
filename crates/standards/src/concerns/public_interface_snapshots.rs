@@ -2,8 +2,9 @@
 //!
 //! Tests for public interfaces should make the reviewed contract visible in the
 //! test source. Command output, public function return values, HTTP responses,
-//! and rendered components should prefer snapshot-style assertions over scattered
-//! substring checks when the shape of the public output matters.
+//! rendered components, screenshots, and terminal/TUI frames should prefer
+//! snapshot-style assertions over scattered substring checks when the shape of
+//! the public output matters.
 //!
 //! A snapshot can be an inline multiline expected string, a named fixture file,
 //! or a project snapshot-testing library. The important property is that review
@@ -18,7 +19,8 @@ Review the tool's tests for public-interface snapshot quality.
 
 Public interfaces include CLI stdout/stderr/help text, public library API return
 values, HTTP API requests/responses, generated files meant for users or machines,
-and rendered UI/component output where applicable.
+rendered UI/component output, screenshots, and terminal/TUI frames where
+applicable.
 
 Required review method:
 1. Identify tests that assert public output or public return values.
@@ -33,6 +35,8 @@ Check for:
    fixtures, or a snapshot-testing library over fragmented `contains` checks.
 2. Public API/HTTP/function/component output assertions show the full public
    shape, not just one or two fields that happen to prove the current test.
+   For visual surfaces, prefer reviewable rendered artifacts such as screenshots
+   or terminal frame snapshots when text-only assertions would hide layout.
 3. Snapshot updates are deliberate and reviewable. Automatic update tooling is
    acceptable only when the resulting diff is what reviewers approve.
 4. Dynamic values are handled explicitly: interpolate them into an expected
