@@ -4,7 +4,7 @@
     "trunc": "0.4.5",
     "tb": "0.1.25",
     "dotsync": "0.3.12",
-    "tdd-ratchet": "0.3.4",
+    "tdd-ratchet": "1.0.0",
     "oc": "0.3.23",
     "agent-harness": "0.1.12"
   }
