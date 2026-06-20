@@ -1,3 +1,11 @@
 [workspace]
-members = ["tools/*", "crates/*"]
+members = [
+    "crates/*",
+    "tools/agent-harness",
+    "tools/dotsync",
+    "tools/oc",
+    "tools/tb",
+    "tools/tdd-ratchet",
+    "tools/trunc",
+]
 resolver = "2"

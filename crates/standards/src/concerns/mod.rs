@@ -22,6 +22,7 @@ pub mod landing_page;
 pub mod latest_ci_green;
 pub mod opencode_skill;
 pub mod pinned_main_parity;
+pub mod public_interface_snapshots;
 pub mod release_freshness;
 pub mod release_pipeline;
 pub mod standalone_publishability;
@@ -56,6 +57,7 @@ pub const ALL_CONCERN_SPECS: &[ConcernSpec] = &[
     release_freshness::SPEC,
     latest_ci_green::SPEC,
     pinned_main_parity::SPEC,
+    public_interface_snapshots::SPEC,
     standalone_publishability::SPEC,
     auto_update::SPEC,
     auto_update_integration::SPEC,
@@ -87,6 +89,7 @@ pub const ALL_CONCERNS: &[&str] = &[
     "release-freshness",
     "latest-ci-green",
     "pinned-main-parity",
+    "public-interface-snapshots",
     "standalone-publishability",
     "auto-update",
     "auto-update-integration",
@@ -109,6 +112,7 @@ pub const AGENTIC_CONCERNS: &[&str] = &[
     "injectable-io",
     "interactive-usage",
     "help-text",
+    "public-interface-snapshots",
 ];
 
 pub fn concern_spec(id: &str) -> Option<&'static ConcernSpec> {

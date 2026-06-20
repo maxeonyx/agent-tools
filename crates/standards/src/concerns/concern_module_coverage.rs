@@ -103,6 +103,10 @@ mod tests {
             "The current checker compares live git branches and commits; fixtures need git-repo test harness support.",
         ),
         (
+            "public-interface-snapshots",
+            "The checker validates centralized attestation state and live git commits; fixture coverage belongs in review-attestation unit tests.",
+        ),
+        (
             "release-freshness",
             "The current checker depends on live GitHub release metadata; fixtures should be added after release evidence is injectable.",
         ),
