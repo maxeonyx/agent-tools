@@ -115,7 +115,7 @@ Exit: all tools have the improvement, and enforcement prevents regression.
 3. Follow the loops: investigate → design → test → implement → review
 4. After review: does this change represent a pattern other tools should follow? If yes → generalize loop
 5. Commit and push the tool repo, then update the submodule pointer here
-6. **"Done" means CI is observed green — not just local green.** Local `cargo ratchet` (or `cargo test`) passing is necessary but NOT sufficient. After pushing a tool-main change, poll the tool's CI run (`gh run list`/`gh run view`) until it goes green before calling the work done or bumping the submodule pointer. Local-green-but-CI-red is exactly how broken migrations have shipped here.
+6. **Observe CI and reconcile it against your intent — do NOT chase green.** After pushing a tool-main change, look at the tool's CI run (`gh run list`/`gh run view`). The bar is not "CI is green"; the bar is "CI is in the state I intended, and I understand every red." Red CI is often the correct desired state (a `pending` test failing as expected, a not-yet-implemented concern). What's forbidden is *not looking*, or seeing an **unexpected** red and not understanding it. Last session's broken migrations shipped because the agent never looked at CI at all and so missed a version-bump break and a gatekeeper break — surprise reds, not expected ones. So: confirm CI's actual state matches what you meant to do before calling the work done or bumping the submodule pointer. Never edit code, move a baseline, or relax a gate just to turn a red green — see "LEAVING TESTS RED IS A SUPERPOWER".
 
 Standard release targets are `x86_64-unknown-linux-gnu` and
 `x86_64-pc-windows-msvc` only. Do not add musl, macOS, or aarch64 release
