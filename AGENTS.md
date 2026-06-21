@@ -21,6 +21,16 @@ Update this file, the standards, or the compliance checks IMMEDIATELY when you n
 
 ---
 
+## LEAVING TESTS RED IS A SUPERPOWER
+
+Red tests, red standards, red CI, failing concerns — these are **expected and good** here. They are the honest, visible record of what work remains. A red test is the work queue. A failing standards concern is the TODO list. Do not be uncomfortable with red.
+
+The wrong instinct — the one to fight — is making red go green by papering over it: grandfathering a failing test, adding a carve-out or `NOT_APPLICABLE` exemption to dodge a concern, moving a ratchet baseline to swallow a violation, or marking something passing that isn't. That hides the work and corrupts the signal. **Never make red green except by genuinely doing the work.**
+
+So: if a tool isn't compliant yet, leave it red. If a test should fail, let it fail loudly. If you fix a violation, fix it the real way (e.g. rewrite history so a test genuinely goes `pending` → `passing`), never by relaxing the gate. Honest red beats fake green every time.
+
+---
+
 ## Development loops
 
 All work follows loops. Not phases. Loops have exit conditions and go-back paths.
@@ -105,6 +115,7 @@ Exit: all tools have the improvement, and enforcement prevents regression.
 3. Follow the loops: investigate → design → test → implement → review
 4. After review: does this change represent a pattern other tools should follow? If yes → generalize loop
 5. Commit and push the tool repo, then update the submodule pointer here
+6. **"Done" means CI is observed green — not just local green.** Local `cargo ratchet` (or `cargo test`) passing is necessary but NOT sufficient. After pushing a tool-main change, poll the tool's CI run (`gh run list`/`gh run view`) until it goes green before calling the work done or bumping the submodule pointer. Local-green-but-CI-red is exactly how broken migrations have shipped here.
 
 Standard release targets are `x86_64-unknown-linux-gnu` and
 `x86_64-pc-windows-msvc` only. Do not add musl, macOS, or aarch64 release
