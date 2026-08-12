@@ -588,7 +588,7 @@ dependencies = [
 
 [[package]]
 name = "dotsync"
-version = "0.3.17"
+version = "0.3.18"
 dependencies = [
  "agent-tools-updater",
  "assert_cmd",
@@ -603,6 +603,7 @@ dependencies = [
  "thiserror",
  "tokio",
  "toml",
+ "toml_edit 0.22.27",
 ]
 
 [[package]]
