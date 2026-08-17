@@ -20,6 +20,7 @@ pub mod injectable_io;
 pub mod interactive_usage;
 pub mod landing_page;
 pub mod latest_ci_green;
+pub mod markdown_no_hard_wrap;
 pub mod opencode_skill;
 pub mod pinned_main_parity;
 pub mod public_interface_snapshots;
@@ -69,6 +70,7 @@ pub const ALL_CONCERN_SPECS: &[ConcernSpec] = &[
     injectable_io::SPEC,
     interactive_usage::SPEC,
     code_review::SPEC,
+    markdown_no_hard_wrap::SPEC,
     concern_module_coverage::SPEC,
 ];
 
@@ -101,6 +103,7 @@ pub const ALL_CONCERNS: &[&str] = &[
     "injectable-io",
     "interactive-usage",
     "code-review",
+    "markdown-no-hard-wrap",
     "concern-module-coverage",
 ];
 
