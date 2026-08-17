@@ -7,7 +7,7 @@ All tools are developed from this workspace. Individual repos exist for CI, rele
 ## Tools
 
 | Tool | Binary | Repo | Site |
-|------|--------|------|------|
+| --- | --- | --- | --- |
 | trunc | `trunc` | [maxeonyx/trunc](https://github.com/maxeonyx/trunc) | [trunc.maxeonyx.com](https://trunc.maxeonyx.com) |
 | tmux-bridge | `tb` | [maxeonyx/tmux-bridge](https://github.com/maxeonyx/tmux-bridge) | [tmux-bridge.maxeonyx.com](https://tmux-bridge.maxeonyx.com) |
 | dotsync | `dotsync` | [maxeonyx/dotsync](https://github.com/maxeonyx/dotsync) | [dotsync.maxeonyx.com](https://dotsync.maxeonyx.com) |

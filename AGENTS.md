@@ -12,10 +12,7 @@ Every tool in this suite should benefit from every improvement made to any tool.
 
 Agents ignore process. They barrel past it into implementation. This rule exists because of that. The process is the first job. Not the second job. Not "also important." THE FIRST JOB.
 
-If a mistake happened, the process should have prevented it. Fix the process.
-If a step was confusing, the process should have been clearer. Fix the process.
-If something was skipped, the process should have enforced it. Fix the process.
-If you're about to do work and the process doesn't describe how, STOP. Write the process first. Then follow it.
+If a mistake happened, the process should have prevented it. Fix the process. If a step was confusing, the process should have been clearer. Fix the process. If something was skipped, the process should have enforced it. Fix the process. If you're about to do work and the process doesn't describe how, STOP. Write the process first. Then follow it.
 
 Update this file, the standards, or the compliance checks IMMEDIATELY when you notice a gap. Process fixes are high leverage, and the entire point of this project. They compound. Implementation fixes are local. They are needed but don't compound.
 
@@ -66,10 +63,7 @@ Prove the requirement before satisfying it.
 4. If no → fix the test
 5. Exit: you have a failing test that will pass when and only when the requirement is met
 
-**For ratcheted tools, never grandfather a new passing test. If a new test
-would already pass, introduce the test in the same commit as a deliberately
-corrupted implementation that proves the test fails, commit that red state, then
-fix the implementation in the subsequent commit.**
+**For ratcheted tools, never grandfather a new passing test. If a new test would already pass, introduce the test in the same commit as a deliberately corrupted implementation that proves the test fails, commit that red state, then fix the implementation in the subsequent commit.**
 
 ### Implement loop
 
@@ -115,18 +109,13 @@ Exit: all tools have the improvement, and enforcement prevents regression.
 3. Follow the loops: investigate → design → test → implement → review
 4. After review: does this change represent a pattern other tools should follow? If yes → generalize loop
 5. Commit and push the tool repo, then update the submodule pointer here
-   - **Run `git status --short` after every commit** and confirm nothing you meant to commit is left behind. A 2026-08-12 dotsync session corrupted three commits' worth of TDD history because `git add -u <pathspec>` *restricts* staging to that pathspec (it does not mean "everything tracked plus this") — the ratchet flips landed in commits that didn't contain their work, and only a reviewer's history audit caught it. If commit messages describe work, the diff must contain that work.
+   - **Run `git status --short` after every commit** and confirm nothing you meant to commit is left behind. A 2026-08-12 dotsync session corrupted three commits' worth of TDD history because `git add -u <pathspec>` _restricts_ staging to that pathspec (it does not mean "everything tracked plus this") — the ratchet flips landed in commits that didn't contain their work, and only a reviewer's history audit caught it. If commit messages describe work, the diff must contain that work.
    - When watching CI, watch the **CI** workflow run, not the Pages run for the same commit — `gh run list --limit 1` can hand you the wrong one and its green means nothing about the release.
-6. **Observe CI and reconcile it against your intent — do NOT chase green.** After pushing a tool-main change, look at the tool's CI run (`gh run list`/`gh run view`). The bar is not "CI is green"; the bar is "CI is in the state I intended, and I understand every red." Red CI is often the correct desired state (a `pending` test failing as expected, a not-yet-implemented concern). What's forbidden is *not looking*, or seeing an **unexpected** red and not understanding it. Last session's broken migrations shipped because the agent never looked at CI at all and so missed a version-bump break and a gatekeeper break — surprise reds, not expected ones. So: confirm CI's actual state matches what you meant to do before calling the work done or bumping the submodule pointer. Never edit code, move a baseline, or relax a gate just to turn a red green — see "LEAVING TESTS RED IS A SUPERPOWER".
+6. **Observe CI and reconcile it against your intent — do NOT chase green.** After pushing a tool-main change, look at the tool's CI run (`gh run list`/`gh run view`). The bar is not "CI is green"; the bar is "CI is in the state I intended, and I understand every red." Red CI is often the correct desired state (a `pending` test failing as expected, a not-yet-implemented concern). What's forbidden is _not looking_, or seeing an **unexpected** red and not understanding it. Last session's broken migrations shipped because the agent never looked at CI at all and so missed a version-bump break and a gatekeeper break — surprise reds, not expected ones. So: confirm CI's actual state matches what you meant to do before calling the work done or bumping the submodule pointer. Never edit code, move a baseline, or relax a gate just to turn a red green — see "LEAVING TESTS RED IS A SUPERPOWER".
 
-Standard release targets are `x86_64-unknown-linux-gnu` and
-`x86_64-pc-windows-msvc` only. Do not add musl, macOS, or aarch64 release
-targets unless the user explicitly reopens that support. `oc` is intentionally
-Linux-only for now.
+Standard release targets are `x86_64-unknown-linux-gnu` and `x86_64-pc-windows-msvc` only. Do not add musl, macOS, or aarch64 release targets unless the user explicitly reopens that support. `oc` is intentionally Linux-only for now.
 
-After changing tool versions or submodule pointers, regenerate the umbrella
-version file with `python3 scripts/generate-version-json.py`; do not edit
-`docs/version.json` by hand.
+After changing tool versions or submodule pointers, regenerate the umbrella version file with `python3 scripts/generate-version-json.py`; do not edit `docs/version.json` by hand.
 
 ### Adding a new cross-cutting concern
 
@@ -145,51 +134,33 @@ The concern is not real until enforcement exists. Prose in AGENTS.md is not enfo
 
 Two tracks run in parallel: mechanical fixes and agentic review.
 
-**Mechanical fixes** (workspace-routing, tdd-ratchet, tests-present, etc.):
-Pick one concern, fix it, run the test, see it pass. Simple loop.
+**Mechanical fixes** (workspace-routing, tdd-ratchet, tests-present, etc.): Pick one concern, fix it, run the test, see it pass. Simple loop.
 
-**Agentic review pass** (code-review, error-messages, help-text, injectable-io, black-box-test-quality):
-Manual concerns require independent review. A review agent can only do two
-things:
-- If the target satisfies the concern, record the attestation with
-  `review-attest`.
-- If the target does not satisfy the concern, return detailed findings. It does
-  not implement fixes and it does not write partial review state.
+**Agentic review pass** (code-review, error-messages, help-text, injectable-io, black-box-test-quality): Manual concerns require independent review. A review agent can only do two things:
 
-Only `state.json` records successful manual review state. Findings are the
-review agent's handoff back to the implementer; keep them in the conversation or
-the implementation backlog unless the user explicitly asks to persist review
-notes.
+- If the target satisfies the concern, record the attestation with `review-attest`.
+- If the target does not satisfy the concern, return detailed findings. It does not implement fixes and it does not write partial review state.
 
-Manual concerns may be reviewed one concern at a time or batched for one target.
-When batched, the review agent evaluates each applicable concern independently
-and records only the concerns that are clean. Findings are grouped by concern.
-An implementer may batch findings across concerns and fix them by design area,
-but after any fix the implementer must call a separate review agent before
-recording or refreshing any attestation.
+Only `state.json` records successful manual review state. Findings are the review agent's handoff back to the implementer; keep them in the conversation or the implementation backlog unless the user explicitly asks to persist review notes.
+
+Manual concerns may be reviewed one concern at a time or batched for one target. When batched, the review agent evaluates each applicable concern independently and records only the concerns that are clean. Findings are grouped by concern. An implementer may batch findings across concerns and fix them by design area, but after any fix the implementer must call a separate review agent before recording or refreshing any attestation.
 
 Review loop:
+
 1. Pick a tool. Derive applicable agentic concerns from NOT_APPLICABLE lists.
-2. Implementer requests an independent review agent with the relevant
-   `review-attest prompt` output.
-3. Review agent evaluates the target against the applicable
-   REVIEW_INSTRUCTIONS.
+2. Implementer requests an independent review agent with the relevant `review-attest prompt` output.
+3. Review agent evaluates the target against the applicable REVIEW_INSTRUCTIONS.
 4. If clean: review agent records the attestation and reports what it reviewed.
-5. If not clean: review agent returns detailed findings by concern and does not
-   record an attestation.
-6. Implementer shapes findings into an implementation backlog, grouping by
-   design area rather than by concern where that is more efficient.
+5. If not clean: review agent returns detailed findings by concern and does not record an attestation.
+6. Implementer shapes findings into an implementation backlog, grouping by design area rather than by concern where that is more efficient.
 7. Implementer fixes in stages, verifying each stage.
-8. After any fix, implementer requests a fresh independent review agent for the
-   affected concern(s). Do not reuse the implementer as the reviewer.
-9. Exit: every applicable manual concern has a current clean attestation in
-   `state.json`, so the standards tests go green.
+8. After any fix, implementer requests a fresh independent review agent for the affected concern(s). Do not reuse the implementer as the reviewer.
+9. Exit: every applicable manual concern has a current clean attestation in `state.json`, so the standards tests go green.
 
 Rules:
-- Review and implementation are different agent sessions. The agent that made a
-  fix cannot attest to that fix.
-- Applicability is precomputed from NOT_APPLICABLE lists, not debated during the
-  review.
+
+- Review and implementation are different agent sessions. The agent that made a fix cannot attest to that fix.
+- Applicability is precomputed from NOT_APPLICABLE lists, not debated during the review.
 - Mechanical failures can join the implementation backlog if the same change fixes them.
 - Do not hand-write attestation files. Trigger the review prompt explicitly, perform the review, then record the attestation explicitly.
 - Attestation command:
@@ -203,10 +174,7 @@ Tool order: trunc → tdd-ratchet → dotsync → tb → oc (simplest first).
 ### Adding a new tool
 
 1. **Improve process first.** Does the onboarding process need updating?
-2. If the tool starts from external design/process notes, import those notes into
-   the tool repo as source material and create a process handoff before product
-   implementation. The handoff records the active loop, first verification
-   target, user-gated decisions, and what is explicitly experimental.
+2. If the tool starts from external design/process notes, import those notes into the tool repo as source material and create a process handoff before product implementation. The handoff records the active loop, first verification target, user-gated decisions, and what is explicitly experimental.
 3. Create the tool repo (follow existing patterns — MIT license, AGENTS.md, docs/, .github/workflows/)
 4. Add it as a submodule under `tools/`
 5. Add it to `standards::TOOLS`
@@ -225,17 +193,14 @@ A concern is not enforced until two things exist:
 
 Without both, it's aspiration. Aspiration does not prevent drift.
 
-Prefer outcome and evidence checks over file-shape checks. When multiple
-concerns need the same observation — live site response, release metadata,
-version output, build result, downloaded binary behavior — factor that
-observation into reusable evidence so one standards run observes it once and
-each concern interprets the evidence in its own policy language.
+Prefer outcome and evidence checks over file-shape checks. When multiple concerns need the same observation — live site response, release metadata, version output, build result, downloaded binary behavior — factor that observation into reusable evidence so one standards run observes it once and each concern interprets the evidence in its own policy language.
 
 ### Current standards
 
 Defined in `crates/standards/src/concerns/*.rs`.
 
 Run the standards suite:
+
 ```bash
 cargo test -p standards
 ```
@@ -274,7 +239,7 @@ cd tools/<name> && cargo ratchet
 ## What belongs where
 
 | Content | Location |
-|---------|----------|
+| --- | --- |
 | Development process, loops, discipline | This file |
 | Cross-cutting standards definitions and enforcement | `crates/standards/src/concerns/*.rs` |
 | Concern registry / agentic concern visibility | `crates/standards/src/concerns/mod.rs` |
@@ -288,6 +253,7 @@ cd tools/<name> && cargo ratchet
 ## Git identity
 
 Personal repo. Use:
+
 ```
 user.name = Maxwell Clarke
 user.email = maxeonyx@gmail.com

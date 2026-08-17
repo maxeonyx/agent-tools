@@ -10,6 +10,7 @@ Use this pattern for lightweight, docs-first CLI tool repos in the maxeonyx ecos
 ## Goal
 
 Ship a small, discoverable tool repository with:
+
 - a Pages landing site,
 - an OpenCode skill,
 - release/deploy workflows,
@@ -31,11 +32,13 @@ Ship a small, discoverable tool repository with:
 ## Landing page requirements
 
 Use the established trunc/tmux-bridge aesthetic:
+
 - support light + dark mode,
 - keep typography and spacing clean,
 - include install commands and repo/site links.
 
 For each tool entry include:
+
 - tool name,
 - binary name,
 - one-line description,
@@ -44,6 +47,7 @@ For each tool entry include:
 - install command snippet.
 
 Include a small ecosystem footer section linking:
+
 - trunc,
 - tmux-bridge,
 - dotsync,
