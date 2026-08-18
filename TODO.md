@@ -19,3 +19,8 @@
   - agentic integration: headless use of a chosen agentic tool for manual-review concerns, with pluggable review backends rather than hard-coding one assistant
   - packaging goal: another repo should adopt `crosscut` by configuration and fixtures, not by copying `agent-tools`
   - later, when `crosscut` is a real Rust library with a public API, add semver-compatibility enforcement via `cargo semver-checks`; do not treat that as a current concern for this repo until there is an actual reusable library surface to preserve
+- Move review attestations out of the dependent repos and into this one (Max, 2026-08-18: *"I feel like it should move to the parent repo rather than in the dependant repos"* — deferred at the time, not urgent):
+  - today each tool carries its own `docs/reviews/*.json`, written by `crates/standards/src/review_attest.rs`, each holding one `reviewed_commit` hash — dotsync has four, trunc/tb/oc/tdd-ratchet three each, agent-harness none
+  - `docs/` is deployed verbatim to Pages, so this internal bookkeeping is published (e.g. `dotsync.maxeonyx.com/reviews/code-quality.json`); it is four commit hashes, so the issue is that it is neither documentation nor anyone's business, not that it is sensitive
+  - dotsync's four attest commit `c700883` from May, which now predates four cull waves, a harness extraction, a test split and 31 pending tests — a stale attestation answers "is this still reviewed?" with yes when the honest answer is no
+  - when this moves, clear dotsync's rather than refresh them: the next-gen rewrite deletes large parts of what was attested, so re-attesting before it lands would be attesting code that is about to go
