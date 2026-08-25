@@ -588,10 +588,11 @@ dependencies = [
 
 [[package]]
 name = "dotsync"
-version = "0.3.27"
+version = "0.4.1"
 dependencies = [
  "agent-tools-updater",
  "assert_cmd",
+ "async-trait",
  "clap",
  "gix",
  "help-test",
