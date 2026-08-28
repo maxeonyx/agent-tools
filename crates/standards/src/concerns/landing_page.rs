@@ -30,13 +30,13 @@ pub const SPEC: crate::concerns::ConcernSpec = crate::concerns::ConcernSpec {
 mod tests {
     use super::NOT_APPLICABLE;
     use crate::evidence::{self, EvidenceKey};
-    use crate::{tools_dir, workspace_root, TOOLS};
+    use crate::{checked_tools, tools_dir, workspace_root};
 
     #[test]
     fn landing_page() {
         let mut failures = Vec::new();
 
-        for tool in TOOLS.iter().filter(|tool| !NOT_APPLICABLE.contains(tool)) {
+        for tool in checked_tools().filter(|tool| !NOT_APPLICABLE.contains(tool)) {
             let Some(site_url) = tool_site_url(tool) else {
                 failures.push(format!("{tool}: README/docs missing public tool site URL"));
                 continue;

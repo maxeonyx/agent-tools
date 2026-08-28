@@ -6,6 +6,14 @@ This is the control plane for developing the maxeonyx agent-tool suite. All deve
 
 Every tool in this suite should benefit from every improvement made to any tool. When you add auto-update to one tool, all tools get it. When you improve help text patterns, all tools get it. When you fix a CI problem, all tools get the fix. The workspace enforces this by making cross-cutting work the natural path and tool-specific work the exception.
 
+## Concurrent development
+
+Mutable work belongs in an exclusive full clone under the sibling `agent-tools-workspace` repository. Name clones `at-<feature-branch>` directly under that repository and use slash-free feature branch names. Never edit, stash, reset, or commit another session's clone.
+
+Initialize only the tool submodules the task needs. Root Cargo membership is limited to shared crates so uninitialized tool submodules remain valid locally; run tool commands from `tools/<name>/`. Standards inspect only initialized tools locally, but `CI=true` requires and checks the complete configured inventory.
+
+When child and umbrella branches both move a submodule pointer, never resolve the gitlink conflict by choosing one side. Merge the child histories first and pin their common descendant. Tool commits and PRs land before the umbrella pointer PR. Prefer merge commits; do not rebase or force-push by default.
+
 ## IMPROVE PROCESS FIRST
 
 **Before doing ANY work — before investigating, before designing, before implementing — ask: does the process need to change?**

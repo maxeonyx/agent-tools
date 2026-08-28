@@ -57,14 +57,14 @@ pub const SPEC: crate::concerns::ConcernSpec = crate::concerns::ConcernSpec {
 #[cfg(test)]
 mod tests {
     use super::NOT_APPLICABLE;
-    use crate::{concerns, tools_dir, TOOLS};
+    use crate::{checked_tools, concerns, tools_dir};
     use std::fs;
 
     #[test]
     fn help_text() {
         let mut failures = Vec::new();
 
-        for tool in TOOLS.iter().filter(|tool| !NOT_APPLICABLE.contains(tool)) {
+        for tool in checked_tools().filter(|tool| !NOT_APPLICABLE.contains(tool)) {
             let tool_path = tools_dir().join(tool);
             let cargo_toml = tool_path.join("Cargo.toml");
 

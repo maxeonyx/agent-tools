@@ -52,7 +52,7 @@ mod tests {
 
     /// Directory names never worth walking. `fixtures` holds deliberately
     /// malformed test input, including this concern's own fail cases.
-    const SKIP_DIRS: &[&str] = &[".git", "target", "node_modules", "fixtures"];
+    const SKIP_DIRS: &[&str] = &[".git", ".devenv", "target", "node_modules", "fixtures"];
 
     /// The widest line a wrapping tool plausibly fills to. Lines longer than
     /// this are someone writing one thought per line, not a filled column.
@@ -385,7 +385,7 @@ mod tests {
         own.sort();
         targets.push(("workspace".to_string(), workspace.clone(), own));
 
-        for tool in crate::TOOLS.iter().filter(|t| !NOT_APPLICABLE.contains(t)) {
+        for tool in crate::checked_tools().filter(|tool| !NOT_APPLICABLE.contains(tool)) {
             let root = crate::tools_dir().join(tool);
             let mut files = Vec::new();
             collect_markdown(&root, Path::new(""), &mut files);

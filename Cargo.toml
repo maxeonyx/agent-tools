@@ -1,11 +1,6 @@
 [workspace]
 members = [
     "crates/*",
-    "tools/agent-harness",
-    "tools/dotsync",
-    "tools/oc",
-    "tools/tb",
-    "tools/tdd-ratchet",
-    "tools/trunc",
 ]
+exclude = ["tools/*"]
 resolver = "2"

@@ -27,7 +27,7 @@ pub const SPEC: crate::concerns::ConcernSpec = crate::concerns::ConcernSpec {
 #[cfg(test)]
 mod tests {
     use super::NOT_APPLICABLE;
-    use crate::{tools_dir, workspace_root, TOOLS};
+    use crate::{checked_tools, tools_dir, workspace_root};
     use std::path::{Path, PathBuf};
     use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -37,7 +37,7 @@ mod tests {
 
         failures.extend(experiment_failures_for_repo("workspace", &workspace_root()));
 
-        for tool in TOOLS.iter().filter(|tool| !NOT_APPLICABLE.contains(tool)) {
+        for tool in checked_tools().filter(|tool| !NOT_APPLICABLE.contains(tool)) {
             failures.extend(experiment_failures_for_repo(tool, &tools_dir().join(tool)));
         }
 

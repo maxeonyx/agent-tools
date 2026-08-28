@@ -17,7 +17,12 @@ All tools are developed from this workspace. Individual repos exist for CI, rele
 ## Quick start
 
 ```bash
-git clone --recurse-submodules git@github.com:maxeonyx/agent-tools.git
-cd agent-tools
-cargo check --all
+git clone git@github.com:maxeonyx/agent-tools-workspace.git
+cd agent-tools-workspace
+git clone git@github.com:maxeonyx/agent-tools.git at-my-feature
+cd at-my-feature
+git switch -c my-feature
+git submodule update --init tools/trunc  # initialize only what the task needs
+cargo check --workspace                 # shared workspace crates
+(cd tools/trunc && cargo check)          # initialized tool
 ```
