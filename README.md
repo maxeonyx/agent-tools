@@ -4,7 +4,7 @@ Shared development workspace for [maxeonyx agent-tools](https://tools.maxeonyx.c
 
 All tools are developed from this workspace. Individual repos exist for CI, releases, and Pages.
 
-## Tools
+## Maintained tools
 
 | Tool | Binary | Repo | Site |
 | --- | --- | --- | --- |
@@ -12,7 +12,12 @@ All tools are developed from this workspace. Individual repos exist for CI, rele
 | tmux-bridge | `tb` | [maxeonyx/tmux-bridge](https://github.com/maxeonyx/tmux-bridge) | [tmux-bridge.maxeonyx.com](https://tmux-bridge.maxeonyx.com) |
 | dotsync | `dotsync` | [maxeonyx/dotsync](https://github.com/maxeonyx/dotsync) | [dotsync.maxeonyx.com](https://dotsync.maxeonyx.com) |
 | tdd-ratchet | `cargo-ratchet` | [maxeonyx/tdd-ratchet-rs](https://github.com/maxeonyx/tdd-ratchet-rs) | [tdd-ratchet.maxeonyx.com](https://tdd-ratchet.maxeonyx.com) |
-| oc | `oc` | [maxeonyx/oc](https://github.com/maxeonyx/oc) | [oc.maxeonyx.com](https://oc.maxeonyx.com) |
+
+## Old tools
+
+| Tool | Last binary | Repo | Historical site |
+| --- | --- | --- | --- |
+| oc (archived) | `oc` | [maxeonyx/oc](https://github.com/maxeonyx/oc) | [oc.maxeonyx.com](https://oc.maxeonyx.com) |
 
 ## Quick start
 
