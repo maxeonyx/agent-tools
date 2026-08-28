@@ -190,6 +190,20 @@ Tool order: trunc → tdd-ratchet → dotsync → tb → oc (simplest first).
 7. Bring it into compliance concern by concern via the generalize loop
 8. Update the umbrella site (`docs/index.html`) and cross-references in sibling tools
 
+### Archiving a tool
+
+Archiving is a reversible lifecycle transition, not deletion. Preserve the source, final releases, and historical explanation while removing the tool from active maintenance obligations.
+
+1. Add or update lifecycle enforcement before changing the tool.
+2. Change the tool README, skill, and site from active installation guidance to a historical showcase explaining why development ended.
+3. Fix any known presentation defect that would undermine the preserved showcase.
+4. Merge and deploy the tool's historical site while the repository is still writable.
+5. Move the tool from maintained to archived inventory, retain its submodule pin and final version metadata, and move it to the umbrella site's old-tools section.
+6. Verify the source, final release, historical site, and umbrella links.
+7. Archive the GitHub repository last, then verify those public surfaces again.
+
+If archiving interrupts a public surface, unarchive the repository, relocate or repair the preserved material, verify it, and archive again. To revive a tool, explicitly unarchive it, move it back to maintained inventory, restore active documentation and CI, and bring every applicable concern current before publishing new work.
+
 ---
 
 ## Enforcement

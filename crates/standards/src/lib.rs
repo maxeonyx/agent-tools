@@ -32,6 +32,10 @@ pub const TOOLS: &[&str] = &[
     "agent-harness",
 ];
 
+pub const MAINTAINED_TOOLS: &[&str] = &["trunc", "tb", "dotsync", "tdd-ratchet", "agent-harness"];
+
+pub const ARCHIVED_TOOLS: &[&str] = &["oc"];
+
 /// Tool repositories that should participate in this standards run.
 ///
 /// Local clones may initialize only the submodules relevant to their task. CI
@@ -46,7 +50,7 @@ pub fn checked_tools() -> std::vec::IntoIter<&'static str> {
 
 fn select_tools(ci: bool, initialized: impl Fn(&str) -> bool) -> Result<Vec<&'static str>, String> {
     if ci {
-        let missing: Vec<_> = TOOLS
+        let missing: Vec<_> = MAINTAINED_TOOLS
             .iter()
             .copied()
             .filter(|tool| !initialized(tool))
@@ -57,10 +61,10 @@ fn select_tools(ci: bool, initialized: impl Fn(&str) -> bool) -> Result<Vec<&'st
                 missing.join(", ")
             ));
         }
-        return Ok(TOOLS.to_vec());
+        return Ok(MAINTAINED_TOOLS.to_vec());
     }
 
-    Ok(TOOLS
+    Ok(MAINTAINED_TOOLS
         .iter()
         .copied()
         .filter(|tool| initialized(tool))
@@ -69,7 +73,7 @@ fn select_tools(ci: bool, initialized: impl Fn(&str) -> bool) -> Result<Vec<&'st
 
 #[cfg(test)]
 mod tests {
-    use super::{select_tools, TOOLS};
+    use super::{select_tools, ARCHIVED_TOOLS, MAINTAINED_TOOLS, TOOLS};
 
     #[test]
     fn local_selection_contains_only_initialized_tools() {
@@ -82,15 +86,30 @@ mod tests {
     fn ci_selection_contains_the_complete_inventory() {
         let selected = select_tools(true, |_| true).unwrap();
 
-        assert_eq!(selected, TOOLS);
+        assert_eq!(selected, MAINTAINED_TOOLS);
     }
 
     #[test]
     fn ci_selection_rejects_missing_submodules() {
-        let error = select_tools(true, |tool| tool != "oc").unwrap_err();
+        let error = select_tools(true, |tool| tool != "tb").unwrap_err();
 
         assert!(error.contains("CI must initialize every tool submodule"));
-        assert!(error.contains("oc"));
+        assert!(error.contains("tb"));
+    }
+
+    #[test]
+    fn maintained_and_archived_tools_partition_the_inventory() {
+        let mut lifecycle_tools = MAINTAINED_TOOLS
+            .iter()
+            .chain(ARCHIVED_TOOLS)
+            .copied()
+            .collect::<Vec<_>>();
+        lifecycle_tools.sort_unstable();
+
+        let mut all_tools = TOOLS.to_vec();
+        all_tools.sort_unstable();
+
+        assert_eq!(lifecycle_tools, all_tools);
     }
 
     #[test]
