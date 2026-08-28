@@ -117,11 +117,10 @@ mod tests {
         let manifest = std::fs::read_to_string(super::workspace_root().join("Cargo.toml"))
             .expect("read workspace Cargo.toml");
 
-        assert!(manifest.contains("exclude = [\"tools/*\"]"));
         for tool in TOOLS {
             assert!(
-                !manifest.contains(&format!("\"tools/{tool}\"")),
-                "root Cargo workspace must not require uninitialized tool {tool}"
+                manifest.contains(&format!("\"tools/{tool}\"")),
+                "root Cargo workspace must explicitly exclude tool {tool}"
             );
         }
     }
