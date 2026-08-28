@@ -13,8 +13,9 @@
 //! working test entrypoint; the second proves the bypass-prevention gate is
 //! active.
 //!
-//! The local invariant above is checked against the ambient `cargo-ratchet`
-//! binary. That is necessary but not sufficient: a tool's CI can still drift
+//! The local invariant above is checked against the workspace-pinned
+//! `tools/tdd-ratchet` source, never an ambient or stale installation. That is
+//! necessary but not sufficient: a tool's CI can still drift
 //! out of the canonical pattern (e.g. a gatekeeper test gets added but CI still
 //! runs plain `cargo test`, or a tool keeps an older bespoke ratchet script).
 //! When that happens the local check is green while CI is structurally
@@ -95,7 +96,9 @@ mod tests {
     fn ci_pattern_failures_from_text(tool: &str, ci: &str) -> Vec<String> {
         let mut failures = Vec::new();
 
-        if !ci.contains("cargo install --path") || !ci.contains("tdd-ratchet") {
+        let installs_source = ci.contains("cargo install --path")
+            && (tool == "tdd-ratchet" || ci.contains("tdd-ratchet"));
+        if !installs_source {
             failures.push(format!(
                 "{tool}: ci.yml must install cargo-ratchet from source (cargo install --path ...tdd-ratchet)"
             ));
@@ -157,7 +160,7 @@ mod tests {
     fn tdd_ratchet_failures_for_tool(tool: &str, tool_dir: &Path) -> Vec<String> {
         let mut failures = Vec::new();
 
-        match run_cargo(tool_dir, &["ratchet"]) {
+        match run_workspace_ratchet(tool_dir) {
             Ok(output) if output.status.success() => {}
             Ok(output) => failures.push(format!(
                 "{tool}: cargo ratchet failed{}",
@@ -180,6 +183,15 @@ mod tests {
     fn run_cargo(tool_dir: &Path, args: &[&str]) -> std::io::Result<Output> {
         Command::new("cargo")
             .args(args)
+            .current_dir(tool_dir)
+            .output()
+    }
+
+    fn run_workspace_ratchet(tool_dir: &Path) -> std::io::Result<Output> {
+        Command::new("cargo")
+            .args(["run", "--quiet", "--manifest-path"])
+            .arg(tools_dir().join("tdd-ratchet/Cargo.toml"))
+            .arg("--")
             .current_dir(tool_dir)
             .output()
     }
@@ -238,6 +250,20 @@ mod tests {
             failures.is_empty(),
             "expected no failures, got: {failures:?}"
         );
+    }
+
+    #[test]
+    fn ci_pattern_accepts_tdd_ratchet_installing_itself() {
+        let ci = r#"
+      - name: Install cargo-ratchet and cargo-nextest
+        run: |
+          cargo install --path . --locked
+          cargo install cargo-nextest --locked
+      - name: Run tests (ratchet)
+        run: cargo ratchet
+"#;
+
+        assert!(ci_pattern_failures_from_text("tdd-ratchet", ci).is_empty());
     }
 
     #[test]

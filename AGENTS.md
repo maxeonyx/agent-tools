@@ -2,6 +2,10 @@
 
 This is the control plane for developing the maxeonyx agent-tool suite. All development happens from this workspace. Individual tool repos exist for CI, releases, and Pages — not for development.
 
+## TDD ratchet — read before testing
+
+Run `cargo ratchet`, not plain `cargo test`, in every maintained tool. A new test must be red when first introduced and committed as `pending`; that expected red test keeps CI green. A new test must not pass when first introduced—doing so makes the ratchet and CI red. Implement only after the red commit, then rerun the ratchet and commit the promotion to `passing`.
+
 ## The goal
 
 Every tool in this suite should benefit from every improvement made to any tool. When you add auto-update to one tool, all tools get it. When you improve help text patterns, all tools get it. When you fix a CI problem, all tools get the fix. The workspace enforces this by making cross-cutting work the natural path and tool-specific work the exception.

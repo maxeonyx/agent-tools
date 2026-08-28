@@ -52,7 +52,7 @@ mod tests {
             expected_versions.insert(tool.to_string(), version.to_string());
 
             check_tool_website_json(tool, package, binary, version, &mut failures);
-            check_cli_version_output(package, binary, version, &mut failures);
+            check_cli_version_output(tool, package, binary, version, &mut failures);
         }
 
         check_workspace_website_json(&expected_versions, &mut failures);
@@ -163,14 +163,15 @@ mod tests {
     }
 
     fn check_cli_version_output(
+        tool: &str,
         package: &str,
         binary: &str,
         version: &str,
         failures: &mut Vec<String>,
     ) {
-        build_binary(package, binary, version, failures);
+        build_binary(tool, package, binary, version, failures);
 
-        match binary_stdout(binary, &["--version"]) {
+        match binary_stdout(tool, binary, &["--version"]) {
             Ok(stdout) => {
                 let expected = format!("{binary} {version}");
                 if stdout.trim_end() != expected {
@@ -183,7 +184,7 @@ mod tests {
             Err(error) => failures.push(format!("{package}: --version {error}")),
         }
 
-        match binary_stdout(binary, &["--version", "--json"]) {
+        match binary_stdout(tool, binary, &["--version", "--json"]) {
             Ok(stdout) => match serde_json::from_str::<Value>(&stdout) {
                 Ok(value) => {
                     if value.get("package").and_then(Value::as_str) != Some(package) {
@@ -210,15 +211,21 @@ mod tests {
         }
     }
 
-    fn build_binary(package: &str, binary: &str, version: &str, failures: &mut Vec<String>) {
+    fn build_binary(
+        tool: &str,
+        package: &str,
+        binary: &str,
+        version: &str,
+        failures: &mut Vec<String>,
+    ) {
         let key = EvidenceKey::new("build-binary", binary)
             .tool(package)
             .version(version);
         let output = evidence::context().command(
             key,
             "cargo",
-            &["build", "--quiet", "-p", package, "--bin", binary],
-            &workspace_root(),
+            &["build", "--quiet", "--bin", binary],
+            &tools_dir().join(tool),
         );
 
         if !output.status_success {
@@ -230,18 +237,18 @@ mod tests {
         }
     }
 
-    fn binary_stdout(binary: &str, args: &[&str]) -> Result<String, String> {
+    fn binary_stdout(tool: &str, binary: &str, args: &[&str]) -> Result<String, String> {
         let mut key =
             EvidenceKey::new("built-binary-version", format!("{binary} {args:?}")).tool(binary);
-        if let Ok(commit) = crate::evidence::tool_commit(&tools_dir().join(binary)) {
+        if let Ok(commit) = crate::evidence::tool_commit(&tools_dir().join(tool)) {
             key = key.commit(commit);
         }
-        let binary_path = evidence::target_debug_binary(binary);
+        let binary_path = tools_dir().join(tool).join("target/debug").join(binary);
         let output = evidence::context().command(
             key,
             binary_path.to_str().unwrap_or(binary),
             args,
-            &workspace_root(),
+            &tools_dir().join(tool),
         );
 
         if !output.status_success {

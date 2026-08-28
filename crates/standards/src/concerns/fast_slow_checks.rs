@@ -11,8 +11,8 @@
 //! the second, warm run is under 5 seconds.
 //!
 //! Fast command pattern:
-//! - library tools: `cargo test -p <tool> --lib -- --quiet`
-//! - binary-only tools: `cargo test -p <tool> --bins -- --quiet`
+//! - library tools: `cargo test --lib -- --quiet` from the tool repo
+//! - binary-only tools: `cargo test --bins -- --quiet` from the tool repo
 //!
 //! Slow entrypoint pattern:
 //! - workspace: `cargo test -p <tool> --test '*'`
@@ -39,7 +39,7 @@ const MAX_WARM_FAST_CHECK_DURATION: std::time::Duration = std::time::Duration::f
 #[cfg(test)]
 mod tests {
     use super::{MAX_WARM_FAST_CHECK_DURATION, NOT_APPLICABLE};
-    use crate::{checked_tools, tools_dir, workspace_root};
+    use crate::{checked_tools, tools_dir};
     use std::time::Instant;
 
     #[test]
@@ -49,7 +49,7 @@ mod tests {
         for tool in checked_tools().filter(|tool| !NOT_APPLICABLE.contains(tool)) {
             let args = fast_command_args(tool);
 
-            let warmup = run_fast_command(&args);
+            let warmup = run_fast_command(tool, &args);
             if !warmup.status.success() {
                 failures.push(format!(
                     "{tool}: warm-up fast command failed: cargo {}\n{}",
@@ -60,7 +60,7 @@ mod tests {
             }
 
             let start = Instant::now();
-            let warm = run_fast_command(&args);
+            let warm = run_fast_command(tool, &args);
             let elapsed = start.elapsed();
 
             if !warm.status.success() {
@@ -92,16 +92,16 @@ mod tests {
 
     fn fast_command_args(tool: &str) -> Vec<&str> {
         if tools_dir().join(tool).join("src/lib.rs").exists() {
-            vec!["test", "-p", tool, "--lib", "--", "--quiet"]
+            vec!["test", "--lib", "--", "--quiet"]
         } else {
-            vec!["test", "-p", tool, "--bins", "--", "--quiet"]
+            vec!["test", "--bins", "--", "--quiet"]
         }
     }
 
-    fn run_fast_command(args: &[&str]) -> std::process::Output {
+    fn run_fast_command(tool: &str, args: &[&str]) -> std::process::Output {
         std::process::Command::new("cargo")
             .args(args)
-            .current_dir(workspace_root())
+            .current_dir(tools_dir().join(tool))
             .output()
             .unwrap_or_else(|error| panic!("failed to run cargo {}: {error}", args.join(" ")))
     }
