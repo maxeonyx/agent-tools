@@ -28,6 +28,7 @@ pub mod release_freshness;
 pub mod release_pipeline;
 pub mod standalone_publishability;
 pub mod tdd_ratchet;
+pub mod tdd_ratchet_guidance;
 pub mod tool_lifecycle;
 pub mod version_artifacts;
 pub mod vision_and_process;
@@ -46,6 +47,7 @@ pub struct ConcernSpec {
 pub const ALL_CONCERN_SPECS: &[ConcernSpec] = &[
     workspace_routing::SPEC,
     tdd_ratchet::SPEC,
+    tdd_ratchet_guidance::SPEC,
     tool_lifecycle::SPEC,
     black_box_tests::SPEC,
     black_box_test_quality::SPEC,
@@ -80,6 +82,7 @@ pub const ALL_CONCERN_SPECS: &[ConcernSpec] = &[
 pub const ALL_CONCERNS: &[&str] = &[
     "workspace-routing",
     "tdd-ratchet",
+    "tdd-ratchet-guidance",
     "tool-lifecycle",
     "tests-present",
     "black-box-test-quality",
