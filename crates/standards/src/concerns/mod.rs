@@ -147,10 +147,7 @@ pub(crate) fn review_attestation_failures(
 ) -> Vec<String> {
     let mut failures = Vec::new();
 
-    for tool in crate::TOOLS
-        .iter()
-        .filter(|tool| !not_applicable.contains(tool))
-    {
+    for tool in crate::checked_tools().filter(|tool| !not_applicable.contains(tool)) {
         let tool_dir = crate::tools_dir().join(tool);
         if let Some(failure) = review_attestation_failure_for_repo(tool, &tool_dir, concern_id) {
             failures.push(failure);

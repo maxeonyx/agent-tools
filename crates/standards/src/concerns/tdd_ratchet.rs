@@ -43,7 +43,7 @@ pub const SPEC: crate::concerns::ConcernSpec = crate::concerns::ConcernSpec {
 #[cfg(test)]
 mod tests {
     use super::NOT_APPLICABLE;
-    use crate::{tools_dir, TOOLS};
+    use crate::{checked_tools, tools_dir};
     use std::path::Path;
     use std::process::{Command, Output};
 
@@ -51,7 +51,7 @@ mod tests {
     fn tdd_ratchet() {
         let mut failures = Vec::new();
 
-        for tool in TOOLS.iter().filter(|tool| !NOT_APPLICABLE.contains(tool)) {
+        for tool in checked_tools().filter(|tool| !NOT_APPLICABLE.contains(tool)) {
             failures.extend(tdd_ratchet_failures_for_tool(tool, &tools_dir().join(tool)));
         }
 
@@ -70,7 +70,7 @@ mod tests {
     fn ci_uses_canonical_ratchet_pattern() {
         let mut failures = Vec::new();
 
-        for tool in TOOLS.iter().filter(|tool| !NOT_APPLICABLE.contains(tool)) {
+        for tool in checked_tools().filter(|tool| !NOT_APPLICABLE.contains(tool)) {
             let ci_path = tools_dir().join(tool).join(".github/workflows/ci.yml");
             failures.extend(ci_pattern_failures(tool, &ci_path));
         }

@@ -27,13 +27,13 @@ pub const SPEC: crate::concerns::ConcernSpec = crate::concerns::ConcernSpec {
 mod tests {
     use super::NOT_APPLICABLE;
     use crate::evidence::{self, EvidenceKey};
-    use crate::{tools_dir, workspace_root, TOOLS};
+    use crate::{checked_tools, tools_dir, workspace_root};
 
     #[test]
     fn release_freshness() {
         let mut failures = Vec::new();
 
-        for tool in TOOLS.iter().filter(|tool| !NOT_APPLICABLE.contains(tool)) {
+        for tool in checked_tools().filter(|tool| !NOT_APPLICABLE.contains(tool)) {
             let tool_dir = tools_dir().join(tool);
             let cargo_toml = std::fs::read_to_string(tool_dir.join("Cargo.toml"))
                 .unwrap_or_else(|error| panic!("failed to read {tool} Cargo.toml: {error}"));

@@ -31,3 +31,79 @@ pub const TOOLS: &[&str] = &[
     "oc",
     "agent-harness",
 ];
+
+/// Tool repositories that should participate in this standards run.
+///
+/// Local clones may initialize only the submodules relevant to their task. CI
+/// is the backstop: when `CI` is set, every configured tool must be initialized
+/// and every concern sees the complete inventory.
+pub fn checked_tools() -> std::vec::IntoIter<&'static str> {
+    let ci = std::env::var_os("CI").is_some();
+    select_tools(ci, |tool| tools_dir().join(tool).join(".git").exists())
+        .unwrap_or_else(|error| panic!("tool inventory invalid: {error}"))
+        .into_iter()
+}
+
+fn select_tools(ci: bool, initialized: impl Fn(&str) -> bool) -> Result<Vec<&'static str>, String> {
+    if ci {
+        let missing: Vec<_> = TOOLS
+            .iter()
+            .copied()
+            .filter(|tool| !initialized(tool))
+            .collect();
+        if !missing.is_empty() {
+            return Err(format!(
+                "CI must initialize every tool submodule; missing: {}",
+                missing.join(", ")
+            ));
+        }
+        return Ok(TOOLS.to_vec());
+    }
+
+    Ok(TOOLS
+        .iter()
+        .copied()
+        .filter(|tool| initialized(tool))
+        .collect())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{select_tools, TOOLS};
+
+    #[test]
+    fn local_selection_contains_only_initialized_tools() {
+        let selected = select_tools(false, |tool| matches!(tool, "trunc" | "tb")).unwrap();
+
+        assert_eq!(selected, vec!["trunc", "tb"]);
+    }
+
+    #[test]
+    fn ci_selection_contains_the_complete_inventory() {
+        let selected = select_tools(true, |_| true).unwrap();
+
+        assert_eq!(selected, TOOLS);
+    }
+
+    #[test]
+    fn ci_selection_rejects_missing_submodules() {
+        let error = select_tools(true, |tool| tool != "oc").unwrap_err();
+
+        assert!(error.contains("CI must initialize every tool submodule"));
+        assert!(error.contains("oc"));
+    }
+
+    #[test]
+    fn root_cargo_workspace_does_not_require_tool_submodules() {
+        let manifest = std::fs::read_to_string(super::workspace_root().join("Cargo.toml"))
+            .expect("read workspace Cargo.toml");
+
+        assert!(manifest.contains("exclude = [\"tools/*\"]"));
+        for tool in TOOLS {
+            assert!(
+                !manifest.contains(&format!("\"tools/{tool}\"")),
+                "root Cargo workspace must not require uninitialized tool {tool}"
+            );
+        }
+    }
+}

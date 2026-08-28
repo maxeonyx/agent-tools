@@ -26,13 +26,13 @@ pub const SPEC: crate::concerns::ConcernSpec = crate::concerns::ConcernSpec {
 #[cfg(test)]
 mod tests {
     use super::NOT_APPLICABLE;
-    use crate::{tools_dir, TOOLS};
+    use crate::{checked_tools, tools_dir};
 
     #[test]
     fn pinned_main_parity() {
         let mut failures = Vec::new();
 
-        for tool in TOOLS.iter().filter(|tool| !NOT_APPLICABLE.contains(tool)) {
+        for tool in checked_tools().filter(|tool| !NOT_APPLICABLE.contains(tool)) {
             let tool_dir = tools_dir().join(tool);
             let head = command_stdout(
                 "git",

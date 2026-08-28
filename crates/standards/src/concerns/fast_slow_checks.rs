@@ -39,14 +39,14 @@ const MAX_WARM_FAST_CHECK_DURATION: std::time::Duration = std::time::Duration::f
 #[cfg(test)]
 mod tests {
     use super::{MAX_WARM_FAST_CHECK_DURATION, NOT_APPLICABLE};
-    use crate::{tools_dir, workspace_root, TOOLS};
+    use crate::{checked_tools, tools_dir, workspace_root};
     use std::time::Instant;
 
     #[test]
     fn fast_slow_checks() {
         let mut failures = Vec::new();
 
-        for tool in TOOLS.iter().filter(|tool| !NOT_APPLICABLE.contains(tool)) {
+        for tool in checked_tools().filter(|tool| !NOT_APPLICABLE.contains(tool)) {
             let args = fast_command_args(tool);
 
             let warmup = run_fast_command(&args);
