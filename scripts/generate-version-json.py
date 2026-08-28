@@ -2,6 +2,7 @@
 """Generate the umbrella docs/version.json from tool version artifacts."""
 
 import json
+import os
 import re
 from pathlib import Path
 
@@ -19,17 +20,33 @@ def tool_names() -> list[str]:
     return re.findall(r'"([^"]+)"', match.group(1))
 
 
-def tool_version(tool: str) -> str:
+def existing_versions() -> dict[str, str]:
+    if not OUTPUT.exists():
+        return {}
+    with OUTPUT.open() as handle:
+        return json.load(handle).get("tools", {})
+
+
+def tool_version(tool: str, existing: dict[str, str]) -> str:
     path = ROOT / "tools" / tool / "docs/version.json"
+    if not path.exists():
+        if os.environ.get("CI"):
+            raise SystemExit(f"CI requires initialized tool version artifact: {path}")
+        if tool not in existing:
+            raise SystemExit(
+                f"uninitialized tool {tool} has no preserved version in {OUTPUT}"
+            )
+        return existing[tool]
     with path.open() as handle:
         version = json.load(handle)["version"]
     return version
 
 
 def main() -> None:
+    existing = existing_versions()
     data = {
         "site": "agent-tools",
-        "tools": {tool: tool_version(tool) for tool in tool_names()},
+        "tools": {tool: tool_version(tool, existing) for tool in tool_names()},
     }
     OUTPUT.write_text(json.dumps(data, indent=2) + "\n")
 
