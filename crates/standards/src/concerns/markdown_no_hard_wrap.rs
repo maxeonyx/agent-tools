@@ -424,7 +424,7 @@ mod tests {
     }
 
     fn skip_dir_name(name: &str) -> bool {
-        SKIP_DIRS.contains(&name)
+        SKIP_DIRS.contains(&name) || name.starts_with(".devenv.")
     }
 
     #[test]

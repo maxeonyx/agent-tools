@@ -91,8 +91,23 @@ mod tests {
     }
 
     fn check_updater(updater: &std::path::Path, failures: &mut Vec<String>) {
-        let updater_content = std::fs::read_to_string(&updater)
-            .unwrap_or_else(|error| panic!("failed to read {}: {error}", updater.display()));
+        let updater_content = match std::fs::read_to_string(updater) {
+            Ok(content) => content,
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+                failures.push(
+                    "agent-tools-updater: crates/agent-tools-updater/src/lib.rs missing"
+                        .to_string(),
+                );
+                return;
+            }
+            Err(error) => {
+                failures.push(format!(
+                    "agent-tools-updater: failed to read {}: {error}",
+                    updater.display()
+                ));
+                return;
+            }
+        };
         if !updater_content.contains("pub fn") && !updater_content.contains("pub async fn") {
             failures.push("agent-tools-updater: no public updater API implemented".to_string());
         }
