@@ -267,6 +267,19 @@ mod tests {
     }
 
     #[test]
+    fn ci_pattern_accepts_prebuilt_nextest_installer() {
+        let ci = r#"
+      - uses: taiki-e/install-action@nextest
+      - name: Install cargo-ratchet
+        run: cargo install --path ../../ratchet-install/tools/tdd-ratchet --locked
+      - name: Run tests (ratchet)
+        run: cargo ratchet
+"#;
+
+        assert!(ci_pattern_failures_from_text("prebuilt-nextest", ci).is_empty());
+    }
+
+    #[test]
     fn ci_pattern_rejects_plain_cargo_test_step() {
         let ci = r#"
       - name: Install cargo-ratchet
