@@ -12,6 +12,7 @@ pub mod code_review;
 pub mod code_standards;
 pub mod concern_module_coverage;
 pub mod devenv_check;
+pub mod ecosystem_independence;
 pub mod error_messages;
 pub mod experiments;
 pub mod fast_slow_checks;
@@ -33,7 +34,6 @@ pub mod tool_lifecycle;
 pub mod version_artifacts;
 pub mod vision_and_process;
 pub mod website_install_links;
-pub mod workspace_routing;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct ConcernSpec {
@@ -45,7 +45,7 @@ pub struct ConcernSpec {
 }
 
 pub const ALL_CONCERN_SPECS: &[ConcernSpec] = &[
-    workspace_routing::SPEC,
+    ecosystem_independence::SPEC,
     tdd_ratchet::SPEC,
     tdd_ratchet_guidance::SPEC,
     tool_lifecycle::SPEC,
@@ -80,7 +80,7 @@ pub const ALL_CONCERN_SPECS: &[ConcernSpec] = &[
 
 /// All known concern IDs.
 pub const ALL_CONCERNS: &[&str] = &[
-    "workspace-routing",
+    "ecosystem-independence",
     "tdd-ratchet",
     "tdd-ratchet-guidance",
     "tool-lifecycle",

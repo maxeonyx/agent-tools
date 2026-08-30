@@ -1,0 +1,6 @@
+[package]
+name = "standalone-fixture"
+version = "0.1.0"
+
+[dev-dependencies]
+help-test = { git = "https://github.com/maxeonyx/help-test", tag = "v0.1.0" }

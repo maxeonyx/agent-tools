@@ -1,0 +1,6 @@
+[package]
+name = "coupled-fixture"
+version = "0.1.0"
+
+[dev-dependencies]
+help-test = { path = "../../crates/help-test" }

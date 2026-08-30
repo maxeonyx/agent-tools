@@ -23,6 +23,12 @@ pub fn tools_dir() -> PathBuf {
     workspace_root().join("tools")
 }
 
+pub fn libraries_dir() -> PathBuf {
+    workspace_root().join("libraries")
+}
+
+pub const LIBRARIES: &[&str] = &["help-test"];
+
 pub const TOOLS: &[&str] = &[
     "trunc",
     "tb",

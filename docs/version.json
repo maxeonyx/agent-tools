@@ -1,11 +1,11 @@
 {
   "site": "agent-tools",
   "tools": {
-    "trunc": "0.4.6",
-    "tb": "0.1.26",
-    "dotsync": "0.4.3",
-    "tdd-ratchet": "1.0.1",
+    "trunc": "0.4.7",
+    "tb": "0.1.27",
+    "dotsync": "0.4.4",
+    "tdd-ratchet": "1.0.2",
     "oc": "0.3.23",
-    "agent-harness": "0.1.13"
+    "agent-harness": "0.1.14"
   }
 }

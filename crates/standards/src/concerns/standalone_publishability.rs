@@ -93,6 +93,7 @@ mod tests {
 
     fn check_isolated_checkout_build(tool: &str, tool_dir: &Path, failures: &mut Vec<String>) {
         let clone_dir = temp_clone_dir(tool);
+        let target_dir = crate::workspace_root().join("target/standalone-builds");
         if clone_dir.exists() {
             std::fs::remove_dir_all(&clone_dir).unwrap_or_else(|error| {
                 panic!(
@@ -119,6 +120,7 @@ mod tests {
 
         let build_output = Command::new("cargo")
             .args(["build", "--locked", "--bins"])
+            .env("CARGO_TARGET_DIR", target_dir)
             .current_dir(&clone_dir)
             .output()
             .unwrap_or_else(|error| {

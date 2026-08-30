@@ -16,3 +16,6 @@
 [submodule "tools/agent-harness"]
 	path = tools/agent-harness
 	url = git@github.com:maxeonyx/agent-harness.git
+[submodule "libraries/help-test"]
+	path = libraries/help-test
+	url = git@github.com:maxeonyx/help-test.git
