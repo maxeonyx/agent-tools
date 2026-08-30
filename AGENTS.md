@@ -1,6 +1,8 @@
 # agent-tools — Development Workspace
 
-This is the control plane for developing the maxeonyx agent-tool suite. All development happens from this workspace. Individual tool repos exist for CI, releases, and Pages — not for development.
+This is the control plane for coordinating the maxeonyx agent-tool suite.
+Cross-cutting work is easiest here, while every child repository remains a
+complete standalone development, CI, and release context in its own right.
 
 ## TDD ratchet — read before testing
 
@@ -14,7 +16,11 @@ Every tool in this suite should benefit from every improvement made to any tool.
 
 Mutable work belongs in an exclusive full clone under the sibling `agent-tools-workspace` repository. Name clones `at-<feature-branch>` directly under that repository and use slash-free feature branch names. Never edit, stash, reset, or commit another session's clone.
 
-Initialize only the tool submodules the task needs. Root Cargo membership is limited to shared crates so uninitialized tool submodules remain valid locally; run tool commands from `tools/<name>/`. Standards inspect only initialized tools locally, but `CI=true` requires and checks the complete configured inventory.
+Initialize only the tool and library submodules the task needs. Root Cargo
+membership is limited to the standards crate so uninitialized submodules remain
+valid locally; run component commands from their own repository directory.
+Standards inspect only initialized tools locally, but `CI=true` requires and
+checks the complete configured inventory.
 
 When child and umbrella branches both move a submodule pointer, never resolve the gitlink conflict by choosing one side. Merge the child histories first and pin their common descendant. Tool commits and PRs land before the umbrella pointer PR. Prefer merge commits; do not rebase or force-push by default.
 
@@ -146,7 +152,7 @@ The concern is not real until enforcement exists. Prose in AGENTS.md is not enfo
 
 Two tracks run in parallel: mechanical fixes and agentic review.
 
-**Mechanical fixes** (workspace-routing, tdd-ratchet, tests-present, etc.): Pick one concern, fix it, run the test, see it pass. Simple loop.
+**Mechanical fixes** (ecosystem-independence, tdd-ratchet, tests-present, etc.): Pick one concern, fix it, run the test, see it pass. Simple loop.
 
 **Agentic review pass** (code-review, error-messages, help-text, injectable-io, black-box-test-quality): Manual concerns require independent review. A review agent can only do two things:
 
@@ -269,7 +275,7 @@ cd tools/<name> && cargo ratchet
 | Development process, loops, discipline | This file |
 | Cross-cutting standards definitions and enforcement | `crates/standards/src/concerns/*.rs` |
 | Concern registry / agentic concern visibility | `crates/standards/src/concerns/mod.rs` |
-| Shared Rust libraries | `crates/` |
+| Shared Rust libraries | Independent repos pinned under `libraries/` |
 | Tool-specific product/architecture facts | `tools/<name>/AGENTS.md` |
 | Tool CI, releases, Pages | Tool's own repo |
 | Umbrella site | `docs/` |
