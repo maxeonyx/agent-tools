@@ -126,10 +126,15 @@ Exit: all tools have the improvement, and enforcement prevents regression.
 2. Work in `tools/<name>/` within this workspace
 3. Follow the loops: investigate → design → test → implement → review
 4. After review: does this change represent a pattern other tools should follow? If yes → generalize loop
-5. Commit and push the tool repo, then update the submodule pointer here
+5. Run the child repository's `devenv test`; its actionlint check is the local
+   proof that GitHub can parse the workflow. Commit and push the tool branch,
+   open a PR, and merge current child `main` into that branch.
    - **Run `git status --short` after every commit** and confirm nothing you meant to commit is left behind. A 2026-08-12 dotsync session corrupted three commits' worth of TDD history because `git add -u <pathspec>` _restricts_ staging to that pathspec (it does not mean "everything tracked plus this") — the ratchet flips landed in commits that didn't contain their work, and only a reviewer's history audit caught it. If commit messages describe work, the diff must contain that work.
-   - When watching CI, watch the **CI** workflow run, not the Pages run for the same commit — `gh run list --limit 1` can hand you the wrong one and its green means nothing about the release.
-6. **Observe CI and reconcile it against your intent — do NOT chase green.** After pushing a tool-main change, look at the tool's CI run (`gh run list`/`gh run view`). The bar is not "CI is green"; the bar is "CI is in the state I intended, and I understand every red." Red CI is often the correct desired state (a `pending` test failing as expected, a not-yet-implemented concern). What's forbidden is _not looking_, or seeing an **unexpected** red and not understanding it. Last session's broken migrations shipped because the agent never looked at CI at all and so missed a version-bump break and a gatekeeper break — surprise reds, not expected ones. So: confirm CI's actual state matches what you meant to do before calling the work done or bumping the submodule pointer. Never edit code, move a baseline, or relax a gate just to turn a red green — see "LEAVING TESTS RED IS A SUPERPOWER".
+6. Explicitly dispatch the source workflow with `gh workflow run ci.yml --ref
+   <feature-branch> -f pr_number=<number>`. It serializes integration, records
+   the required Ready check, auto-merges, publishes the artifacts it already
+   built, and records `integrated-ci` on the exact merge commit.
+7. **Observe the whole dispatched run and reconcile it against your intent — do NOT chase green.** The bar is not "CI is green"; the bar is "CI is in the state I intended, and I understand every red." Red CI is often the correct desired state. Confirm the PR merge, release, Pages deployment, and exact-commit `integrated-ci` status before updating the umbrella pointer. Never relax a gate merely to turn a red green.
 
 Standard release targets are `x86_64-unknown-linux-gnu` and `x86_64-pc-windows-msvc` only. Do not add musl, macOS, or aarch64 release targets unless the user explicitly reopens that support. `oc` is intentionally Linux-only for now.
 
@@ -263,8 +268,12 @@ cd tools/<name> && cargo ratchet
 
 1. Make changes in `tools/<name>/`
 2. Commit and push to the tool's own repo/branch
-3. From workspace root: `git add tools/<name>` to update the submodule pointer
-4. Commit and push the workspace
+3. Open the child PR, merge current child `main`, and explicitly dispatch its
+   serialized integration workflow
+4. Wait for that workflow to merge, release, deploy, and attest its merge commit
+5. Fast-forward the child checkout to the merged `main`
+6. From workspace root: `git add tools/<name>` to update the submodule pointer
+7. Commit and push the workspace
 
 ---
 

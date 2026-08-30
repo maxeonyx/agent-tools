@@ -2,6 +2,7 @@
 
 {
   packages = [
+    pkgs.actionlint
     pkgs.cargo
     pkgs.cargo-nextest
     pkgs.clippy
@@ -18,6 +19,7 @@
   ];
 
   enterTest = ''
+    actionlint
     cargo fmt --check --all
     cargo check -p standards --tests
     cargo test -p standards
