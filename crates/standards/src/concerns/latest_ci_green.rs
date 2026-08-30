@@ -4,9 +4,9 @@
 //! `main` CI run.
 //!
 //! Release and website checks validate public artifacts. They do not prove the
-//! current recorded tool head passed its own repository CI. Compliance here is
-//! remote: for each tool repo, there must be a completed successful `ci.yml`
-//! run on `main` for the exact commit recorded in this workspace.
+//! current recorded tool head passed its own repository integration. Compliance
+//! here is remote: the exact merge commit must carry the successful
+//! `integrated-ci` commit status written after the one-run pipeline publishes.
 
 /// Tools where this concern does not apply.
 pub const NOT_APPLICABLE: &[&str] = &[];
@@ -17,7 +17,7 @@ pub const REVIEW_INSTRUCTIONS: &str = "";
 pub const SPEC: crate::concerns::ConcernSpec = crate::concerns::ConcernSpec {
     id: "latest-ci-green",
     definition_summary:
-        "Pinned tool commits must have a successful ci.yml run on the exact recorded commit.",
+        "Pinned tool commits must have a successful integrated-ci status on the exact recorded merge commit.",
     review_instructions: REVIEW_INSTRUCTIONS,
     applies_to_workspace: false,
     applicability_note:
@@ -47,64 +47,45 @@ mod tests {
             let head = evidence::tool_commit(&tool_dir)
                 .unwrap_or_else(|error| panic!("{tool}: failed to read HEAD: {error}"));
 
-            let runs = command_stdout(
-                EvidenceKey::new("github-ci-runs", format!("{repo}:{head}"))
+            let endpoint = format!("repos/{repo}/commits/{head}/status");
+            let statuses = command_stdout(
+                EvidenceKey::new("github-integrated-ci-status", format!("{repo}:{head}"))
                     .repo(repo)
                     .tool(tool)
                     .commit(&head),
                 "gh",
-                &[
-                    "run",
-                    "list",
-                    "--repo",
-                    repo,
-                    "--workflow",
-                    "ci.yml",
-                    "--branch",
-                    "main",
-                    "--commit",
-                    &head,
-                    "--limit",
-                    "1",
-                    "--json",
-                    "headSha,status,conclusion,url,displayTitle",
-                ],
+                &["api", &endpoint],
             )
-            .unwrap_or_else(|error| panic!("{tool}: failed to read CI runs: {error}"));
+            .unwrap_or_else(|error| panic!("{tool}: failed to read commit statuses: {error}"));
 
-            let parsed: Value = serde_json::from_str(&runs)
-                .unwrap_or_else(|error| panic!("{tool}: invalid gh run list JSON: {error}"));
-            let Some(run) = parsed.as_array().and_then(|runs| runs.first()) else {
+            let parsed: Value = serde_json::from_str(&statuses)
+                .unwrap_or_else(|error| panic!("{tool}: invalid commit status JSON: {error}"));
+            let status = parsed
+                .get("statuses")
+                .and_then(Value::as_array)
+                .and_then(|statuses| {
+                    statuses.iter().find(|status| {
+                        status.get("context").and_then(Value::as_str) == Some("integrated-ci")
+                    })
+                });
+            let Some(status) = status else {
                 failures.push(format!(
-                    "{tool}: no successful ci.yml run found for pinned commit {head} on main"
+                    "{tool}: no integrated-ci status found for pinned merge commit {head}"
                 ));
                 continue;
             };
 
-            let run_sha = run
-                .get("headSha")
+            let state = status
+                .get("state")
                 .and_then(Value::as_str)
                 .unwrap_or_default();
-            let status = run
-                .get("status")
+            let url = status
+                .get("target_url")
                 .and_then(Value::as_str)
                 .unwrap_or_default();
-            let conclusion = run
-                .get("conclusion")
-                .and_then(Value::as_str)
-                .unwrap_or_default();
-            let url = run.get("url").and_then(Value::as_str).unwrap_or_default();
-
-            if run_sha != head {
+            if state != "success" {
                 failures.push(format!(
-                    "{tool}: ci.yml run lookup returned {run_sha}, expected pinned commit {head} ({url})"
-                ));
-                continue;
-            }
-
-            if status != "completed" || conclusion != "success" {
-                failures.push(format!(
-                    "{tool}: latest main ci.yml run for {head} is status={status} conclusion={conclusion} ({url})"
+                    "{tool}: integrated-ci status for {head} is state={state} ({url})"
                 ));
             }
         }

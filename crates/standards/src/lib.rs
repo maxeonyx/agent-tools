@@ -54,6 +54,41 @@ pub fn checked_tools() -> std::vec::IntoIter<&'static str> {
         .into_iter()
 }
 
+pub fn checked_libraries() -> std::vec::IntoIter<&'static str> {
+    let ci = std::env::var_os("CI").is_some();
+    select_libraries(ci, |library| {
+        libraries_dir().join(library).join(".git").exists()
+    })
+    .unwrap_or_else(|error| panic!("library inventory invalid: {error}"))
+    .into_iter()
+}
+
+fn select_libraries(
+    ci: bool,
+    initialized: impl Fn(&str) -> bool,
+) -> Result<Vec<&'static str>, String> {
+    if ci {
+        let missing: Vec<_> = LIBRARIES
+            .iter()
+            .copied()
+            .filter(|library| !initialized(library))
+            .collect();
+        if !missing.is_empty() {
+            return Err(format!(
+                "CI must initialize every library submodule; missing: {}",
+                missing.join(", ")
+            ));
+        }
+        return Ok(LIBRARIES.to_vec());
+    }
+
+    Ok(LIBRARIES
+        .iter()
+        .copied()
+        .filter(|library| initialized(library))
+        .collect())
+}
+
 fn select_tools(ci: bool, initialized: impl Fn(&str) -> bool) -> Result<Vec<&'static str>, String> {
     if ci {
         let missing: Vec<_> = MAINTAINED_TOOLS
@@ -79,7 +114,9 @@ fn select_tools(ci: bool, initialized: impl Fn(&str) -> bool) -> Result<Vec<&'st
 
 #[cfg(test)]
 mod tests {
-    use super::{select_tools, ARCHIVED_TOOLS, MAINTAINED_TOOLS, TOOLS};
+    use super::{
+        select_libraries, select_tools, ARCHIVED_TOOLS, LIBRARIES, MAINTAINED_TOOLS, TOOLS,
+    };
 
     #[test]
     fn local_selection_contains_only_initialized_tools() {
@@ -101,6 +138,14 @@ mod tests {
 
         assert!(error.contains("CI must initialize every tool submodule"));
         assert!(error.contains("tb"));
+    }
+
+    #[test]
+    fn ci_library_selection_requires_the_complete_inventory() {
+        assert_eq!(select_libraries(true, |_| true).unwrap(), LIBRARIES);
+        assert!(select_libraries(true, |_| false)
+            .unwrap_err()
+            .contains("CI must initialize every library submodule"));
     }
 
     #[test]

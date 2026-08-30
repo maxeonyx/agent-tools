@@ -1,8 +1,8 @@
 //! # Well-Tuned CI Triggers
 //!
-//! Tool repositories should not run source checks, release builds, or binary
-//! publishing for every repository change. Source CI is expensive and
-//! release-producing, so it should trigger only for source/release inputs.
+//! Source CI is expensive and release-producing. It runs once, by explicit
+//! dispatch against a pull request that has already passed the repository's
+//! offline checks, and serializes integration across the repository.
 //!
 //! Website updates are separate: if a repo uses `docs/` as its Pages site, a
 //! docs website change should run a Pages deployment, not the source release
@@ -19,17 +19,17 @@ pub const REVIEW_INSTRUCTIONS: &str = "";
 pub const SPEC: crate::concerns::ConcernSpec = crate::concerns::ConcernSpec {
     id: "ci-triggers",
     definition_summary:
-        "Tool CI must use path filters so source/release CI, Pages CI, and internal docs changes trigger only the appropriate workflow.",
+        "Release CI must be explicitly dispatched, serialized through one Ready-to-merge run, and reproducible through repository-local offline checks.",
     review_instructions: REVIEW_INSTRUCTIONS,
     applies_to_workspace: false,
     applicability_note:
-        "Applies to standalone tool repos because they own release-producing CI and Pages workflows.",
+        "Applies to standalone maintained tools and libraries because they own release-producing CI; tool website-only deployments remain separate.",
 };
 
 #[cfg(test)]
 mod tests {
     use super::NOT_APPLICABLE;
-    use crate::{checked_tools, tools_dir};
+    use crate::{checked_libraries, checked_tools, libraries_dir, tools_dir};
     use std::path::Path;
 
     #[test]
@@ -38,7 +38,11 @@ mod tests {
 
         for tool in checked_tools().filter(|tool| !NOT_APPLICABLE.contains(tool)) {
             let tool_dir = tools_dir().join(tool);
-            check_tool(tool, &tool_dir, &mut failures);
+            check_repository(tool, &tool_dir, true, &mut failures);
+        }
+        for library in checked_libraries() {
+            let library_dir = libraries_dir().join(library);
+            check_repository(library, &library_dir, false, &mut failures);
         }
 
         if !failures.is_empty() {
@@ -46,48 +50,55 @@ mod tests {
         }
     }
 
-    fn check_tool(tool: &str, tool_dir: &Path, failures: &mut Vec<String>) {
-        let workflow_dir = tool_dir.join(".github/workflows");
+    fn check_repository(repo: &str, repo_dir: &Path, has_pages: bool, failures: &mut Vec<String>) {
+        let workflow_dir = repo_dir.join(".github/workflows");
         let ci_path = workflow_dir.join("ci.yml");
         let pages_path = workflow_dir.join("pages.yml");
 
-        let ci = read_workflow(tool, &ci_path, failures);
-        let pages = read_workflow(tool, &pages_path, failures);
-        let (Some(ci), Some(pages)) = (ci, pages) else {
+        let Some(ci) = read_workflow(repo, &ci_path, failures) else {
             return;
         };
 
         for required in [
-            "paths:",
-            ".github/workflows/ci.yml",
-            "Cargo.toml",
-            "Cargo.lock",
-            "src/**",
-            "tests/**",
-            "docs/version.json",
+            "workflow_dispatch:",
+            "pr_number:",
+            "group: integration",
+            "cancel-in-progress: false",
+            "name: Ready",
+            "actionlint",
+            "gh pr merge",
+            "--merge",
+            "--auto",
+            "integrated-ci",
+            "cargo build --release",
+            "gh release",
         ] {
             if !ci.contains(required) {
                 failures.push(format!(
-                    "{tool}: ci.yml missing source path filter {required}"
+                    "{repo}: ci.yml missing integration evidence {required}"
                 ));
             }
         }
 
-        if ci.contains("docs/**")
-            || ci.contains("docs/process/**")
-            || ci.contains("docs/source-notes/**")
-        {
+        if ci.contains("push:") || ci.contains("pull_request:") || ci.contains("merge_group:") {
             failures.push(format!(
-                "{tool}: ci.yml must not broadly trigger source/release CI for internal docs"
+                "{repo}: ci.yml must run only by explicit workflow dispatch"
             ));
         }
 
-        if !ci.contains("gh release") {
+        let devenv = std::fs::read_to_string(repo_dir.join("devenv.nix")).unwrap_or_default();
+        if !devenv.contains("pkgs.actionlint") || !devenv.contains("actionlint") {
             failures.push(format!(
-                "{tool}: ci.yml no longer appears release-producing"
+                "{repo}: devenv test must install and run actionlint offline"
             ));
         }
 
+        if !has_pages {
+            return;
+        }
+        let Some(pages) = read_workflow(repo, &pages_path, failures) else {
+            return;
+        };
         for required in [
             "paths:",
             ".github/workflows/pages.yml",
@@ -96,7 +107,7 @@ mod tests {
         ] {
             if !pages.contains(required) {
                 failures.push(format!(
-                    "{tool}: pages.yml missing website path filter {required}"
+                    "{repo}: pages.yml missing website path filter {required}"
                 ));
             }
         }
@@ -106,17 +117,17 @@ mod tests {
             || pages.contains("docs/source-notes/**")
         {
             failures.push(format!(
-                "{tool}: pages.yml must not broadly trigger for internal docs"
+                "{repo}: pages.yml must not broadly trigger for internal docs"
             ));
         }
 
         if !pages.contains("deploy-pages") {
-            failures.push(format!("{tool}: pages.yml missing Pages deployment"));
+            failures.push(format!("{repo}: pages.yml missing Pages deployment"));
         }
 
         if !pages.contains("gh release download") {
             failures.push(format!(
-                "{tool}: pages.yml should preserve release downloads when deploying website-only changes"
+                "{repo}: pages.yml should preserve release downloads when deploying website-only changes"
             ));
         }
     }
