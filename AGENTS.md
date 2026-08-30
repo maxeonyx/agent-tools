@@ -22,7 +22,7 @@ valid locally; run component commands from their own repository directory.
 Standards inspect only initialized tools locally, but `CI=true` requires and
 checks the complete configured inventory.
 
-When child and umbrella branches both move a submodule pointer, never resolve the gitlink conflict by choosing one side. Merge the child histories first and pin their common descendant. Tool commits and PRs land before the umbrella pointer PR. Prefer merge commits; do not rebase or force-push by default.
+When child and umbrella branches both move a submodule pointer, never resolve the gitlink conflict by choosing one side. Merge the child histories first and pin their common descendant. Tool commits and PRs land before the umbrella pointer PR. Prefer merge commits; do not rebase or force-push by default. Rewrite history only when it is genuinely unusable; if replacement is necessary, manually rebuild the branch and explicitly swap it rather than using a brittle routine rebase workflow.
 
 ## IMPROVE PROCESS FIRST
 
