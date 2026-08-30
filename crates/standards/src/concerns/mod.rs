@@ -22,6 +22,7 @@ pub mod interactive_usage;
 pub mod landing_page;
 pub mod latest_ci_green;
 pub mod markdown_no_hard_wrap;
+pub mod merge_policy;
 pub mod opencode_skill;
 pub mod pinned_main_parity;
 pub mod public_interface_snapshots;
@@ -75,6 +76,7 @@ pub const ALL_CONCERN_SPECS: &[ConcernSpec] = &[
     interactive_usage::SPEC,
     code_review::SPEC,
     markdown_no_hard_wrap::SPEC,
+    merge_policy::SPEC,
     concern_module_coverage::SPEC,
 ];
 
@@ -110,6 +112,7 @@ pub const ALL_CONCERNS: &[&str] = &[
     "interactive-usage",
     "code-review",
     "markdown-no-hard-wrap",
+    "merge-policy",
     "concern-module-coverage",
 ];
 
