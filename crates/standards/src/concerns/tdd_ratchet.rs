@@ -103,9 +103,11 @@ mod tests {
                 "{tool}: ci.yml must install cargo-ratchet from source (cargo install --path ...tdd-ratchet)"
             ));
         }
-        if !ci.contains("cargo install cargo-nextest") {
+        let installs_nextest = ci.contains("cargo install cargo-nextest")
+            || ci.contains("taiki-e/install-action@nextest");
+        if !installs_nextest {
             failures.push(format!(
-                "{tool}: ci.yml must install cargo-nextest (the ratchet shells out to nextest)"
+                "{tool}: ci.yml must install cargo-nextest from source or the maintained prebuilt action (the ratchet shells out to nextest)"
             ));
         }
         if !run_steps(ci).any(|step| step.contains("cargo ratchet")) {
