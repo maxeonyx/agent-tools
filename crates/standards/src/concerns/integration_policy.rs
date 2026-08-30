@@ -24,20 +24,20 @@ mod tests {
     use crate::workspace_root;
     use serde_json::Value;
 
-    const REPOSITORIES: &[&str] = &[
-        "help-test",
-        "trunc",
-        "tmux-bridge",
-        "dotsync",
-        "tdd-ratchet-rs",
-        "agent-harness",
+    const REPOSITORIES: &[(&str, bool)] = &[
+        ("help-test", false),
+        ("trunc", true),
+        ("tmux-bridge", true),
+        ("dotsync", true),
+        ("tdd-ratchet-rs", true),
+        ("agent-harness", true),
     ];
 
     #[test]
     fn integration_policy() {
         let mut failures = Vec::new();
 
-        for repo in REPOSITORIES {
+        for (repo, has_pages) in REPOSITORIES {
             let settings_endpoint = format!("repos/maxeonyx/{repo}");
             let settings = github_json(repo, "repository-settings", &settings_endpoint);
             match settings {
@@ -50,6 +50,17 @@ mod tests {
             match protection {
                 Ok(content) => failures.extend(protection_failures(repo, &content)),
                 Err(error) => failures.push(error),
+            }
+
+            if *has_pages {
+                let pages_endpoint = format!(
+                    "repos/maxeonyx/{repo}/environments/github-pages/deployment-branch-policies"
+                );
+                let pages = github_json(repo, "pages-deployment-policy", &pages_endpoint);
+                match pages {
+                    Ok(content) => failures.extend(pages_policy_failures(repo, &content)),
+                    Err(error) => failures.push(error),
+                }
             }
         }
 
@@ -130,8 +141,27 @@ mod tests {
         failures
     }
 
-    fn pages_policy_failures(_repo: &str, _content: &str) -> Vec<String> {
-        Vec::new()
+    fn pages_policy_failures(repo: &str, content: &str) -> Vec<String> {
+        let value: Value = match serde_json::from_str(content) {
+            Ok(value) => value,
+            Err(error) => return vec![format!("{repo}: invalid Pages policy JSON: {error}")],
+        };
+        let accepts_integration_branches = value
+            .get("branch_policies")
+            .and_then(Value::as_array)
+            .is_some_and(|policies| {
+                policies.iter().any(|policy| {
+                    policy.get("type").and_then(Value::as_str) == Some("branch")
+                        && policy.get("name").and_then(Value::as_str) == Some("*")
+                })
+            });
+        if accepts_integration_branches {
+            Vec::new()
+        } else {
+            vec![format!(
+                "{repo}: Pages environment does not accept validated integration branches"
+            )]
+        }
     }
 
     fn fixture(name: &str, file: &str) -> String {
@@ -147,6 +177,9 @@ mod tests {
     fn protected_integration_fixture_passes() {
         assert!(settings_failures("fixture", &fixture("pass", "settings.json")).is_empty());
         assert!(protection_failures("fixture", &fixture("pass", "protection.json")).is_empty());
+        assert!(
+            pages_policy_failures("fixture", &fixture("pass", "pages-policies.json")).is_empty()
+        );
     }
 
     #[test]
