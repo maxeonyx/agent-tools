@@ -1,0 +1,5 @@
+name: CI
+jobs:
+  check:
+    steps:
+      - run: git clone https://github.com/maxeonyx/agent-tools ../../agent-tools-deps

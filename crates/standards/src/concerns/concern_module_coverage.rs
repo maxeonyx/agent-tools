@@ -134,10 +134,6 @@ mod tests {
             "website-install-links",
             "The current checker inspects live website/install metadata and will share release/version evidence; fixtures should wait for that harness.",
         ),
-        (
-            "workspace-routing",
-            "The current checker inspects live workspace routing and submodule layout; fixtures need a synthetic workspace harness.",
-        ),
     ];
 
     #[derive(Deserialize)]
