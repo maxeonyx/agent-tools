@@ -16,6 +16,8 @@ Every tool in this suite should benefit from every improvement made to any tool.
 
 Mutable work belongs in an exclusive full clone under the sibling `agent-tools-workspace` repository. Name clones `at-<feature-branch>` directly under that repository and use slash-free feature branch names. Never edit, stash, reset, or commit another session's clone.
 
+After creating a clone, run every branch, push, and PR command with the new clone as the explicit working directory. A shell stays in the parent directory after `git clone`; chaining `git switch` or `git push` without changing directories can mutate the workspace-wrapper repository instead of the new clone.
+
 Initialize only the tool and library submodules the task needs. Root Cargo
 membership is limited to the standards crate so uninitialized submodules remain
 valid locally; run component commands from their own repository directory.
