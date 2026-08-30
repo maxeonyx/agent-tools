@@ -130,6 +130,10 @@ mod tests {
         failures
     }
 
+    fn pages_policy_failures(_repo: &str, _content: &str) -> Vec<String> {
+        Vec::new()
+    }
+
     fn fixture(name: &str, file: &str) -> String {
         let path = workspace_root()
             .join("crates/standards/src/concerns/integration_policy/fixtures")
@@ -157,5 +161,17 @@ mod tests {
             .any(|failure| failure.contains("up-to-date")));
         assert!(failures.iter().any(|failure| failure.contains("Ready")));
         assert!(failures.iter().any(|failure| failure.contains("admins")));
+    }
+
+    #[test]
+    fn main_only_pages_policy_is_rejected() {
+        let failures = pages_policy_failures(
+            "fixture",
+            &fixture("fail-unprotected", "pages-policies.json"),
+        );
+
+        assert!(failures
+            .iter()
+            .any(|failure| failure.contains("integration branches")));
     }
 }
