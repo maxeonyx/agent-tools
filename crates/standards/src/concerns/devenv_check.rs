@@ -141,11 +141,17 @@ mod tests {
                 failures.push(format!("{name}: devenv.nix missing {package}"));
             }
         }
+        check_enter_test(&nix, is_workspace, name, failures);
+    }
+
+    fn check_enter_test(nix: &str, is_workspace: bool, name: &str, failures: &mut Vec<String>) {
         if !nix.contains("enterTest") {
             failures.push(format!("{name}: devenv.nix missing enterTest"));
+            return;
         }
         if is_workspace {
             for command in [
+                "actionlint",
                 "cargo fmt --check --all",
                 "cargo check -p standards --tests",
                 "cargo test -p standards",
@@ -156,15 +162,46 @@ mod tests {
             }
         } else {
             for command in [
+                "actionlint",
                 "cargo fmt --check",
                 "cargo clippy -- -D warnings",
-                "cargo test",
+                "cargo ratchet",
             ] {
                 if !nix.contains(command) {
                     failures.push(format!("{name}: enterTest missing `{command}`"));
                 }
             }
         }
+    }
+
+    #[test]
+    fn tool_enter_test_rejects_plain_cargo_test() {
+        let nix = r#"
+            enterTest = ''
+              actionlint
+              cargo fmt --check
+              cargo clippy -- -D warnings
+              cargo test
+            '';
+        "#;
+        let mut failures = Vec::new();
+        check_enter_test(nix, false, "fixture", &mut failures);
+        assert_eq!(failures, vec!["fixture: enterTest missing `cargo ratchet`"]);
+    }
+
+    #[test]
+    fn tool_enter_test_accepts_cargo_ratchet() {
+        let nix = r#"
+            enterTest = ''
+              actionlint
+              cargo fmt --check
+              cargo clippy -- -D warnings
+              cargo ratchet
+            '';
+        "#;
+        let mut failures = Vec::new();
+        check_enter_test(nix, false, "fixture", &mut failures);
+        assert!(failures.is_empty());
     }
 
     fn read(path: impl AsRef<Path>) -> String {
