@@ -1,8 +1,6 @@
 # agent-tools — Development Workspace
 
-This is the control plane for coordinating the maxeonyx agent-tool suite.
-Cross-cutting work is easiest here, while every child repository remains a
-complete standalone development, CI, and release context in its own right.
+This is the control plane for coordinating the maxeonyx agent-tool suite. Cross-cutting work is easiest here, while every child repository remains a complete standalone development, CI, and release context in its own right.
 
 ## TDD ratchet — read before testing
 
@@ -18,11 +16,7 @@ Mutable work belongs in an exclusive full clone under the sibling `agent-tools-w
 
 After creating a clone, run every branch, push, and PR command with the new clone as the explicit working directory. A shell stays in the parent directory after `git clone`; chaining `git switch` or `git push` without changing directories can mutate the workspace-wrapper repository instead of the new clone.
 
-Initialize only the tool and library submodules the task needs. Root Cargo
-membership is limited to the standards crate so uninitialized submodules remain
-valid locally; run component commands from their own repository directory.
-Standards inspect only initialized tools locally, but `CI=true` requires and
-checks the complete configured inventory.
+Initialize only the tool and library submodules the task needs. Root Cargo membership is limited to the standards crate so uninitialized submodules remain valid locally; run component commands from their own repository directory. Standards inspect only initialized tools locally, but `CI=true` requires and checks the complete configured inventory.
 
 When child and umbrella branches both move a submodule pointer, never resolve the gitlink conflict by choosing one side. Merge the child histories first and pin their common descendant. Tool commits and PRs land before the umbrella pointer PR. Prefer merge commits; do not rebase or force-push by default. Rewrite history only when it is genuinely unusable; if replacement is necessary, manually rebuild the branch and explicitly swap it rather than using a brittle routine rebase workflow.
 
@@ -128,14 +122,9 @@ Exit: all tools have the improvement, and enforcement prevents regression.
 2. Work in `tools/<name>/` within this workspace
 3. Follow the loops: investigate → design → test → implement → review
 4. After review: does this change represent a pattern other tools should follow? If yes → generalize loop
-5. Run the child repository's `devenv test`; its actionlint check is the local
-   proof that GitHub can parse the workflow. Commit and push the tool branch,
-   open a PR, and merge current child `main` into that branch.
+5. Run the child repository's `devenv test`; its actionlint check is the local proof that GitHub can parse the workflow. Commit and push the tool branch, open a PR, and merge current child `main` into that branch.
    - **Run `git status --short` after every commit** and confirm nothing you meant to commit is left behind. A 2026-08-12 dotsync session corrupted three commits' worth of TDD history because `git add -u <pathspec>` _restricts_ staging to that pathspec (it does not mean "everything tracked plus this") — the ratchet flips landed in commits that didn't contain their work, and only a reviewer's history audit caught it. If commit messages describe work, the diff must contain that work.
-6. Explicitly dispatch the source workflow with `gh workflow run ci.yml --ref
-   <feature-branch> -f pr_number=<number>`. It serializes integration, records
-   the required Ready check, auto-merges, publishes the artifacts it already
-   built, and records `integrated-ci` on the exact merge commit.
+6. Explicitly dispatch the source workflow with `gh workflow run ci.yml --ref <feature-branch> -f pr_number=<number>`. It serializes integration, records the required Ready check, auto-merges, publishes the artifacts it already built, and records `integrated-ci` on the exact merge commit.
 7. **Observe the whole dispatched run and reconcile it against your intent — do NOT chase green.** The bar is not "CI is green"; the bar is "CI is in the state I intended, and I understand every red." Red CI is often the correct desired state. Confirm the PR merge, release, Pages deployment, and exact-commit `integrated-ci` status before updating the umbrella pointer. Never relax a gate merely to turn a red green.
 
 Standard release targets are `x86_64-unknown-linux-gnu` and `x86_64-pc-windows-msvc` only. Do not add musl, macOS, or aarch64 release targets unless the user explicitly reopens that support. `oc` is intentionally Linux-only for now.
@@ -270,8 +259,7 @@ cd tools/<name> && cargo ratchet
 
 1. Make changes in `tools/<name>/`
 2. Commit and push to the tool's own repo/branch
-3. Open the child PR, merge current child `main`, and explicitly dispatch its
-   serialized integration workflow
+3. Open the child PR, merge current child `main`, and explicitly dispatch its serialized integration workflow
 4. Wait for that workflow to merge, release, deploy, and attest its merge commit
 5. Fast-forward the child checkout to the merged `main`
 6. From workspace root: `git add tools/<name>` to update the submodule pointer
