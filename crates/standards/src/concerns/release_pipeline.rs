@@ -2,10 +2,10 @@
 //!
 //! Each tool should have consistent CI: check → build → release → pages.
 //!
-//! Consistent pipelines mean consistent behavior: debounced runs, predictable
-//! release mechanics, and automatic Pages deployment. When you fix a CI issue in
-//! one tool, you should be able to apply the same fix across all tools without
-//! re-learning each pipeline.
+//! Consistent pipelines mean consistent behavior: serialized integration runs,
+//! predictable release mechanics, and automatic Pages deployment. When you fix
+//! a CI issue in one tool, you should be able to apply the same fix across all
+//! tools without re-learning each pipeline.
 //!
 //! Compliance is primarily release evidence: the current GitHub Release must
 //! expose the expected Linux binary asset for the tool. Workflow YAML markers
@@ -51,8 +51,10 @@ mod tests {
             let ci_contents = std::fs::read_to_string(&ci_path)
                 .unwrap_or_else(|error| panic!("failed to read {}: {error}", ci_path.display()));
 
-            if !ci_contents.contains("cancel-in-progress: true") {
-                failures.push(format!("{tool}: ci.yml missing cancel-in-progress: true"));
+            if !ci_contents.contains("cancel-in-progress: false") {
+                failures.push(format!(
+                    "{tool}: ci.yml must preserve in-flight integration with cancel-in-progress: false"
+                ));
             }
             if !ci_contents.contains("gh release") {
                 failures.push(format!("{tool}: ci.yml missing gh release"));

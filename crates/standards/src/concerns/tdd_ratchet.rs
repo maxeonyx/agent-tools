@@ -103,9 +103,11 @@ mod tests {
                 "{tool}: ci.yml must install cargo-ratchet from source (cargo install --path ...tdd-ratchet)"
             ));
         }
-        if !ci.contains("cargo install cargo-nextest") {
+        let installs_nextest = ci.contains("cargo install cargo-nextest")
+            || ci.contains("taiki-e/install-action@nextest");
+        if !installs_nextest {
             failures.push(format!(
-                "{tool}: ci.yml must install cargo-nextest (the ratchet shells out to nextest)"
+                "{tool}: ci.yml must install cargo-nextest from source or the maintained prebuilt action (the ratchet shells out to nextest)"
             ));
         }
         if !run_steps(ci).any(|step| step.contains("cargo ratchet")) {
@@ -264,6 +266,19 @@ mod tests {
 "#;
 
         assert!(ci_pattern_failures_from_text("tdd-ratchet", ci).is_empty());
+    }
+
+    #[test]
+    fn ci_pattern_accepts_prebuilt_nextest_installer() {
+        let ci = r#"
+      - uses: taiki-e/install-action@nextest
+      - name: Install cargo-ratchet
+        run: cargo install --path ../../ratchet-install/tools/tdd-ratchet --locked
+      - name: Run tests (ratchet)
+        run: cargo ratchet
+"#;
+
+        assert!(ci_pattern_failures_from_text("prebuilt-nextest", ci).is_empty());
     }
 
     #[test]
