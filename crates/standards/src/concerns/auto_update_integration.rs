@@ -51,19 +51,7 @@ mod tests {
         let mut failures = Vec::new();
 
         let updater = workspace_root().join("crates/agent-tools-updater/src/lib.rs");
-        let updater_content = std::fs::read_to_string(&updater)
-            .unwrap_or_else(|error| panic!("failed to read {}: {error}", updater.display()));
-        if !updater_content.contains("pub fn") && !updater_content.contains("pub async fn") {
-            failures.push("agent-tools-updater: no public updater API implemented".to_string());
-        }
-        if !updater_content.contains("#[test]") && !updater_content.contains("#[tokio::test]") {
-            failures.push("agent-tools-updater: no updater tests found".to_string());
-        }
-        if !contains_any(&updater_content, FORCE_UPDATE_MARKERS) {
-            failures.push(
-                "agent-tools-updater: no forced-update test hook/env marker found".to_string(),
-            );
-        }
+        check_updater(&updater, &mut failures);
 
         for tool in checked_tools().filter(|tool| !NOT_APPLICABLE.contains(tool)) {
             let tool_dir = tools_dir().join(tool);
@@ -100,6 +88,48 @@ mod tests {
                 failures.join("\n  ")
             );
         }
+    }
+
+    fn check_updater(updater: &std::path::Path, failures: &mut Vec<String>) {
+        let updater_content = match std::fs::read_to_string(updater) {
+            Ok(content) => content,
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+                failures.push(
+                    "agent-tools-updater: crates/agent-tools-updater/src/lib.rs missing"
+                        .to_string(),
+                );
+                return;
+            }
+            Err(error) => {
+                failures.push(format!(
+                    "agent-tools-updater: failed to read {}: {error}",
+                    updater.display()
+                ));
+                return;
+            }
+        };
+        if !updater_content.contains("pub fn") && !updater_content.contains("pub async fn") {
+            failures.push("agent-tools-updater: no public updater API implemented".to_string());
+        }
+        if !updater_content.contains("#[test]") && !updater_content.contains("#[tokio::test]") {
+            failures.push("agent-tools-updater: no updater tests found".to_string());
+        }
+        if !contains_any(&updater_content, FORCE_UPDATE_MARKERS) {
+            failures.push(
+                "agent-tools-updater: no forced-update test hook/env marker found".to_string(),
+            );
+        }
+    }
+
+    #[test]
+    fn missing_updater_is_reported_instead_of_panicking() {
+        let updater = workspace_root().join("target/standards-fixtures/missing-updater/src/lib.rs");
+        let mut failures = Vec::new();
+        check_updater(&updater, &mut failures);
+        assert_eq!(
+            failures,
+            vec!["agent-tools-updater: crates/agent-tools-updater/src/lib.rs missing"]
+        );
     }
 
     fn source_tree_contents(tool: &str) -> String {

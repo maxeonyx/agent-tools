@@ -8,9 +8,9 @@
 //! - `tool --version` prints `<binary> <version>`
 //! - `tool --version --json` prints machine-readable JSON with `package`,
 //!   `binary`, and `version`
-//! - the umbrella site package has `docs/version.json` listing the current
-//!   tool versions recorded in this workspace, plus site identity and build
-//!   metadata when available.
+//! - the umbrella source has deterministic `docs/version.json` content listing
+//!   the current tool versions
+//! - the published umbrella `/version.json` adds commit and build-time metadata
 
 /// Tools where this concern does not apply.
 pub const NOT_APPLICABLE: &[&str] = &[];
@@ -55,7 +55,8 @@ mod tests {
             check_cli_version_output(tool, package, binary, version, &mut failures);
         }
 
-        check_workspace_website_json(&expected_versions, &mut failures);
+        check_workspace_source_json(&expected_versions, &mut failures);
+        check_workspace_live_json(&expected_versions, &mut failures);
 
         if !failures.is_empty() {
             panic!(
@@ -65,7 +66,7 @@ mod tests {
         }
     }
 
-    fn check_workspace_website_json(
+    fn check_workspace_source_json(
         expected_versions: &BTreeMap<String, String>,
         failures: &mut Vec<String>,
     ) {
@@ -81,30 +82,73 @@ mod tests {
         if value.get("site").and_then(Value::as_str) != Some("agent-tools") {
             failures.push("workspace: docs/version.json missing site=agent-tools".to_string());
         }
-        if !value.get("git_commit").is_some_and(Value::is_string)
-            && !value.get("commit").is_some_and(Value::is_string)
-        {
-            failures.push(
-                "workspace: docs/version.json missing git_commit/commit metadata".to_string(),
-            );
-        }
-        if !value.get("published_at").is_some_and(Value::is_string)
-            && !value.get("built_at").is_some_and(Value::is_string)
-        {
-            failures.push(
-                "workspace: docs/version.json missing published_at/built_at metadata".to_string(),
-            );
+        for build_field in ["git_commit", "commit", "published_at", "built_at"] {
+            if value.get(build_field).is_some() {
+                failures.push(format!(
+                    "workspace: deterministic docs/version.json must not contain {build_field}"
+                ));
+            }
         }
 
+        check_workspace_tool_versions(&value, expected_versions, failures, "docs/version.json");
+    }
+
+    fn check_workspace_live_json(
+        expected_versions: &BTreeMap<String, String>,
+        failures: &mut Vec<String>,
+    ) {
+        let url = "https://tools.maxeonyx.com/version.json";
+        let output = evidence::context().command(
+            EvidenceKey::new("live-version-json", url).tool("agent-tools"),
+            "curl",
+            &["-fsSL", "--max-time", "10", url],
+            &workspace_root(),
+        );
+        if !output.status_success {
+            failures.push(format!(
+                "workspace: live /version.json failed: {}",
+                output.stderr.trim()
+            ));
+            return;
+        }
+        let value = match serde_json::from_str::<Value>(&output.stdout) {
+            Ok(value) => value,
+            Err(error) => {
+                failures.push(format!(
+                    "workspace: live /version.json invalid JSON: {error}"
+                ));
+                return;
+            }
+        };
+
+        if value.get("site").and_then(Value::as_str) != Some("agent-tools") {
+            failures.push("workspace: live /version.json missing site=agent-tools".to_string());
+        }
+        if !value.get("git_commit").is_some_and(Value::is_string) {
+            failures.push("workspace: live /version.json missing git_commit metadata".to_string());
+        }
+        if !value.get("built_at").is_some_and(Value::is_string) {
+            failures.push("workspace: live /version.json missing built_at metadata".to_string());
+        }
+
+        check_workspace_tool_versions(&value, expected_versions, failures, "live /version.json");
+    }
+
+    fn check_workspace_tool_versions(
+        value: &Value,
+        expected_versions: &BTreeMap<String, String>,
+        failures: &mut Vec<String>,
+        source: &str,
+    ) {
         let Some(tools) = value.get("tools").and_then(Value::as_object) else {
-            failures.push("workspace: docs/version.json missing tools object".to_string());
+            failures.push(format!("workspace: {source} missing tools object"));
             return;
         };
 
         for (tool, version) in expected_versions {
             if tools.get(tool).and_then(Value::as_str) != Some(version.as_str()) {
                 failures.push(format!(
-                    "workspace: docs/version.json tool {tool} expected version {version}"
+                    "workspace: {source} tool {tool} expected version {version}"
                 ));
             }
         }

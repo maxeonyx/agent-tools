@@ -405,7 +405,7 @@ mod tests {
             let name = entry.file_name().to_string_lossy().to_string();
 
             if path.is_dir() {
-                if SKIP_DIRS.contains(&name.as_str()) || path == excluded_dir {
+                if skip_dir_name(&name) || path == excluded_dir {
                     continue;
                 }
                 // Verbatim upstream copies are not ours to reformat.
@@ -421,6 +421,16 @@ mod tests {
             }
             out.push(path);
         }
+    }
+
+    fn skip_dir_name(name: &str) -> bool {
+        SKIP_DIRS.contains(&name) || name.starts_with(".devenv.")
+    }
+
+    #[test]
+    fn generated_devenv_profiles_are_skipped() {
+        assert!(skip_dir_name(".devenv"));
+        assert!(skip_dir_name(".devenv.generated-profile"));
     }
 
     fn fixture_files(case: &str) -> Vec<PathBuf> {
