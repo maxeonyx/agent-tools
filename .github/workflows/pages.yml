@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - docs/**
+      - scripts/stage-site.py
       - .github/workflows/pages.yml
   workflow_dispatch:
 
@@ -31,10 +32,18 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v6
 
+      - name: Stage the site with deployment metadata
+        run: |
+          python3 scripts/stage-site.py \
+            --source docs \
+            --output _site \
+            --git-commit "$GITHUB_SHA" \
+            --built-at "$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v4
         with:
-          path: docs
+          path: _site
 
       - name: Deploy to GitHub Pages
         id: deployment
