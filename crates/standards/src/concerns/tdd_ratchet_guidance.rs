@@ -3,7 +3,8 @@
 //! Agents must understand the ratchet before they write or run a test. Every
 //! maintained tool guide and the umbrella guide therefore explain, near the
 //! beginning, that an expected red new test is a green CI state while a new
-//! test that starts green is a ratchet violation.
+//! test that starts green is a ratchet violation. The pending state may be
+//! committed by the developer or recorded by a trusted ledger workflow.
 
 pub const NOT_APPLICABLE: &[&str] = &[];
 
@@ -12,7 +13,7 @@ pub const REVIEW_INSTRUCTIONS: &str = "";
 pub const SPEC: crate::concerns::ConcernSpec = crate::concerns::ConcernSpec {
     id: "tdd-ratchet-guidance",
     definition_summary:
-        "The umbrella and every maintained tool must prominently explain the red-test, pending-commit, green-CI, and later-promotion semantics of tdd-ratchet.",
+        "The umbrella and every maintained tool must prominently explain the red-test, pending-recording, green-CI, and later-promotion semantics of tdd-ratchet.",
     review_instructions: REVIEW_INSTRUCTIONS,
     applies_to_workspace: true,
     applicability_note:
@@ -55,32 +56,35 @@ mod tests {
             .to_lowercase();
         let required = [
             (
-                "cargo ratchet",
+                vec!["cargo ratchet"],
                 "name `cargo ratchet` as the test entrypoint",
             ),
-            ("new test must be red", "say a new test must start red"),
             (
-                "committed as `pending`",
-                "require the red test to be committed as pending",
+                vec!["new test must be red"],
+                "say a new test must start red",
             ),
             (
-                "expected red test keeps ci green",
+                vec!["committed as `pending`", "recorded as `pending`"],
+                "require the red test's pending state to be recorded",
+            ),
+            (
+                vec!["expected red test keeps ci green"],
                 "explain that expected red keeps CI green",
             ),
             (
-                "new test must not pass",
+                vec!["new test must not pass"],
                 "say a newly introduced test must not pass",
             ),
             (
-                "promotion to `passing`",
+                vec!["promotion to `passing`"],
                 "put promotion to passing after implementation",
             ),
         ];
 
         required
             .iter()
-            .filter_map(|(needle, explanation)| {
-                (!prominent.contains(needle)).then(|| {
+            .filter_map(|(needles, explanation)| {
+                (!needles.iter().any(|needle| prominent.contains(needle))).then(|| {
                     format!("{repo}: first {PROMINENT_LINE_LIMIT} lines must {explanation}")
                 })
             })
