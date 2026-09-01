@@ -107,6 +107,11 @@ mod tests {
     }
 
     #[test]
+    fn trusted_ledger_guidance_fixture_passes() {
+        assert!(guidance_failures("fixture", &fixture("pass-trusted-ledger")).is_empty());
+    }
+
+    #[test]
     fn incomplete_guidance_fixture_is_rejected() {
         let failures = guidance_failures("fixture", &fixture("fail-incomplete"));
 
