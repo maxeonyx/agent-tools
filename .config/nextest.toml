@@ -1,0 +1,12 @@
+[test-groups]
+subprocess-heavy = { max-threads = 1 }
+
+[[profile.default.overrides]]
+filter = '''
+test(devenv_check)
+| test(fast_slow_checks)
+| test(standalone_publishability)
+| test(tdd_ratchet::tests::tdd_ratchet)
+| test(version_artifacts::tests::version_artifacts)
+'''
+test-group = "subprocess-heavy"
