@@ -34,6 +34,48 @@ mod tests {
     use serde_json::Value;
     use std::collections::BTreeMap;
     use std::path::Path;
+    use std::process::Command;
+
+    #[test]
+    fn staged_workspace_version_artifact_includes_deployment_metadata() {
+        let workspace = workspace_root();
+        let output_dir = workspace.join("target/standards-fixtures/staged-version-site");
+        let _ = std::fs::remove_dir_all(&output_dir);
+
+        let output = Command::new("python3")
+            .args([
+                "scripts/stage-site.py",
+                "--source",
+                "docs",
+                "--output",
+                output_dir.to_str().expect("utf-8 fixture path"),
+                "--git-commit",
+                "fixture-commit",
+                "--built-at",
+                "2026-09-02T00:00:00Z",
+            ])
+            .current_dir(&workspace)
+            .output()
+            .expect("run site staging command");
+
+        assert!(
+            output.status.success(),
+            "site staging failed: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        assert!(output_dir.join("index.html").is_file());
+        let version = read_json(&output_dir.join("version.json")).expect("read staged version");
+        assert_eq!(
+            version.get("git_commit").and_then(Value::as_str),
+            Some("fixture-commit")
+        );
+        assert_eq!(
+            version.get("built_at").and_then(Value::as_str),
+            Some("2026-09-02T00:00:00Z")
+        );
+
+        std::fs::remove_dir_all(output_dir).expect("remove staged site fixture");
+    }
 
     #[test]
     fn version_artifacts() {
