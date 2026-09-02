@@ -8,10 +8,13 @@
 //! accidental reasons. The ratchet catches tests that don't test anything real,
 //! regressions, and silent test removal.
 //!
-//! To comply, `cargo ratchet` must pass in the tool repo, and plain
-//! `cargo test` must fail in the same repo. The first proves the ratchet is the
-//! working test entrypoint; the second proves the bypass-prevention gate is
-//! active.
+//! To comply, `cargo ratchet` must be the test entrypoint in the umbrella and
+//! every maintained tool, and plain `cargo test` must be rejected by a
+//! gatekeeper. The umbrella cannot recursively invoke its own complete ratchet
+//! while this concern is running, so its check proves the committed ledger,
+//! pinned source wrapper, offline entrypoint, and gatekeeper structurally and
+//! executes the gatekeeper in isolation. The outer ratchet run is the outcome
+//! evidence for the complete umbrella suite.
 //!
 //! The local invariant above is checked against the workspace-pinned
 //! `tools/tdd-ratchet` source, never an ambient or stale installation. That is
@@ -34,17 +37,16 @@ pub const REVIEW_INSTRUCTIONS: &str = "";
 pub const SPEC: crate::concerns::ConcernSpec = crate::concerns::ConcernSpec {
     id: "tdd-ratchet",
     definition_summary:
-        "Each tool repo must pass cargo ratchet and reject plain cargo test bypasses.",
+        "The umbrella and each tool repo must use cargo ratchet and reject plain cargo test bypasses.",
     review_instructions: REVIEW_INSTRUCTIONS,
-    applies_to_workspace: false,
-    applicability_note:
-        "Applies to tool repos with their own ratchet gate, not to the workspace root.",
+    applies_to_workspace: true,
+    applicability_note: "Applies to the workspace standards suite and every maintained tool because all test and concern changes require failing-first history.",
 };
 
 #[cfg(test)]
 mod tests {
     use super::{NOT_APPLICABLE, SPEC};
-    use crate::{checked_tools, tools_dir};
+    use crate::{checked_tools, tools_dir, workspace_root};
     use std::path::Path;
     use std::process::{Command, Output};
 
@@ -58,7 +60,7 @@ mod tests {
 
     #[test]
     fn tdd_ratchet() {
-        let mut failures = Vec::new();
+        let mut failures = tdd_ratchet_failures_for_workspace(&workspace_root());
 
         for tool in checked_tools().filter(|tool| !NOT_APPLICABLE.contains(tool)) {
             failures.extend(tdd_ratchet_failures_for_tool(tool, &tools_dir().join(tool)));
@@ -67,6 +69,70 @@ mod tests {
         if !failures.is_empty() {
             panic!("tdd-ratchet non-compliant:\n  {}", failures.join("\n  "));
         }
+    }
+
+    fn tdd_ratchet_failures_for_workspace(workspace: &Path) -> Vec<String> {
+        let mut failures = Vec::new();
+
+        let ledger = read(workspace.join(".test-status.json"));
+        if !ledger.contains("test-status.v1.json") {
+            failures.push("workspace: .test-status.json schema-v1 ledger missing".to_string());
+        }
+
+        let standards = read(workspace.join("crates/standards/src/lib.rs"));
+        if !standards.contains("fn tdd_ratchet_gatekeeper()") || !standards.contains("TDD_RATCHET")
+        {
+            failures.push("workspace: standards gatekeeper test missing".to_string());
+        }
+
+        let devenv = read(workspace.join("devenv.nix"));
+        for required in [
+            "writeShellScriptBin \"cargo-ratchet\"",
+            "tools/tdd-ratchet/Cargo.toml",
+            "cargo ratchet",
+        ] {
+            if !devenv.contains(required) {
+                failures.push(format!(
+                    "workspace: devenv.nix missing pinned ratchet entrypoint `{required}`"
+                ));
+            }
+        }
+        if devenv.lines().any(|line| {
+            let line = line.trim();
+            !line.starts_with('#') && line.starts_with("cargo test")
+        }) {
+            failures.push(
+                "workspace: devenv.nix runs cargo test directly instead of cargo ratchet"
+                    .to_string(),
+            );
+        }
+
+        match Command::new("cargo")
+            .args(["test", "-p", "standards", "tdd_ratchet_gatekeeper"])
+            .env_remove("TDD_RATCHET")
+            .current_dir(workspace)
+            .output()
+        {
+            Ok(output)
+                if !output.status.success()
+                    && (String::from_utf8_lossy(&output.stdout)
+                        .contains("Run cargo ratchet instead of cargo test.")
+                        || String::from_utf8_lossy(&output.stderr)
+                            .contains("Run cargo ratchet instead of cargo test.")) => {}
+            Ok(output) => failures.push(format!(
+                "workspace: plain cargo test did not fail through the ratchet gatekeeper{}",
+                output_detail(&output)
+            )),
+            Err(error) => failures.push(format!(
+                "workspace: failed to exercise plain cargo test gatekeeper: {error}"
+            )),
+        }
+
+        failures
+    }
+
+    fn read(path: impl AsRef<Path>) -> String {
+        std::fs::read_to_string(path).unwrap_or_default()
     }
 
     /// Each tool's CI must invoke the canonical ratchet pattern, not a bypass.
