@@ -1,0 +1,89 @@
+name: Trusted test-status ledger
+
+on:
+  pull_request_target:
+    types: [opened, reopened, synchronize]
+
+permissions: {}
+
+concurrency:
+  group: ledger-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    if: github.actor != 'github-actions[bot]' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - name: Check out the pinned ratchet source
+        uses: actions/checkout@v6
+        with:
+          repository: maxeonyx/tdd-ratchet-rs
+          ref: v1.1.3
+          path: trusted-ratchet-source
+          persist-credentials: false
+      - name: Check out the pull-request head without credentials
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          path: pull-request
+          persist-credentials: false
+      - name: Reject ordinary ledger edits
+        run: |
+          changed=$(git diff-tree --no-commit-id --name-only -r "$commit")
+          test "$changed" = '.test-status.json'
+          test "$(gh api commit --jq '.commit.verification.verified')" = true
+          test "$(gh api commit --jq '.author.login')" = 'github-actions[bot]'
+          test "$(gh api commit --jq '.committer.login')" = 'web-flow'
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install nextest
+        uses: taiki-e/install-action@nextest
+      - name: Build the base-controlled ratchet
+        run: cargo build --release --manifest-path trusted-ratchet-source/Cargo.toml
+      - name: Produce the proposed ledger
+        working-directory: pull-request
+        run: ../trusted-ratchet-source/target/release/cargo-ratchet
+      - name: Upload only the proposed ledger
+        uses: actions/upload-artifact@v7
+        with:
+          name: proposed-test-status
+          path: pull-request/.test-status.json
+          if-no-files-found: error
+          include-hidden-files: true
+
+  write:
+    needs: validate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: read
+    steps:
+      - name: Download the ratchet-produced ledger
+        uses: actions/download-artifact@v8
+        with:
+          name: proposed-test-status
+          path: ledger-output
+      - name: Validate and commit only the ledger
+        env:
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          ledger='ledger-output/.test-status.json'
+          test "$(find ledger-output -type f | wc -l)" -eq 1
+          jq -e '(keys - ["\u0024schema", "tests", "checks", "renames"] | length) == 0' "$ledger"
+          jq -e 'all(.tests[]; . == "pending" or . == "passing")' "$ledger"
+          current_head=$(gh pr view "$PR_NUMBER" --json headRefOid --jq .headRefOid)
+          test "$current_head" = "$HEAD_SHA"
+          # Re-establish the semantic ledger transition in the privileged job.
+          jq -e --slurpfile previous previous-ledger.json --slurpfile instructions instructions.json '
+            def transition_ok($from; $to):
+              ($from == "pending" and ($to == "pending" or $to == "passing"))
+              or ($from == "passing" and $to == "passing");
+            all($previous[0].tests | to_entries[]; transition_ok(.value; $ledger.tests[.key]))
+          ' "$ledger"
+          tree_sha=$(gh api -X POST git/trees --input - --jq .sha)
+          commit_sha=$(gh api -X POST git/commits --input - --jq .sha)
+          gh api -X PATCH "git/refs/heads/$HEAD_REF" -f sha="$commit_sha" -F force=false
