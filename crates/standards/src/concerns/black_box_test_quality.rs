@@ -49,8 +49,16 @@ pub const SPEC: crate::concerns::ConcernSpec = crate::concerns::ConcernSpec {
 
 #[cfg(test)]
 mod tests {
-    use super::NOT_APPLICABLE;
+    use super::{NOT_APPLICABLE, SPEC};
     use crate::concerns;
+
+    #[test]
+    fn workspace_is_in_black_box_quality_scope() {
+        assert!(
+            SPEC.applies_to_workspace,
+            "umbrella concern checkers need black-box quality review"
+        );
+    }
 
     #[test]
     fn black_box_test_quality() {
