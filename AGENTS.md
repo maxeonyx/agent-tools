@@ -4,7 +4,7 @@ This is the control plane for coordinating the maxeonyx agent-tool suite. Cross-
 
 ## TDD ratchet — read before testing
 
-Run `cargo ratchet`, not plain `cargo test`, in every maintained tool. A new test must be red when first introduced and committed as `pending`; that expected red test keeps CI green. A new test must not pass when first introduced—doing so makes the ratchet and CI red. Implement only after the red commit, then rerun the ratchet and commit the promotion to `passing`.
+Run `cargo ratchet`, not plain `cargo test`, in the umbrella and every maintained tool. A new test must be red when first introduced and committed as `pending`; that expected red test keeps CI green. A new test must not pass when first introduced—doing so makes the ratchet and CI red. Implement only after the red commit, then rerun the ratchet and commit the promotion to `passing`.
 
 ## The goal
 
@@ -192,7 +192,7 @@ Tool order: trunc → tdd-ratchet → dotsync → tb → oc (simplest first).
 3. Create the tool repo (follow existing patterns — MIT license, AGENTS.md, docs/, .github/workflows/)
 4. Add it as a submodule under `tools/`
 5. Add it to `standards::TOOLS`
-6. Run `cargo test -p standards` and use the failing concern tests as the compliance backlog
+6. Run the umbrella's `cargo ratchet` and use the pending concern tests as the compliance backlog
 7. Bring it into compliance concern by concern via the generalize loop
 8. Update the umbrella site (`docs/index.html`) and cross-references in sibling tools
 
@@ -227,10 +227,10 @@ Prefer outcome and evidence checks over file-shape checks. When multiple concern
 
 Defined in `crates/standards/src/concerns/*.rs`.
 
-Run the standards suite:
+Run the ratcheted standards suite:
 
 ```bash
-cargo test -p standards
+cargo ratchet
 ```
 
 Passing tests are the compliance state. Failing tests are the TODO list. `crates/standards/src/concerns/mod.rs` tracks the concern registry and which concerns are agentic.
@@ -241,7 +241,7 @@ Passing tests are the compliance state. Failing tests are the TODO list. `crates
 
 ```bash
 # Fast checks (lint, format, build, tests — immediate feedback)
-cargo test -p standards              # standards fail until every applicable tool complies
+cargo ratchet                         # standards stay pending until every applicable tool complies
 cargo fmt --check --all              # formatting
 cargo clippy --all -- -D warnings    # linting
 cargo test -p trunc                  # tool tests (fast — spawns binary, checks output)

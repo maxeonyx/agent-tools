@@ -2,7 +2,7 @@
 //!
 //! This crate has no runtime purpose. Its concern modules define cross-cutting
 //! standards and their mechanical tests fail until every applicable tool
-//! complies. Run with `cargo test -p standards`.
+//! complies. Run with `cargo ratchet` from the workspace root.
 
 use std::path::{Path, PathBuf};
 
@@ -117,6 +117,13 @@ mod tests {
     use super::{
         select_libraries, select_tools, ARCHIVED_TOOLS, LIBRARIES, MAINTAINED_TOOLS, TOOLS,
     };
+
+    #[test]
+    fn tdd_ratchet_gatekeeper() {
+        if std::env::var("TDD_RATCHET").is_err() {
+            panic!("Run cargo ratchet instead of cargo test.");
+        }
+    }
 
     #[test]
     fn local_selection_contains_only_initialized_tools() {
