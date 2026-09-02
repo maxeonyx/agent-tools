@@ -154,7 +154,7 @@ mod tests {
                 "actionlint",
                 "cargo fmt --check --all",
                 "cargo check -p standards --tests",
-                "cargo test -p standards",
+                "cargo ratchet",
             ] {
                 if !nix.contains(command) {
                     failures.push(format!("{name}: enterTest missing `{command}`"));

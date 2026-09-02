@@ -2,6 +2,9 @@
 
 {
   packages = [
+    (pkgs.writeShellScriptBin "cargo-ratchet" ''
+      exec cargo run --quiet --manifest-path "$DEVENV_ROOT/tools/tdd-ratchet/Cargo.toml" -- "$@"
+    '')
     pkgs.actionlint
     pkgs.cargo
     pkgs.cargo-nextest
@@ -22,6 +25,6 @@
     actionlint
     cargo fmt --check --all
     cargo check -p standards --tests
-    cargo test -p standards
+    cargo ratchet
   '';
 }
