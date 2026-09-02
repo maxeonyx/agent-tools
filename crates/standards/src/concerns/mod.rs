@@ -33,6 +33,7 @@ pub mod standalone_publishability;
 pub mod tdd_ratchet;
 pub mod tdd_ratchet_guidance;
 pub mod tool_lifecycle;
+pub mod trusted_tdd_ledger;
 pub mod version_artifacts;
 pub mod vision_and_process;
 pub mod website_install_links;
@@ -50,6 +51,7 @@ pub const ALL_CONCERN_SPECS: &[ConcernSpec] = &[
     ecosystem_independence::SPEC,
     tdd_ratchet::SPEC,
     tdd_ratchet_guidance::SPEC,
+    trusted_tdd_ledger::SPEC,
     tool_lifecycle::SPEC,
     black_box_tests::SPEC,
     black_box_test_quality::SPEC,
@@ -87,6 +89,7 @@ pub const ALL_CONCERNS: &[&str] = &[
     "ecosystem-independence",
     "tdd-ratchet",
     "tdd-ratchet-guidance",
+    "trusted-tdd-ledger",
     "tool-lifecycle",
     "tests-present",
     "black-box-test-quality",
