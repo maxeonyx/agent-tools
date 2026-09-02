@@ -248,11 +248,60 @@ mod tests {
     }
 
     fn verify_forced_update(
-        _installed: &Path,
-        _replacement: &Path,
-        _expected_version: &str,
+        installed: &Path,
+        replacement: &Path,
+        expected_version: &str,
     ) -> Result<(), String> {
-        panic!("red: forced-update evidence boundary is not implemented")
+        let before = std::fs::read(installed)
+            .map_err(|error| format!("could not read installed binary before update: {error}"))?;
+        let replacement_bytes = std::fs::read(replacement)
+            .map_err(|error| format!("could not read replacement binary: {error}"))?;
+        if before == replacement_bytes {
+            return Err("installed and replacement binaries were already identical".to_string());
+        }
+
+        let update = Command::new(installed)
+            .arg("--version")
+            .env(FORCE_ENV, "1")
+            .env(SOURCE_ENV, replacement)
+            .output()
+            .map_err(|error| format!("installed binary could not start: {error}"))?;
+        if !update.status.success() {
+            return Err(format!(
+                "forced update command failed with status {}: {}",
+                update.status,
+                String::from_utf8_lossy(&update.stderr).trim()
+            ));
+        }
+
+        let after = std::fs::read(installed)
+            .map_err(|error| format!("could not read installed binary after update: {error}"))?;
+        if after != replacement_bytes {
+            return Err("forced update did not replace the installed binary".to_string());
+        }
+
+        let updated = Command::new(installed)
+            .arg("--version")
+            .env_remove(FORCE_ENV)
+            .env_remove(SOURCE_ENV)
+            .output()
+            .map_err(|error| format!("updated binary could not start: {error}"))?;
+        if !updated.status.success() {
+            return Err(format!(
+                "updated binary failed with status {}: {}",
+                updated.status,
+                String::from_utf8_lossy(&updated.stderr).trim()
+            ));
+        }
+        let actual = String::from_utf8_lossy(&updated.stdout);
+        if actual.trim_end() != expected_version {
+            return Err(format!(
+                "updated binary reported `{}`, expected `{expected_version}`",
+                actual.trim_end()
+            ));
+        }
+
+        Ok(())
     }
 
     #[test]
