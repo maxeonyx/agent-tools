@@ -5,7 +5,7 @@
     "standards::standards$concerns::auto_update_integration::tests::auto_update_integration": "pending",
     "standards::standards$concerns::auto_update_integration::tests::missing_updater_is_reported_instead_of_panicking": "passing",
     "standards::standards$concerns::black_box_test_quality::tests::black_box_test_quality": "pending",
-    "standards::standards$concerns::black_box_test_quality::tests::workspace_is_in_black_box_quality_scope": "pending",
+    "standards::standards$concerns::black_box_test_quality::tests::workspace_is_in_black_box_quality_scope": "passing",
     "standards::standards$concerns::black_box_tests::tests::tests_present": "passing",
     "standards::standards$concerns::ci_triggers::tests::ci_triggers_are_well_tuned": "passing",
     "standards::standards$concerns::code_review::tests::code_review": "pending",
