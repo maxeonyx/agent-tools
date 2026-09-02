@@ -3,7 +3,8 @@ subprocess-heavy = { max-threads = 1 }
 
 [[profile.default.overrides]]
 filter = '''
-test(devenv_check)
+test(auto_update_integration::tests::auto_update_integration)
+| test(devenv_check)
 | test(fast_slow_checks)
 | test(standalone_publishability)
 | test(tdd_ratchet::tests::tdd_ratchet)
