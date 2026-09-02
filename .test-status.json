@@ -77,6 +77,7 @@
     "standards::standards$concerns::tool_lifecycle::tests::active_archive_fixture_is_rejected": "passing",
     "standards::standards$concerns::tool_lifecycle::tests::compliant_archive_fixture_passes": "passing",
     "standards::standards$concerns::tool_lifecycle::tests::tool_lifecycle": "passing",
+    "standards::standards$concerns::version_artifacts::tests::staged_workspace_version_artifact_includes_deployment_metadata": "passing",
     "standards::standards$concerns::version_artifacts::tests::version_artifacts": "passing",
     "standards::standards$concerns::vision_and_process::tests::vision_and_process": "passing",
     "standards::standards$concerns::website_install_links::tests::website_install_links": "passing",
