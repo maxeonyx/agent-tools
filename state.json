@@ -1,3 +1,28 @@
 {
-  "reviews": []
+  "reviews": [
+    {
+      "reviewed_commit": "06d8fc99ca04fa4e3aaf511a3f458b46b49e45cf",
+      "concern": "code-review",
+      "repo": "tdd-ratchet",
+      "attested_via": "review-attest"
+    },
+    {
+      "reviewed_commit": "06d8fc99ca04fa4e3aaf511a3f458b46b49e45cf",
+      "concern": "error-messages",
+      "repo": "tdd-ratchet",
+      "attested_via": "review-attest"
+    },
+    {
+      "reviewed_commit": "06d8fc99ca04fa4e3aaf511a3f458b46b49e45cf",
+      "concern": "help-text",
+      "repo": "tdd-ratchet",
+      "attested_via": "review-attest"
+    },
+    {
+      "reviewed_commit": "06d8fc99ca04fa4e3aaf511a3f458b46b49e45cf",
+      "concern": "injectable-io",
+      "repo": "tdd-ratchet",
+      "attested_via": "review-attest"
+    }
+  ]
 }
