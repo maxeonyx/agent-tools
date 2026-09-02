@@ -259,6 +259,7 @@ mod tests {
     fn run_cargo(tool_dir: &Path, args: &[&str]) -> std::io::Result<Output> {
         Command::new("cargo")
             .args(args)
+            .env_remove("TDD_RATCHET")
             .current_dir(tool_dir)
             .output()
     }
