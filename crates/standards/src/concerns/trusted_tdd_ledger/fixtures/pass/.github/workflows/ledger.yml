@@ -73,8 +73,12 @@ jobs:
         run: |
           ledger='ledger-output/.test-status.json'
           test "$(find ledger-output -type f | wc -l)" -eq 1
-          jq -e '(keys - ["\u0024schema", "tests", "checks", "renames"] | length) == 0' "$ledger"
-          jq -e 'all(.tests[]; . == "pending" or . == "passing")' "$ledger"
+          jq -e '
+            (keys - ["\u0024schema", "tests", "checks", "renames"] | length) == 0 and
+            (all(.tests[]; . == "pending" or . == "passing")) and
+            (has("removals") | not) and
+            (has("baseline") | not)
+          ' "$ledger"
           current_head=$(gh pr view "$PR_NUMBER" --json headRefOid --jq .headRefOid)
           test "$current_head" = "$HEAD_SHA"
           # Re-establish the semantic ledger transition in the privileged job.
@@ -82,8 +86,24 @@ jobs:
             def transition_ok($from; $to):
               ($from == "pending" and ($to == "pending" or $to == "passing"))
               or ($from == "passing" and $to == "passing");
-            all($previous[0].tests | to_entries[]; transition_ok(.value; $ledger.tests[.key]))
+            all($previous[0].tests | to_entries[];
+              if .value == "passing" and $ledger.tests[.key] == "pending"
+              then error("passing tests cannot be downgraded")
+              elif $ledger.tests | has(.key)
+              then transition_ok(.value; $ledger.tests[.key])
+              elif ($instructions[0].removals // []) | index(.key)
+              then true
+              else error("removed tests require an instruction")
+              end)
+            and all($ledger.tests | to_entries[];
+              if $previous[0].tests | has(.key)
+              then transition_ok($previous[0].tests[.key]; .value)
+              elif .value == "pending"
+              then true
+              else error("new tests must enter pending")
+              end)
           ' "$ledger"
+          tree=$(jq -n '{tree: [{path: ".test-status.json"}]}')
           tree_sha=$(gh api -X POST git/trees --input - --jq .sha)
           commit_sha=$(gh api -X POST git/commits --input - --jq .sha)
           gh api -X PATCH "git/refs/heads/$HEAD_REF" -f sha="$commit_sha" -F force=false
