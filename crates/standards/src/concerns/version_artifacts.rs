@@ -10,7 +10,9 @@
 //!   `binary`, and `version`
 //! - the umbrella source has deterministic `docs/version.json` content listing
 //!   the current tool versions
-//! - the published umbrella `/version.json` adds commit and build-time metadata
+//! - staging the umbrella site adds commit and build-time metadata to the
+//!   deployable `/version.json`
+//! - the published umbrella `/version.json` contains the same metadata
 
 /// Tools where this concern does not apply.
 pub const NOT_APPLICABLE: &[&str] = &[];
@@ -38,33 +40,12 @@ mod tests {
 
     #[test]
     fn staged_workspace_version_artifact_includes_deployment_metadata() {
-        let workspace = workspace_root();
-        let output_dir = workspace.join("target/standards-fixtures/staged-version-site");
-        let _ = std::fs::remove_dir_all(&output_dir);
-
-        let output = Command::new("python3")
-            .args([
-                "scripts/stage-site.py",
-                "--source",
-                "docs",
-                "--output",
-                output_dir.to_str().expect("utf-8 fixture path"),
-                "--git-commit",
-                "fixture-commit",
-                "--built-at",
-                "2026-09-02T00:00:00Z",
-            ])
-            .current_dir(&workspace)
-            .output()
-            .expect("run site staging command");
-
-        assert!(
-            output.status.success(),
-            "site staging failed: {}",
-            String::from_utf8_lossy(&output.stderr)
-        );
-        assert!(output_dir.join("index.html").is_file());
-        let version = read_json(&output_dir.join("version.json")).expect("read staged version");
+        let version = stage_workspace_site(
+            "deployment-metadata",
+            "fixture-commit",
+            "2026-09-02T00:00:00Z",
+        )
+        .expect("stage workspace site");
         assert_eq!(
             version.get("git_commit").and_then(Value::as_str),
             Some("fixture-commit")
@@ -73,8 +54,6 @@ mod tests {
             version.get("built_at").and_then(Value::as_str),
             Some("2026-09-02T00:00:00Z")
         );
-
-        std::fs::remove_dir_all(output_dir).expect("remove staged site fixture");
     }
 
     #[test]
@@ -98,6 +77,7 @@ mod tests {
         }
 
         check_workspace_source_json(&expected_versions, &mut failures);
+        check_workspace_staged_json(&expected_versions, &mut failures);
         check_workspace_live_json(&expected_versions, &mut failures);
 
         if !failures.is_empty() {
@@ -105,6 +85,95 @@ mod tests {
                 "version-artifacts non-compliant:\n  {}",
                 failures.join("\n  ")
             );
+        }
+    }
+
+    fn check_workspace_staged_json(
+        expected_versions: &BTreeMap<String, String>,
+        failures: &mut Vec<String>,
+    ) {
+        const COMMIT: &str = "standards-fixture-commit";
+        const BUILT_AT: &str = "2026-09-02T00:00:00Z";
+
+        let value = match stage_workspace_site("concern", COMMIT, BUILT_AT) {
+            Ok(value) => value,
+            Err(error) => {
+                failures.push(format!("workspace: staged site {error}"));
+                return;
+            }
+        };
+
+        if value.get("site").and_then(Value::as_str) != Some("agent-tools") {
+            failures.push("workspace: staged version.json missing site=agent-tools".to_string());
+        }
+        if value.get("git_commit").and_then(Value::as_str) != Some(COMMIT) {
+            failures.push(format!(
+                "workspace: staged version.json did not preserve git_commit={COMMIT}"
+            ));
+        }
+        if value.get("built_at").and_then(Value::as_str) != Some(BUILT_AT) {
+            failures.push(format!(
+                "workspace: staged version.json did not preserve built_at={BUILT_AT}"
+            ));
+        }
+
+        check_workspace_tool_versions(&value, expected_versions, failures, "staged version.json");
+    }
+
+    fn stage_workspace_site(
+        fixture: &str,
+        git_commit: &str,
+        built_at: &str,
+    ) -> Result<Value, String> {
+        let workspace = workspace_root();
+        let output_dir = workspace.join(format!(
+            "target/standards-fixtures/staged-version-site-{fixture}"
+        ));
+        remove_fixture(&output_dir)?;
+
+        let output = Command::new("python3")
+            .args([
+                "scripts/stage-site.py",
+                "--source",
+                "docs",
+                "--output",
+                output_dir
+                    .to_str()
+                    .ok_or("fixture path is not valid UTF-8")?,
+                "--git-commit",
+                git_commit,
+                "--built-at",
+                built_at,
+            ])
+            .current_dir(&workspace)
+            .output()
+            .map_err(|error| format!("command could not start: {error}"))?;
+
+        if !output.status.success() {
+            let _ = remove_fixture(&output_dir);
+            return Err(format!(
+                "command failed with status {}: {}",
+                output.status,
+                String::from_utf8_lossy(&output.stderr).trim()
+            ));
+        }
+        if !output_dir.join("index.html").is_file() {
+            let _ = remove_fixture(&output_dir);
+            return Err("did not contain index.html".to_string());
+        }
+
+        let version = read_json(&output_dir.join("version.json"));
+        let cleanup = remove_fixture(&output_dir);
+        let version = version.map_err(|error| format!("version.json {error}"))?;
+        cleanup?;
+        Ok(version)
+    }
+
+    fn remove_fixture(path: &Path) -> Result<(), String> {
+        match std::fs::remove_dir_all(path) {
+            Ok(()) => Ok(()),
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),
+            Err(error) => Err(format!("could not remove {}: {error}", path.display())),
         }
     }
 

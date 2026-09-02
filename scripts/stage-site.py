@@ -26,6 +26,7 @@ def main() -> None:
     with version_path.open() as handle:
         version = json.load(handle)
     version["git_commit"] = args.git_commit
+    version["built_at"] = args.built_at
     version_path.write_text(json.dumps(version, indent=2) + "\n")
 
 
