@@ -43,10 +43,18 @@ pub const SPEC: crate::concerns::ConcernSpec = crate::concerns::ConcernSpec {
 
 #[cfg(test)]
 mod tests {
-    use super::NOT_APPLICABLE;
+    use super::{NOT_APPLICABLE, SPEC};
     use crate::{checked_tools, tools_dir};
     use std::path::Path;
     use std::process::{Command, Output};
+
+    #[test]
+    fn workspace_is_in_tdd_ratchet_scope() {
+        assert!(
+            SPEC.applies_to_workspace,
+            "the umbrella standards suite must dogfood tdd-ratchet"
+        );
+    }
 
     #[test]
     fn tdd_ratchet() {

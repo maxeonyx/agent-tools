@@ -59,6 +59,7 @@
     "standards::standards$concerns::tdd_ratchet::tests::ci_uses_canonical_ratchet_pattern": "passing",
     "standards::standards$concerns::tdd_ratchet::tests::output_detail_uses_tail_non_empty_lines": "passing",
     "standards::standards$concerns::tdd_ratchet::tests::tdd_ratchet": "pending",
+    "standards::standards$concerns::tdd_ratchet::tests::workspace_is_in_tdd_ratchet_scope": "pending",
     "standards::standards$concerns::tdd_ratchet_guidance::tests::compliant_guidance_fixture_passes": "passing",
     "standards::standards$concerns::tdd_ratchet_guidance::tests::incomplete_guidance_fixture_is_rejected": "passing",
     "standards::standards$concerns::tdd_ratchet_guidance::tests::tdd_ratchet_guidance": "passing",
