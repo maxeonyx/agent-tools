@@ -5,7 +5,23 @@
 
 pub const NOT_APPLICABLE: &[&str] = &["oc", "wmux"];
 
-pub const REVIEW_INSTRUCTIONS: &str = "";
+pub const REVIEW_INSTRUCTIONS: &str = r#"
+Review the live GitHub merge settings for the target repository. This is a
+manual attestation because GitHub does not expose all required settings to the
+least-privilege Actions token used for untrusted pull-request tests.
+
+Required review method:
+1. Resolve the repository from the target's `origin` remote. For the `workspace`
+   target, review both `maxeonyx/agent-tools` and
+   `maxeonyx/agent-tools-workspace`.
+2. For each repository, run `gh api repos/OWNER/REPO` with reviewer credentials
+   that can observe its merge settings.
+3. Verify `archived` is false, `allow_merge_commit` is true,
+   `allow_squash_merge` is false, and `allow_rebase_merge` is false.
+4. Treat missing or inaccessible fields as a finding; do not infer compliance.
+5. Report the repositories and fields inspected. Record the attestation only
+   when every repository in the target is clean.
+"#;
 
 pub const SPEC: crate::concerns::ConcernSpec = crate::concerns::ConcernSpec {
     id: "merge-policy",
@@ -19,41 +35,35 @@ pub const SPEC: crate::concerns::ConcernSpec = crate::concerns::ConcernSpec {
 
 #[cfg(test)]
 mod tests {
-    use crate::evidence::{self, EvidenceKey};
-    use crate::workspace_root;
+    use super::{NOT_APPLICABLE, REVIEW_INSTRUCTIONS};
+    use crate::{checked_libraries, concerns, libraries_dir, workspace_root};
     use serde_json::Value;
 
-    const ACTIVE_REPOSITORIES: &[&str] = &[
-        "agent-tools",
-        "agent-tools-workspace",
-        "help-test",
-        "trunc",
-        "tmux-bridge",
-        "dotsync",
-        "tdd-ratchet-rs",
-        "agent-harness",
-    ];
-
     #[test]
-    fn merge_policy() {
-        let mut failures = Vec::new();
+    fn merge_policy_attestations() {
+        assert!(
+            !REVIEW_INSTRUCTIONS.trim().is_empty(),
+            "merge-policy must remain an explicit manual concern"
+        );
 
-        for repo in ACTIVE_REPOSITORIES {
-            let endpoint = format!("repos/maxeonyx/{repo}");
-            let output = evidence::context().command(
-                EvidenceKey::new("github-repository-settings", &endpoint).repo(*repo),
-                "gh",
-                &["api", &endpoint],
-                &workspace_root(),
-            );
-            if !output.status_success {
-                failures.push(format!(
-                    "{repo}: cannot read GitHub repository settings: {}",
-                    output.stderr.trim()
-                ));
-                continue;
+        let mut failures = concerns::review_attestation_failures("merge-policy", NOT_APPLICABLE);
+
+        for library in checked_libraries() {
+            if let Some(failure) = concerns::review_attestation_failure_for_repo(
+                library,
+                &libraries_dir().join(library),
+                "merge-policy",
+            ) {
+                failures.push(failure);
             }
-            failures.extend(settings_failures(repo, &output.stdout));
+        }
+
+        if let Some(failure) = concerns::review_attestation_failure_for_repo(
+            "workspace",
+            &workspace_root(),
+            "merge-policy",
+        ) {
+            failures.push(failure);
         }
 
         if !failures.is_empty() {

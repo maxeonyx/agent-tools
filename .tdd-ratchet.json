@@ -1,0 +1,6 @@
+{
+  "removals": [
+    "standards::standards$concerns::integration_policy::tests::integration_policy",
+    "standards::standards$concerns::merge_policy::tests::merge_policy"
+  ]
+}
