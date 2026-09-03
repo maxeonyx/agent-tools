@@ -6,7 +6,25 @@
 
 pub const NOT_APPLICABLE: &[&str] = &[];
 
-pub const REVIEW_INSTRUCTIONS: &str = "";
+pub const REVIEW_INSTRUCTIONS: &str = r#"
+Review the live GitHub integration settings for the target repository. This is
+a manual attestation because branch protection and environment policy are not
+visible to the least-privilege Actions token used for untrusted pull-request
+tests.
+
+Required review method:
+1. Resolve the GitHub repository from the target's `origin` remote.
+2. Run `gh api repos/OWNER/REPO` and verify `allow_auto_merge` is true.
+3. Run `gh api repos/OWNER/REPO/branches/main/protection` and verify required
+   status checks are strict, include `Ready`, and `enforce_admins.enabled` is
+   true.
+4. For maintained tools (all targets except `help-test`), run
+   `gh api repos/OWNER/REPO/environments/github-pages/deployment-branch-policies`
+   and verify a branch policy named `*` permits validated integration branches.
+5. Treat missing or inaccessible fields as a finding; do not infer compliance.
+6. Report the endpoints and fields inspected. Record the attestation only when
+   every required setting is clean.
+"#;
 
 pub const SPEC: crate::concerns::ConcernSpec = crate::concerns::ConcernSpec {
     id: "integration-policy",
@@ -20,47 +38,26 @@ pub const SPEC: crate::concerns::ConcernSpec = crate::concerns::ConcernSpec {
 
 #[cfg(test)]
 mod tests {
-    use crate::evidence::{self, EvidenceKey};
-    use crate::workspace_root;
+    use super::REVIEW_INSTRUCTIONS;
+    use crate::{checked_libraries, concerns, libraries_dir, workspace_root};
     use serde_json::Value;
 
-    const REPOSITORIES: &[(&str, bool)] = &[
-        ("help-test", false),
-        ("trunc", true),
-        ("tmux-bridge", true),
-        ("dotsync", true),
-        ("tdd-ratchet-rs", true),
-        ("agent-harness", true),
-    ];
-
     #[test]
-    fn integration_policy() {
-        let mut failures = Vec::new();
+    fn integration_policy_attestations() {
+        assert!(
+            !REVIEW_INSTRUCTIONS.trim().is_empty(),
+            "integration-policy must remain an explicit manual concern"
+        );
 
-        for (repo, has_pages) in REPOSITORIES {
-            let settings_endpoint = format!("repos/maxeonyx/{repo}");
-            let settings = github_json(repo, "repository-settings", &settings_endpoint);
-            match settings {
-                Ok(content) => failures.extend(settings_failures(repo, &content)),
-                Err(error) => failures.push(error),
-            }
+        let mut failures = concerns::review_attestation_failures("integration-policy", &[]);
 
-            let protection_endpoint = format!("repos/maxeonyx/{repo}/branches/main/protection");
-            let protection = github_json(repo, "main-protection", &protection_endpoint);
-            match protection {
-                Ok(content) => failures.extend(protection_failures(repo, &content)),
-                Err(error) => failures.push(error),
-            }
-
-            if *has_pages {
-                let pages_endpoint = format!(
-                    "repos/maxeonyx/{repo}/environments/github-pages/deployment-branch-policies"
-                );
-                let pages = github_json(repo, "pages-deployment-policy", &pages_endpoint);
-                match pages {
-                    Ok(content) => failures.extend(pages_policy_failures(repo, &content)),
-                    Err(error) => failures.push(error),
-                }
+        for library in checked_libraries() {
+            if let Some(failure) = concerns::review_attestation_failure_for_repo(
+                library,
+                &libraries_dir().join(library),
+                "integration-policy",
+            ) {
+                failures.push(failure);
             }
         }
 
@@ -69,23 +66,6 @@ mod tests {
                 "integration-policy non-compliant:\n  {}",
                 failures.join("\n  ")
             );
-        }
-    }
-
-    fn github_json(repo: &str, kind: &str, endpoint: &str) -> Result<String, String> {
-        let output = evidence::context().command(
-            EvidenceKey::new(kind, endpoint).repo(repo),
-            "gh",
-            &["api", endpoint],
-            &workspace_root(),
-        );
-        if output.status_success {
-            Ok(output.stdout)
-        } else {
-            Err(format!(
-                "{repo}: cannot read {kind}: {}",
-                output.stderr.trim()
-            ))
         }
     }
 

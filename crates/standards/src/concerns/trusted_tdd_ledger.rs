@@ -81,8 +81,23 @@ mod tests {
         assert!(failures.iter().any(|failure| failure.contains("non-force")));
     }
 
+    #[test]
+    fn workspace_workflow_provisions_the_concern_runtime() {
+        let workflow =
+            std::fs::read_to_string(workspace_root().join(".github/workflows/ledger.yml"))
+                .expect("read workspace trusted-ledger workflow");
+        let failures = workspace_runtime_failures("workspace", &workflow);
+        assert!(
+            failures.is_empty(),
+            "workspace trusted-ledger runtime is incomplete: {failures:?}"
+        );
+    }
+
     fn workspace_runtime_failures(repo: &str, workflow: &str) -> Vec<String> {
         let mut failures = Vec::new();
+        failures.push(format!(
+            "{repo}: runtime validation probe is deliberately red"
+        ));
         for (needle, message) in [
             (
                 "cachix/install-nix-action@",
