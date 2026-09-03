@@ -59,12 +59,30 @@ jobs:
       - name: Install nextest
         uses: taiki-e/install-action@nextest
 
+      - name: Install Nix
+        uses: cachix/install-nix-action@b85815f71a6de0ddee80b8a80a98d43f4bcc66c7 # v31
+
+      - name: Install the workspace's exact devenv
+        run: nix profile install github:cachix/devenv/v1.4.1
+
       - name: Build the base-controlled ratchet
         run: cargo build --release --manifest-path trusted-ratchet-source/Cargo.toml
 
-      - name: Produce the proposed ledger
+      - name: Make nested public repositories credential-free
         working-directory: pull-request
-        run: ../trusted-ratchet-source/target/release/cargo-ratchet
+        run: |
+          # shellcheck disable=SC2016
+          git submodule foreach --recursive '
+            origin=$(git remote get-url origin)
+            https_url=$(printf %s "$origin" | sed "s#^git@github.com:#https://github.com/#")
+            git remote set-url origin "$https_url"
+          '
+
+      - name: Produce the proposed ledger
+        env:
+          GH_TOKEN: ${{ github.token }}
+        working-directory: pull-request
+        run: devenv shell -- ../trusted-ratchet-source/target/release/cargo-ratchet
 
       - name: Upload only the proposed ledger
         uses: actions/upload-artifact@v7
