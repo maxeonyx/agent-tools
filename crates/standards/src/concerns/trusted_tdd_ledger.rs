@@ -105,6 +105,10 @@ mod tests {
                 "must install Nix before entering the declared devenv",
             ),
             (
+                "cachix/cachix-action@",
+                "must use devenv's public binary cache",
+            ),
+            (
                 "github:cachix/devenv/v1.4.1",
                 "must install the workspace's exact devenv version",
             ),
