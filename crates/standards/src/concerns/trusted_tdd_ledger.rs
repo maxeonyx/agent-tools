@@ -33,7 +33,13 @@ mod tests {
 
     #[test]
     fn trusted_tdd_ledger() {
-        let mut failures = repository_failures("workspace", &workspace_root(), false);
+        let workspace = workspace_root();
+        let mut failures = repository_failures("workspace", &workspace, false);
+        if let Ok(workflow) =
+            std::fs::read_to_string(workspace.join(".github/workflows/ledger.yml"))
+        {
+            failures.extend(workspace_runtime_failures("workspace", &workflow));
+        }
 
         for tool in checked_tools().filter(|tool| !NOT_APPLICABLE.contains(tool)) {
             failures.extend(repository_failures(
@@ -73,6 +79,39 @@ mod tests {
             .iter()
             .any(|failure| failure.contains("current pull-request head")));
         assert!(failures.iter().any(|failure| failure.contains("non-force")));
+    }
+
+    fn workspace_runtime_failures(repo: &str, workflow: &str) -> Vec<String> {
+        let mut failures = Vec::new();
+        for (needle, message) in [
+            (
+                "cachix/install-nix-action@",
+                "must install Nix before entering the declared devenv",
+            ),
+            (
+                "github:cachix/devenv/v1.4.1",
+                "must install the workspace's exact devenv version",
+            ),
+            (
+                "git submodule foreach --recursive",
+                "must make nested public-repository checks credential-free",
+            ),
+            (
+                "git remote set-url origin \"$https_url\"",
+                "must replace nested SSH remotes with public HTTPS remotes",
+            ),
+            (
+                "GH_TOKEN: ${{ github.token }}",
+                "must provide the read-only GitHub token used by concerns",
+            ),
+            (
+                "devenv shell -- ../trusted-ratchet-source/target/release/cargo-ratchet",
+                "must run the ratchet inside the workspace's declared environment",
+            ),
+        ] {
+            require(repo, workflow, needle, message, &mut failures);
+        }
+        failures
     }
 
     fn repository_failures(repo: &str, repo_dir: &Path, self_hosting: bool) -> Vec<String> {
