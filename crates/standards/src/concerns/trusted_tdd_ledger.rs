@@ -83,10 +83,9 @@ mod tests {
 
     #[test]
     fn workspace_workflow_provisions_the_concern_runtime() {
-        let workflow = std::fs::read_to_string(
-            workspace_root().join(".github/workflows/ledger.yml"),
-        )
-        .expect("read workspace trusted-ledger workflow");
+        let workflow =
+            std::fs::read_to_string(workspace_root().join(".github/workflows/ledger.yml"))
+                .expect("read workspace trusted-ledger workflow");
         let failures = workspace_runtime_failures("workspace", &workflow);
         assert!(
             failures.is_empty(),
@@ -96,6 +95,7 @@ mod tests {
 
     fn workspace_runtime_failures(repo: &str, workflow: &str) -> Vec<String> {
         let mut failures = Vec::new();
+        let workflow = without_comment_lines(workflow);
         failures.push(format!(
             "{repo}: runtime validation probe is deliberately red"
         ));
@@ -129,7 +129,26 @@ mod tests {
                 "must run the ratchet inside the workspace's declared environment",
             ),
         ] {
-            require(repo, workflow, needle, message, &mut failures);
+            require(repo, &workflow, needle, message, &mut failures);
+        }
+
+        let preserved_results = [
+            "standards::standards$concerns::merge_policy::tests::merge_policy",
+            "standards::standards$concerns::integration_policy::tests::integration_policy",
+        ];
+        for test in preserved_results {
+            let invocation = format!("--preserve-passing '{test}'");
+            if workflow.matches(&invocation).count() != 1 {
+                failures.push(format!(
+                    "{repo}: trusted workflow must preserve exactly the reviewed admin-only result {test}"
+                ));
+            }
+        }
+        if workflow.matches("--preserve-passing").count() != preserved_results.len() {
+            failures.push(format!(
+                "{repo}: trusted workflow must contain exactly {} reviewed --preserve-passing entries",
+                preserved_results.len()
+            ));
         }
         failures
     }
