@@ -6,6 +6,8 @@ This is the control plane for coordinating the maxeonyx agent-tool suite. Cross-
 
 Run `cargo ratchet`, not plain `cargo test`, in the umbrella and every maintained tool. A new test must be red when first introduced and committed as `pending`; that expected red test keeps CI green. A new test must not pass when first introduced—doing so makes the ratchet and CI red. Push the red implementation commit, then wait for the trusted ledger workflow's ledger-only bot commit before implementing the fix. After implementation, rerun the ratchet, push the green commit, and again wait for the bot commit that records the promotion to `passing`.
 
+Retiring a test takes one more commit. Name it under `removals` in `.tdd-ratchet.json` and commit that alongside the deletion; the bot consumes the instruction in a single run, so delete `.tdd-ratchet.json` in the next commit. A leftover instruction fails every later ratchet run with `removal target is not present in committed status`.
+
 ## The goal
 
 Every tool in this suite should benefit from every improvement made to any tool. When you add auto-update to one tool, all tools get it. When you improve help text patterns, all tools get it. When you fix a CI problem, all tools get the fix. The workspace enforces this by making cross-cutting work the natural path and tool-specific work the exception.
