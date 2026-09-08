@@ -33,7 +33,7 @@ mod tests {
     use super::NOT_APPLICABLE;
     use crate::evidence::{self, EvidenceKey};
     use crate::{checked_tools, tools_dir, workspace_root};
-    use serde_json::Value;
+    use serde_json::{json, Value};
     use std::collections::BTreeMap;
     use std::path::Path;
     use std::process::Command;
@@ -54,6 +54,44 @@ mod tests {
             version.get("built_at").and_then(Value::as_str),
             Some("2026-09-02T00:00:00Z")
         );
+    }
+
+    #[test]
+    fn deployed_site_is_measured_against_merged_main() {
+        let merged = json!({
+            "site": "agent-tools",
+            "tools": { "trunc": "0.4.11", "tdd-ratchet": "1.1.3" }
+        });
+        let current = json!({
+            "site": "agent-tools",
+            "tools": { "trunc": "0.4.11", "tdd-ratchet": "1.1.3" },
+            "git_commit": "1e1284609098d8d0383769e722501b95d4859a77",
+            "built_at": "2026-09-08T00:35:39Z"
+        });
+        let stale = json!({
+            "site": "agent-tools",
+            "tools": { "trunc": "0.4.11", "tdd-ratchet": "1.1.2" },
+            "git_commit": "1e1284609098d8d0383769e722501b95d4859a77",
+            "built_at": "2026-09-08T00:35:39Z"
+        });
+
+        assert_eq!(
+            deployed_site_failures(&current, &merged),
+            Vec::<String>::new()
+        );
+
+        let failures = deployed_site_failures(&stale, &merged);
+        assert_eq!(failures.len(), 1, "{failures:?}");
+        assert!(
+            failures[0].contains("tdd-ratchet")
+                && failures[0].contains("1.1.2")
+                && failures[0].contains("1.1.3"),
+            "{failures:?}"
+        );
+    }
+
+    fn deployed_site_failures(_deployed: &Value, _merged: &Value) -> Vec<String> {
+        Vec::new()
     }
 
     #[test]
