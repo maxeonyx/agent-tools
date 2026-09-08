@@ -8,6 +8,8 @@ Run `cargo ratchet`, not plain `cargo test`, in the umbrella and every maintaine
 
 Retiring a test takes one more commit. Name it under `removals` in `.tdd-ratchet.json` and commit that alongside the deletion; the bot consumes the instruction in a single run, so delete `.tdd-ratchet.json` in the next commit. A leftover instruction fails every later ratchet run with `removal target is not present in committed status`.
 
+The ledger bot writes to the pull request's **head branch**, so do not merge with `--delete-branch` while its run is still going: the write step ends in `gh: Not Found` and `Reference does not exist`, and whatever the run wanted to record is lost. Merge, let the run finish, then delete the branch.
+
 ## The goal
 
 Every tool in this suite should benefit from every improvement made to any tool. When you add auto-update to one tool, all tools get it. When you improve help text patterns, all tools get it. When you fix a CI problem, all tools get the fix. The workspace enforces this by making cross-cutting work the natural path and tool-specific work the exception.
