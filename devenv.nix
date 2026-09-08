@@ -15,6 +15,8 @@
     pkgs.gh
     pkgs.git
     pkgs.openssl
+    # Vendored openssl's build script needs File::Compare.
+    pkgs.perl
     pkgs.pkg-config
     pkgs.rustc
     pkgs.rustfmt
