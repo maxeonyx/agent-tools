@@ -265,6 +265,8 @@ cd tools/<name> && cargo ratchet
 6. From workspace root: `git add tools/<name>` to update the submodule pointer
 7. Commit and push the workspace
 
+A tool release blocks every other umbrella branch until its pointer lands. `release-freshness`, `pinned-main-parity`, and `version-artifacts` compare the pinned commit against the tool's published release, remote `main`, and live site, and all three are tracked passing — so the moment a tool releases, they regress on every umbrella branch and the ledger bot writes for none of them. Land the pointer bump before starting other umbrella work, and carry unrelated umbrella changes on the pointer branch if one is already open.
+
 ---
 
 ## What belongs where
