@@ -286,7 +286,7 @@ cd tools/<name> && cargo ratchet
 Personal repo. Use:
 
 ```
-user.name = Maxwell Clarke
+user.name = Max Clarke
 user.email = maxeonyx@gmail.com
 ```
 
