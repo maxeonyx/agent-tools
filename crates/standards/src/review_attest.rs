@@ -135,6 +135,14 @@ mod tests {
     }
 
     #[test]
+    fn help_test_library_is_available_as_a_review_target() {
+        let target = resolve_target("help-test").expect("help-test should be reviewable");
+
+        assert_eq!(target.repo_name, "help-test");
+        assert_eq!(target.repo_dir, crate::libraries_dir().join("help-test"));
+    }
+
+    #[test]
     fn render_prompt_includes_review_file_and_commit() {
         let spec = resolve_agentic_concern("code-review").unwrap();
         let target = ReviewTarget {

@@ -12,7 +12,13 @@
 //!   the current tool versions
 //! - staging the umbrella site adds commit and build-time metadata to the
 //!   deployable `/version.json`
-//! - the published umbrella `/version.json` contains the same metadata
+//! - the published umbrella `/version.json` carries that metadata and the tool
+//!   versions recorded in `docs/version.json` on merged `main`
+//!
+//! The deployed umbrella site is measured against `main`, not against the
+//! working tree. The site is only ever deployed from `main`, after a merge, so
+//! measuring it against the working tree would demand that production serve a
+//! branch's versions before that branch could land.
 
 /// Tools where this concern does not apply.
 pub const NOT_APPLICABLE: &[&str] = &[];
@@ -33,8 +39,8 @@ mod tests {
     use super::NOT_APPLICABLE;
     use crate::evidence::{self, EvidenceKey};
     use crate::{checked_tools, tools_dir, workspace_root};
-    use serde_json::Value;
-    use std::collections::BTreeMap;
+    use serde_json::{json, Value};
+    use std::collections::{BTreeMap, BTreeSet};
     use std::path::Path;
     use std::process::Command;
 
@@ -54,6 +60,78 @@ mod tests {
             version.get("built_at").and_then(Value::as_str),
             Some("2026-09-02T00:00:00Z")
         );
+    }
+
+    #[test]
+    fn deployed_site_is_measured_against_merged_main() {
+        let merged = json!({
+            "site": "agent-tools",
+            "tools": { "trunc": "0.4.12", "tdd-ratchet": "1.1.5" }
+        });
+        let current = json!({
+            "site": "agent-tools",
+            "tools": { "trunc": "0.4.12", "tdd-ratchet": "1.1.5" },
+            "git_commit": "1e1284609098d8d0383769e722501b95d4859a77",
+            "built_at": "2026-09-08T00:35:39Z"
+        });
+        let stale = json!({
+            "site": "agent-tools",
+            "tools": { "trunc": "0.4.12", "tdd-ratchet": "1.1.3" },
+            "git_commit": "1e1284609098d8d0383769e722501b95d4859a77",
+            "built_at": "2026-09-08T00:35:39Z"
+        });
+
+        assert_eq!(
+            deployed_site_failures(&current, &merged),
+            Vec::<String>::new()
+        );
+
+        let failures = deployed_site_failures(&stale, &merged);
+        assert_eq!(failures.len(), 1, "{failures:?}");
+        assert!(
+            failures[0].contains("tdd-ratchet")
+                && failures[0].contains("1.1.3")
+                && failures[0].contains("1.1.5"),
+            "{failures:?}"
+        );
+    }
+
+    fn deployed_site_failures(deployed: &Value, merged: &Value) -> Vec<String> {
+        let mut failures = Vec::new();
+
+        if deployed.get("site").and_then(Value::as_str) != Some("agent-tools") {
+            failures.push("workspace: live /version.json missing site=agent-tools".to_string());
+        }
+        if !deployed.get("git_commit").is_some_and(Value::is_string) {
+            failures.push("workspace: live /version.json missing git_commit metadata".to_string());
+        }
+        if !deployed.get("built_at").is_some_and(Value::is_string) {
+            failures.push("workspace: live /version.json missing built_at metadata".to_string());
+        }
+
+        let Some(merged_tools) = merged.get("tools").and_then(Value::as_object) else {
+            failures.push("workspace: main docs/version.json missing tools object".to_string());
+            return failures;
+        };
+        let Some(deployed_tools) = deployed.get("tools").and_then(Value::as_object) else {
+            failures.push("workspace: live /version.json missing tools object".to_string());
+            return failures;
+        };
+
+        let tools: BTreeSet<&String> = merged_tools.keys().chain(deployed_tools.keys()).collect();
+        for tool in tools {
+            let served = deployed_tools.get(tool).and_then(Value::as_str);
+            let declared = merged_tools.get(tool).and_then(Value::as_str);
+            if served != declared {
+                failures.push(format!(
+                    "workspace: live /version.json serves {tool} {}, merged main declares {} — redeploy the umbrella site",
+                    served.unwrap_or("nothing"),
+                    declared.unwrap_or("nothing")
+                ));
+            }
+        }
+
+        failures
     }
 
     #[test]
@@ -78,7 +156,7 @@ mod tests {
 
         check_workspace_source_json(&expected_versions, &mut failures);
         check_workspace_staged_json(&expected_versions, &mut failures);
-        check_workspace_live_json(&expected_versions, &mut failures);
+        check_workspace_live_json(&mut failures);
 
         if !failures.is_empty() {
             panic!(
@@ -204,10 +282,7 @@ mod tests {
         check_workspace_tool_versions(&value, expected_versions, failures, "docs/version.json");
     }
 
-    fn check_workspace_live_json(
-        expected_versions: &BTreeMap<String, String>,
-        failures: &mut Vec<String>,
-    ) {
+    fn check_workspace_live_json(failures: &mut Vec<String>) {
         let url = "https://tools.maxeonyx.com/version.json";
         let output = evidence::context().command(
             EvidenceKey::new("live-version-json", url).tool("agent-tools"),
@@ -222,7 +297,7 @@ mod tests {
             ));
             return;
         }
-        let value = match serde_json::from_str::<Value>(&output.stdout) {
+        let deployed = match serde_json::from_str::<Value>(&output.stdout) {
             Ok(value) => value,
             Err(error) => {
                 failures.push(format!(
@@ -232,17 +307,37 @@ mod tests {
             }
         };
 
-        if value.get("site").and_then(Value::as_str) != Some("agent-tools") {
-            failures.push("workspace: live /version.json missing site=agent-tools".to_string());
-        }
-        if !value.get("git_commit").is_some_and(Value::is_string) {
-            failures.push("workspace: live /version.json missing git_commit metadata".to_string());
-        }
-        if !value.get("built_at").is_some_and(Value::is_string) {
-            failures.push("workspace: live /version.json missing built_at metadata".to_string());
+        let merged = match merged_workspace_version_json() {
+            Ok(value) => value,
+            Err(error) => {
+                failures.push(error);
+                return;
+            }
+        };
+
+        failures.extend(deployed_site_failures(&deployed, &merged));
+    }
+
+    /// `docs/version.json` as merged on `main`, which is the only source the
+    /// umbrella site is ever deployed from.
+    fn merged_workspace_version_json() -> Result<Value, String> {
+        const ENDPOINT: &str = "repos/maxeonyx/agent-tools/contents/docs/version.json?ref=main";
+
+        let output = evidence::context().command(
+            EvidenceKey::new("merged-version-json", ENDPOINT).tool("agent-tools"),
+            "gh",
+            &["api", "-H", "Accept: application/vnd.github.raw", ENDPOINT],
+            &workspace_root(),
+        );
+        if !output.status_success {
+            return Err(format!(
+                "workspace: main docs/version.json unreadable: {}",
+                output.stderr.trim()
+            ));
         }
 
-        check_workspace_tool_versions(&value, expected_versions, failures, "live /version.json");
+        serde_json::from_str(&output.stdout)
+            .map_err(|error| format!("workspace: main docs/version.json invalid JSON: {error}"))
     }
 
     fn check_workspace_tool_versions(

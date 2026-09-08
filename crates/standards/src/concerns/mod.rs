@@ -131,6 +131,8 @@ pub const AGENTIC_CONCERNS: &[&str] = &[
     "interactive-usage",
     "help-text",
     "public-interface-snapshots",
+    "integration-policy",
+    "merge-policy",
 ];
 
 pub fn concern_spec(id: &str) -> Option<&'static ConcernSpec> {
