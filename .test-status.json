@@ -83,7 +83,7 @@
     "standards::standards$concerns::trusted_tdd_ledger::tests::trusted_tdd_ledger": "pending",
     "standards::standards$concerns::trusted_tdd_ledger::tests::unsafe_fixture_is_rejected": "passing",
     "standards::standards$concerns::trusted_tdd_ledger::tests::workspace_workflow_provisions_the_concern_runtime": "pending",
-    "standards::standards$concerns::version_artifacts::tests::deployed_site_is_measured_against_merged_main": "pending",
+    "standards::standards$concerns::version_artifacts::tests::deployed_site_is_measured_against_merged_main": "passing",
     "standards::standards$concerns::version_artifacts::tests::staged_workspace_version_artifact_includes_deployment_metadata": "passing",
     "standards::standards$concerns::version_artifacts::tests::version_artifacts": "passing",
     "standards::standards$concerns::vision_and_process::tests::vision_and_process": "passing",
