@@ -114,8 +114,61 @@ mod tests {
 
     /// Why each `AGENTS.md` directory under `root` has no working alias,
     /// reported as `<directory relative to root>: <reason>`.
-    fn missing_aliases(_root: &Path, _excluded: &[PathBuf]) -> Vec<String> {
-        unimplemented!("checker lands in the follow-up commit")
+    fn missing_aliases(root: &Path, excluded: &[PathBuf]) -> Vec<String> {
+        let mut instruction_dirs = Vec::new();
+        collect_instruction_dirs(root, excluded, &mut instruction_dirs);
+
+        let mut failures = Vec::new();
+        for dir in instruction_dirs {
+            let relative = dir.strip_prefix(root).unwrap_or(&dir).display().to_string();
+            let shown = if relative.is_empty() {
+                ".".to_string()
+            } else {
+                relative
+            };
+
+            let alias = dir.join("CLAUDE.md");
+            if !alias.is_file() {
+                failures.push(format!("{shown}: CLAUDE.md missing"));
+                continue;
+            }
+
+            let content = std::fs::read_to_string(&alias)
+                .unwrap_or_else(|error| panic!("failed to read {}: {error}", alias.display()));
+            if !content.lines().any(|line| line.trim() == "@AGENTS.md") {
+                failures.push(format!("{shown}: CLAUDE.md does not import @AGENTS.md"));
+            }
+        }
+
+        failures.sort();
+        failures
+    }
+
+    fn collect_instruction_dirs(dir: &Path, excluded: &[PathBuf], out: &mut Vec<PathBuf>) {
+        if dir.join("AGENTS.md").is_file() {
+            out.push(dir.to_path_buf());
+        }
+
+        let Ok(entries) = std::fs::read_dir(dir) else {
+            return;
+        };
+        for entry in entries.filter_map(|entry| entry.ok()) {
+            let path = entry.path();
+            if !path.is_dir() {
+                continue;
+            }
+            let name = entry.file_name().to_string_lossy().to_string();
+            if skip_dir_name(&name) || excluded.contains(&path) {
+                continue;
+            }
+            collect_instruction_dirs(&path, excluded, out);
+        }
+    }
+
+    fn skip_dir_name(name: &str) -> bool {
+        // `*.ignore*` names are globally gitignored scratch space, including
+        // whole clones of other repositories.
+        SKIP_DIRS.contains(&name) || name.starts_with(".devenv.") || name.contains(".ignore")
     }
 
     fn labelled(repo: &str, root: &Path, excluded: &[PathBuf]) -> Vec<String> {
