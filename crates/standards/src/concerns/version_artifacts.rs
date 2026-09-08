@@ -40,7 +40,7 @@ mod tests {
     use crate::evidence::{self, EvidenceKey};
     use crate::{checked_tools, tools_dir, workspace_root};
     use serde_json::{json, Value};
-    use std::collections::BTreeMap;
+    use std::collections::{BTreeMap, BTreeSet};
     use std::path::Path;
     use std::process::Command;
 
@@ -96,8 +96,42 @@ mod tests {
         );
     }
 
-    fn deployed_site_failures(_deployed: &Value, _merged: &Value) -> Vec<String> {
-        Vec::new()
+    fn deployed_site_failures(deployed: &Value, merged: &Value) -> Vec<String> {
+        let mut failures = Vec::new();
+
+        if deployed.get("site").and_then(Value::as_str) != Some("agent-tools") {
+            failures.push("workspace: live /version.json missing site=agent-tools".to_string());
+        }
+        if !deployed.get("git_commit").is_some_and(Value::is_string) {
+            failures.push("workspace: live /version.json missing git_commit metadata".to_string());
+        }
+        if !deployed.get("built_at").is_some_and(Value::is_string) {
+            failures.push("workspace: live /version.json missing built_at metadata".to_string());
+        }
+
+        let Some(merged_tools) = merged.get("tools").and_then(Value::as_object) else {
+            failures.push("workspace: main docs/version.json missing tools object".to_string());
+            return failures;
+        };
+        let Some(deployed_tools) = deployed.get("tools").and_then(Value::as_object) else {
+            failures.push("workspace: live /version.json missing tools object".to_string());
+            return failures;
+        };
+
+        let tools: BTreeSet<&String> = merged_tools.keys().chain(deployed_tools.keys()).collect();
+        for tool in tools {
+            let served = deployed_tools.get(tool).and_then(Value::as_str);
+            let declared = merged_tools.get(tool).and_then(Value::as_str);
+            if served != declared {
+                failures.push(format!(
+                    "workspace: live /version.json serves {tool} {}, merged main declares {} — redeploy the umbrella site",
+                    served.unwrap_or("nothing"),
+                    declared.unwrap_or("nothing")
+                ));
+            }
+        }
+
+        failures
     }
 
     #[test]
