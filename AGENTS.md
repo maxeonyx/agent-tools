@@ -4,11 +4,13 @@ This is the control plane for coordinating the maxeonyx agent-tool suite. Cross-
 
 ## TDD ratchet — read before testing
 
-Run `cargo ratchet`, not plain `cargo test`, in the umbrella and every maintained tool. A new test must be red when first introduced and committed as `pending`; that expected red test keeps CI green. A new test must not pass when first introduced—doing so makes the ratchet and CI red. Push the red implementation commit, then wait for the trusted ledger workflow's ledger-only bot commit before implementing the fix. After implementation, rerun the ratchet, push the green commit, and again wait for the bot commit that records the promotion to `passing`.
+Run `cargo ratchet`, not plain `cargo test`, in the umbrella and every maintained tool, and run it inside the repository's devenv, where `cargo-ratchet` is a shim built from source. Outside the devenv it is whatever binary sits on `PATH`: a 1.0.0 left over from an old `cargo install` reported this workspace green while its history checks were red. A new test must be red when first introduced and committed as `pending`; that expected red test keeps CI green. A new test must not pass when first introduced—doing so makes the ratchet and CI red. Push the red implementation commit, then wait for the trusted ledger workflow's ledger-only bot commit before implementing the fix. After implementation, rerun the ratchet, push the green commit, and again wait for the bot commit that records the promotion to `passing`.
 
 Retiring a test takes one more commit. Name it under `removals` in `.tdd-ratchet.json` and commit that alongside the deletion; the bot consumes the instruction in a single run, so delete `.tdd-ratchet.json` in the next commit. A leftover instruction fails every later ratchet run with `removal target is not present in committed status`.
 
 The ledger bot writes to the pull request's **head branch**, so do not merge with `--delete-branch` while its run is still going: the write step ends in `gh: Not Found` and `Reference does not exist`, and whatever the run wanted to record is lost. Merge, let the run finish, then delete the branch.
+
+It commits even when the ledger is unchanged, so every ledger run moves the head SHA. Dispatch a tool's integration run only once the ledger run for that push has finished. Dispatch first and the bot's commit lands after `Ready` was recorded, leaving the required status on a commit that is no longer the head, so auto-merge waits for a check that will never arrive and the Merge job fails.
 
 ## The goal
 

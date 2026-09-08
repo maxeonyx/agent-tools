@@ -8,6 +8,7 @@ pub mod auto_update_integration;
 pub mod black_box_test_quality;
 pub mod black_box_tests;
 pub mod ci_triggers;
+pub mod claude_md_alias;
 pub mod code_review;
 pub mod code_standards;
 pub mod concern_module_coverage;
@@ -82,6 +83,7 @@ pub const ALL_CONCERN_SPECS: &[ConcernSpec] = &[
     markdown_no_hard_wrap::SPEC,
     merge_policy::SPEC,
     concern_module_coverage::SPEC,
+    claude_md_alias::SPEC,
 ];
 
 /// All known concern IDs.
@@ -120,6 +122,7 @@ pub const ALL_CONCERNS: &[&str] = &[
     "markdown-no-hard-wrap",
     "merge-policy",
     "concern-module-coverage",
+    "claude-md-alias",
 ];
 
 /// Concerns that require agentic review (have non-empty REVIEW_INSTRUCTIONS).

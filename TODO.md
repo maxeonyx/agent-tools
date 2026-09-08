@@ -1,5 +1,7 @@
 # TODO
 
+- Make the trusted ledger workflow's write job skip the commit when the proposed ledger equals the committed one. It currently commits an identical tree, which moves the head SHA for no reason and voids any `Ready` status recorded against the previous head. Every repo carries its own copy of `ledger.yml`, and `trusted-tdd-ledger` asserts on its contents, so the change lands in the concern and all four workflows together.
+- Give tool repos a `cargo-ratchet` that comes from the pinned ratchet version rather than `PATH`. The umbrella and tdd-ratchet build the shim from source, which a standalone tool repo cannot do without coupling to this workspace; fetching the published release inside the devenv would keep `ecosystem-independence` intact.
 - Add a website-package concern for path independence: every website package should build and deploy correctly under an arbitrary root path rather than assuming `/`. This should be enforced mechanically against the packaged site, not just documented.
 - Add workspace self-coverage where it is materially useful, rather than a blanket "self-coverage" concern:
   - apply `code-review` to this repo's own substantive code (`crates/standards`, shared crates, and root-owned package/build logic)
