@@ -3,7 +3,7 @@
   "tools": {
     "trunc": "0.4.13",
     "tb": "0.1.30",
-    "dotsync": "0.7.0",
+    "dotsync": "0.8.0",
     "tdd-ratchet": "1.1.6",
     "oc": "0.3.23",
     "agent-harness": "0.1.17"
