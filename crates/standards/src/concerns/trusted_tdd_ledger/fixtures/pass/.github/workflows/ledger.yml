@@ -81,6 +81,11 @@ jobs:
           ' "$ledger"
           current_head=$(gh pr view "$PR_NUMBER" --json headRefOid --jq .headRefOid)
           test "$current_head" = "$HEAD_SHA"
+          # A commit here moves the head, which invalidates any status recorded
+          # against it, so record nothing when there is nothing to record.
+          if diff <(jq -S . previous-ledger.json) <(jq -S . "$ledger") >/dev/null; then
+            exit 0
+          fi
           # Re-establish the semantic ledger transition in the privileged job.
           jq -e --slurpfile previous previous-ledger.json --slurpfile instructions instructions.json '
             def transition_ok($from; $to):

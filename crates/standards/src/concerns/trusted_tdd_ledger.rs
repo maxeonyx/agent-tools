@@ -5,7 +5,14 @@
 //! validates its transition. A trusted workflow must validate untrusted code
 //! with base-controlled, pinned ratchet logic, pass only the proposed hidden
 //! ledger to a separately privileged job, revalidate the transition against the
-//! current pull-request head, and create a non-force ledger-only bot commit.
+//! head it is about to move, and create a non-force ledger-only bot commit.
+//!
+//! Two triggers deliver base control. `pull_request_target` runs the base
+//! definition on every push to a pull request. Explicit dispatch runs the
+//! definition of the ref it was dispatched against, so it earns base control by
+//! refusing to run for any ref but `main`, and in exchange it can record `main`
+//! itself — which a repository that accepts direct pushes needs, or its
+//! committed ledger drifts from what its tests actually do.
 //!
 //! The check is structural because the security boundary is the workflow
 //! definition itself. GitHub Actions syntax is independently exercised by the
@@ -31,10 +38,21 @@ mod tests {
     use crate::{checked_tools, tools_dir, workspace_root};
     use std::path::{Path, PathBuf};
 
+    /// How a repository's trusted ledger workflow starts, which decides who
+    /// controls the definition that runs.
+    #[derive(Clone, Copy, PartialEq)]
+    enum Trigger {
+        /// Every push to a pull request; the base repository owns the definition.
+        PullRequestTarget,
+        /// A maintainer, explicitly, against a pull request or `main` itself.
+        MainDispatch,
+    }
+
     #[test]
     fn trusted_tdd_ledger() {
         let workspace = workspace_root();
-        let mut failures = repository_failures("workspace", &workspace, false);
+        let mut failures =
+            repository_failures("workspace", &workspace, Trigger::MainDispatch, false);
         if let Ok(workflow) =
             std::fs::read_to_string(workspace.join(".github/workflows/ledger.yml"))
         {
@@ -45,6 +63,7 @@ mod tests {
             failures.extend(repository_failures(
                 tool,
                 &tools_dir().join(tool),
+                Trigger::PullRequestTarget,
                 tool == "tdd-ratchet",
             ));
         }
@@ -56,7 +75,12 @@ mod tests {
 
     #[test]
     fn canonical_fixture_passes() {
-        let failures = repository_failures("fixture", &fixture("pass"), false);
+        let failures = repository_failures(
+            "fixture",
+            &fixture("pass"),
+            Trigger::PullRequestTarget,
+            false,
+        );
         assert!(
             failures.is_empty(),
             "canonical fixture should pass: {failures:?}"
@@ -65,7 +89,12 @@ mod tests {
 
     #[test]
     fn unsafe_fixture_is_rejected() {
-        let failures = repository_failures("fixture", &fixture("fail-unsafe"), false);
+        let failures = repository_failures(
+            "fixture",
+            &fixture("fail-unsafe"),
+            Trigger::PullRequestTarget,
+            false,
+        );
         assert!(failures
             .iter()
             .any(|failure| failure.contains("pull_request_target")));
@@ -130,7 +159,12 @@ mod tests {
         failures
     }
 
-    fn repository_failures(repo: &str, repo_dir: &Path, self_hosting: bool) -> Vec<String> {
+    fn repository_failures(
+        repo: &str,
+        repo_dir: &Path,
+        trigger: Trigger,
+        self_hosting: bool,
+    ) -> Vec<String> {
         let mut failures = Vec::new();
         let workflow_path = repo_dir.join(".github/workflows/ledger.yml");
         let workflow = match std::fs::read_to_string(&workflow_path) {
@@ -145,20 +179,85 @@ mod tests {
         };
         let workflow = without_comment_lines(&workflow);
 
+        let trigger_requirements: &[(&str, &str)] = match trigger {
+            Trigger::PullRequestTarget => &[
+                (
+                    "pull_request_target:",
+                    "must use the base-controlled pull_request_target event",
+                ),
+                (
+                    "github.event.pull_request.head.repo.full_name == github.repository",
+                    "must reject pull requests from forks with a same-repository restriction",
+                ),
+                (
+                    "group: ledger-pr-${{ github.event.pull_request.number }}",
+                    "must serialize each pull request independently",
+                ),
+                (
+                    "ref: ${{ github.event.pull_request.head.sha }}",
+                    "must check out the exact untrusted pull-request head",
+                ),
+                (
+                    "current_head=$(gh pr view",
+                    "write job must query the current pull-request head",
+                ),
+            ],
+            Trigger::MainDispatch => &[
+                (
+                    "workflow_dispatch:",
+                    "must run only when a maintainer dispatches it",
+                ),
+                (
+                    "test \"$GITHUB_REF\" = refs/heads/main",
+                    "must refuse to run a workflow definition that main does not control",
+                ),
+                (
+                    "--json isCrossRepository --jq .isCrossRepository)\" = false",
+                    "must reject pull requests from forks",
+                ),
+                (
+                    "git/ref/heads/main\" --jq .object.sha",
+                    "must be able to record main itself, not only pull requests",
+                ),
+                (
+                    "group: ledger-${{ inputs.target }}",
+                    "must serialize each dispatch target independently",
+                ),
+                (
+                    "ref: ${{ steps.target.outputs.head_sha }}",
+                    "must check out the exact resolved head",
+                ),
+                (
+                    "commit=$(git rev-list -1 HEAD -- .test-status.json)",
+                    "must trace the committed ledger to the commit that wrote it",
+                ),
+                (
+                    "current_head=$(gh api \"repos/$REPOSITORY/git/ref/heads/$HEAD_REF\"",
+                    "write job must query the head it is about to move",
+                ),
+            ],
+        };
+
+        for (needle, message) in trigger_requirements {
+            require(repo, &workflow, needle, message, &mut failures);
+        }
+
+        if trigger == Trigger::MainDispatch {
+            for (needle, message) in [
+                (
+                    "pull_request_target:",
+                    "dispatched ledger must not also run on pull-request events",
+                ),
+                ("  push:", "dispatched ledger must not also run on push"),
+            ] {
+                if workflow.contains(needle) {
+                    failures.push(format!("{repo}: {message}"));
+                }
+            }
+        }
+
         for (needle, message) in [
-            (
-                "pull_request_target:",
-                "must use the base-controlled pull_request_target event",
-            ),
-            (
-                "github.event.pull_request.head.repo.full_name == github.repository",
-                "must reject pull requests from forks with a same-repository restriction",
-            ),
             ("permissions: {}", "must deny permissions by default"),
-            (
-                "group: ledger-pr-${{ github.event.pull_request.number }}",
-                "must serialize each pull request independently",
-            ),
             (
                 "cancel-in-progress: false",
                 "must not cancel an in-progress ledger transition",
@@ -176,10 +275,6 @@ mod tests {
             (
                 "contents: write",
                 "write job must request its contents permission explicitly",
-            ),
-            (
-                "ref: ${{ github.event.pull_request.head.sha }}",
-                "must check out the exact untrusted pull-request head",
             ),
             ("path: pull-request", "must isolate the untrusted checkout"),
             (
@@ -283,12 +378,12 @@ mod tests {
                 "bot-authored ledger commits must change only the ledger",
             ),
             (
-                "current_head=$(gh pr view",
-                "write job must query the current pull-request head",
+                "test \"$current_head\" = \"$HEAD_SHA\"",
+                "write job must validate the head it is about to move",
             ),
             (
-                "test \"$current_head\" = \"$HEAD_SHA\"",
-                "write job must validate the current pull-request head",
+                "diff <(jq -S . previous-ledger.json)",
+                "write job must skip the commit when the ledger already matches",
             ),
             (
                 "path: \".test-status.json\"",

@@ -1,23 +1,60 @@
 name: Trusted test-status ledger
 
 on:
-  pull_request_target:
-    types: [opened, reopened, synchronize]
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Pull request number to record, or main to record main itself
+        required: true
+        type: string
 
 permissions: {}
 
 concurrency:
-  group: ledger-pr-${{ github.event.pull_request.number }}
+  group: ledger-${{ inputs.target }}
   cancel-in-progress: false
 
 jobs:
   validate:
-    if: github.actor != 'github-actions[bot]' && github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     permissions:
       contents: read
       pull-requests: read
+    outputs:
+      head_ref: ${{ steps.target.outputs.head_ref }}
+      head_sha: ${{ steps.target.outputs.head_sha }}
     steps:
+      # Dispatch decides which workflow definition runs, so a branch could
+      # otherwise validate its own ledger with its own rules.
+      - name: Require the workflow definition that main controls
+        run: test "$GITHUB_REF" = refs/heads/main
+
+      - name: Resolve the dispatch target
+        id: target
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          TARGET: ${{ inputs.target }}
+        run: |
+          case "$TARGET" in
+            main)
+              head_ref=main
+              head_sha=$(gh api "repos/$REPOSITORY/git/ref/heads/main" --jq .object.sha)
+              ;;
+            '' | *[!0-9]*)
+              echo "target must be a pull request number or main, got '$TARGET'"
+              exit 1
+              ;;
+            *)
+              test "$(gh pr view "$TARGET" --repo "$REPOSITORY" --json state --jq .state)" = OPEN
+              test "$(gh pr view "$TARGET" --repo "$REPOSITORY" --json isCrossRepository --jq .isCrossRepository)" = false
+              head_ref=$(gh pr view "$TARGET" --repo "$REPOSITORY" --json headRefName --jq .headRefName)
+              head_sha=$(gh pr view "$TARGET" --repo "$REPOSITORY" --json headRefOid --jq .headRefOid)
+              ;;
+          esac
+          echo "head_ref=$head_ref" >>"$GITHUB_OUTPUT"
+          echo "head_sha=$head_sha" >>"$GITHUB_OUTPUT"
+
       - name: Check out the reviewed ratchet source
         uses: actions/checkout@v6
         with:
@@ -26,33 +63,28 @@ jobs:
           path: trusted-ratchet-source
           persist-credentials: false
 
-      - name: Check out the pull-request head without credentials
+      - name: Check out the recorded head without credentials
         uses: actions/checkout@v6
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
+          ref: ${{ steps.target.outputs.head_sha }}
           fetch-depth: 0
           path: pull-request
-          submodules: recursive
           persist-credentials: false
 
+      # The write job judges the proposed ledger against the committed one, so
+      # the committed one has to be a ledger this workflow wrote.
       - name: Reject ordinary ledger edits
         env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
           GH_TOKEN: ${{ github.token }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           REPOSITORY: ${{ github.repository }}
         working-directory: pull-request
         run: |
-          git fetch --no-tags origin "$BASE_SHA"
-          while read -r commit; do
-            changed=$(git diff-tree --no-commit-id --name-only -r "$commit")
-            if grep -qx '.test-status.json' <<<"$changed"; then
-              test "$changed" = '.test-status.json'
-              test "$(gh api "repos/$REPOSITORY/commits/$commit" --jq '.commit.verification.verified')" = true
-              test "$(gh api "repos/$REPOSITORY/commits/$commit" --jq '.author.login')" = 'github-actions[bot]'
-              test "$(gh api "repos/$REPOSITORY/commits/$commit" --jq '.committer.login')" = 'web-flow'
-            fi
-          done < <(git rev-list "$BASE_SHA..$HEAD_SHA")
+          commit=$(git rev-list -1 HEAD -- .test-status.json)
+          changed=$(git diff-tree --no-commit-id --name-only -r "$commit")
+          test "$changed" = '.test-status.json'
+          test "$(gh api "repos/$REPOSITORY/commits/$commit" --jq '.commit.verification.verified')" = true
+          test "$(gh api "repos/$REPOSITORY/commits/$commit" --jq '.author.login')" = 'github-actions[bot]'
+          test "$(gh api "repos/$REPOSITORY/commits/$commit" --jq '.committer.login')" = 'web-flow'
 
       - uses: dtolnay/rust-toolchain@stable
 
@@ -102,7 +134,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      pull-requests: read
     steps:
       - name: Download the ratchet-produced ledger
         uses: actions/download-artifact@v8
@@ -114,9 +145,8 @@ jobs:
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
-          HEAD_REF: ${{ github.event.pull_request.head.ref }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_REF: ${{ needs.validate.outputs.head_ref }}
+          HEAD_SHA: ${{ needs.validate.outputs.head_sha }}
           REPOSITORY: ${{ github.repository }}
         run: |
           ledger='ledger-output/.test-status.json'
@@ -130,7 +160,7 @@ jobs:
             (has("baseline") | not)
           ' "$ledger" >/dev/null
 
-          current_head=$(gh pr view "$PR_NUMBER" --repo "$REPOSITORY" --json headRefOid --jq .headRefOid)
+          current_head=$(gh api "repos/$REPOSITORY/git/ref/heads/$HEAD_REF" --jq .object.sha)
           test "$current_head" = "$HEAD_SHA"
 
           gh api "repos/$REPOSITORY/contents/.test-status.json?ref=$HEAD_SHA" --jq .content \
@@ -138,6 +168,13 @@ jobs:
           if ! gh api "repos/$REPOSITORY/contents/.tdd-ratchet.json?ref=$HEAD_SHA" --jq .content \
             | tr -d '\n' | base64 --decode >instructions.json; then
             echo '{}' >instructions.json
+          fi
+
+          # A commit here moves the head, which invalidates any status recorded
+          # against it, so record nothing when there is nothing to record.
+          if diff <(jq -S . previous-ledger.json) <(jq -S . "$ledger") >/dev/null; then
+            echo 'The committed ledger already matches the ratchet result.'
+            exit 0
           fi
 
           # Re-establish the semantic ledger transition in the privileged job.

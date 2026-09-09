@@ -4,13 +4,17 @@ This is the control plane for coordinating the maxeonyx agent-tool suite. Cross-
 
 ## TDD ratchet — read before testing
 
-Run `cargo ratchet`, not plain `cargo test`, in the umbrella and every maintained tool, and run it inside the repository's devenv, where `cargo-ratchet` is a shim built from source. Outside the devenv it is whatever binary sits on `PATH`: a 1.0.0 left over from an old `cargo install` reported this workspace green while its history checks were red. A new test must be red when first introduced and committed as `pending`; that expected red test keeps CI green. A new test must not pass when first introduced—doing so makes the ratchet and CI red. Push the red implementation commit, then wait for the trusted ledger workflow's ledger-only bot commit before implementing the fix. After implementation, rerun the ratchet, push the green commit, and again wait for the bot commit that records the promotion to `passing`.
+Run `cargo ratchet`, not plain `cargo test`, in the umbrella and every maintained tool, and run it inside the repository's devenv, where `cargo-ratchet` is a shim built from source. Outside the devenv it is whatever binary sits on `PATH`: a 1.0.0 left over from an old `cargo install` reported this workspace green while its history checks were red. A new test must be red when first introduced and committed as `pending`; that expected red test keeps CI green. A new test must not pass when first introduced—doing so makes the ratchet and CI red.
+
+Only the trusted ledger workflow's bot commit writes `.test-status.json`, and only when you dispatch it: `gh workflow run ledger.yml --ref main -f target=<pull-request-number|main>`. `--ref main` is not optional — a dispatch runs the workflow definition of the ref it names, so this one refuses every other ref, because a branch must not get to validate its own ledger with its own rules. `target=main` validates `main` and commits the ledger onto `main`, which is what keeps direct pushes from leaving the ledger stale; a pull request number validates that pull request's head and commits onto its head branch. Umbrella work can take either route — `main` accepts direct pushes and refuses force-pushes and deletions.
+
+A run costs about 20 minutes, so defer and batch: dispatch once for a batch of commits, and only when a local ratchet run has already convinced you it will pass. A red commit and its green fix are still two dispatches — the first records `pending`, the second the promotion to `passing`. A run that finds the committed ledger already correct records nothing.
 
 Retiring a test takes one more commit. Name it under `removals` in `.tdd-ratchet.json` and commit that alongside the deletion; the bot consumes the instruction in a single run, so delete `.tdd-ratchet.json` in the next commit. A leftover instruction fails every later ratchet run with `removal target is not present in committed status`.
 
-The ledger bot writes to the pull request's **head branch**, so do not merge with `--delete-branch` while its run is still going: the write step ends in `gh: Not Found` and `Reference does not exist`, and whatever the run wanted to record is lost. Merge, let the run finish, then delete the branch.
+The bot writes to the branch it validated, so do not merge with `--delete-branch` while its run is still going: the write step ends in `gh: Not Found` and `Reference does not exist`, and whatever the run wanted to record is lost. Merge, let the run finish, then delete the branch.
 
-It commits even when the ledger is unchanged, so every ledger run moves the head SHA. Dispatch a tool's integration run only once the ledger run for that push has finished. Dispatch first and the bot's commit lands after `Ready` was recorded, leaving the required status on a commit that is no longer the head, so auto-merge waits for a check that will never arrive and the Merge job fails.
+A ledger commit moves the head SHA, and tool ledgers still commit even when nothing changed. Dispatch a tool's integration run only once the ledger run for that push has finished. Dispatch first and the bot's commit lands after `Ready` was recorded, leaving the required status on a commit that is no longer the head, so auto-merge waits for a check that will never arrive and the Merge job fails.
 
 ### Repairing a ledger history
 
@@ -145,8 +149,6 @@ Exit: the pattern is enforced, and every tool either has the improvement or is v
 
 Standard release targets are `x86_64-unknown-linux-gnu` and `x86_64-pc-windows-msvc` only. Do not add musl, macOS, or aarch64 release targets unless the user explicitly reopens that support. `oc` is intentionally Linux-only for now.
 
-After changing tool versions or submodule pointers, regenerate the umbrella version file with `python3 scripts/generate-version-json.py`; do not edit `docs/version.json` by hand.
-
 ### Adding a new cross-cutting concern
 
 1. **Improve process first.** Write down what the concern IS and WHY it matters.
@@ -278,10 +280,11 @@ cd tools/<name> && cargo ratchet
 3. Open the child PR, merge current child `main`, and explicitly dispatch its serialized integration workflow
 4. Wait for that workflow to merge, release, deploy, and attest its merge commit
 5. Fast-forward the child checkout to the merged `main`
-6. From workspace root: `git add tools/<name>` to update the submodule pointer
-7. Commit and push the workspace
+6. From workspace root: `git add tools/<name>`, regenerate `docs/version.json` with `python3 scripts/generate-version-json.py` — never by hand — and commit both together
+7. Push, and let the Pages workflow deploy the site — it runs on any `docs/` push and takes about twenty seconds
+8. Dispatch the ledger against `main` once the batch of pointer bumps is done
 
-A tool release blocks every other umbrella branch until its pointer lands. `release-freshness`, `pinned-main-parity`, and `version-artifacts` compare the pinned commit against the tool's published release, remote `main`, and live site, and all three are tracked passing — so the moment a tool releases, they regress on every umbrella branch and the ledger bot writes for none of them. Land the pointer bump before starting other umbrella work, and carry unrelated umbrella changes on the pointer branch if one is already open.
+Step 7 is the one thing not to defer. `version-artifacts` compares the live site against `docs/version.json` on merged `main`, so an undeployed pointer bump reads as a red concern everywhere until the site catches up. `release-freshness` and `pinned-main-parity` compare the pinned commit against the tool's published release and remote `main`, so a release with no pointer bump reads red the same way. Land the pointer bump before starting other umbrella work, and carry unrelated umbrella changes with it if a branch is already open.
 
 ---
 
@@ -308,4 +311,4 @@ user.name = Max Clarke
 user.email = maxeonyx@gmail.com
 ```
 
-Pushing to main is safe — remote preservation. Commit and push frequently.
+Pushing is safe — remote preservation. Commit and push frequently.
