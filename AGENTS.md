@@ -24,6 +24,8 @@ Push a dated `backup/…-main-<date>` tag of the current tip before swapping. Ev
 
 Every tool in this suite should benefit from every improvement made to any tool. When you add auto-update to one tool, all tools get it. When you improve help text patterns, all tools get it. When you fix a CI problem, all tools get the fix. The workspace enforces this by making cross-cutting work the natural path and tool-specific work the exception.
 
+The concern suite is the map of where that has and has not happened. Each concern is one independent aspect of quality, checked across every applicable repo, so the ecosystem's quality waterline can be raised deliberately — see `VISION.md`.
+
 ## Concurrent development
 
 Mutable work belongs in an exclusive full clone under the sibling `agent-tools-workspace` repository. Name clones `at-<feature-branch>` directly under that repository and use slash-free feature branch names. Never edit, stash, reset, or commit another session's clone.
@@ -42,17 +44,17 @@ Agents ignore process. They barrel past it into implementation. This rule exists
 
 If a mistake happened, the process should have prevented it. Fix the process. If a step was confusing, the process should have been clearer. Fix the process. If something was skipped, the process should have enforced it. Fix the process. If you're about to do work and the process doesn't describe how, STOP. Write the process first. Then follow it.
 
-Update this file, the standards, or the compliance checks IMMEDIATELY when you notice a gap. Process fixes are high leverage, and the entire point of this project. They compound. Implementation fixes are local. They are needed but don't compound.
+Update this file, the standards, or the concern checks IMMEDIATELY when you notice a gap. Process fixes are high leverage, and the entire point of this project. They compound. Implementation fixes are local. They are needed but don't compound.
 
 ---
 
 ## LEAVING TESTS RED IS A SUPERPOWER
 
-Red tests, red standards, red CI, failing concerns — these are **expected and good** here. They are the honest, visible record of what work remains. A red test is the work queue. A failing standards concern is the TODO list. Do not be uncomfortable with red.
+Red tests, red standards, red CI, failing concerns — these are **expected and good** here. They are the honest, visible record of where the ecosystem sits on each aspect. Red is a resting state, not a debt. Do not be uncomfortable with it.
 
 The wrong instinct — the one to fight — is making red go green by papering over it: grandfathering a failing test, adding a carve-out or `NOT_APPLICABLE` exemption to dodge a concern, moving a ratchet baseline to swallow a violation, or marking something passing that isn't. That hides the work and corrupts the signal. **Never make red green except by genuinely doing the work.**
 
-So: if a tool isn't compliant yet, leave it red. If a test should fail, let it fail loudly. If you fix a violation, fix it the real way (e.g. rewrite history so a test genuinely goes `pending` → `passing`), never by relaxing the gate. Honest red beats fake green every time.
+**You do not need to make anything green. Prefer to defer over fixing hackily: green is earned the proper way only, there is time, and it is fine to leave something red and say why.** If a test should fail, let it fail loudly. If you fix a violation, fix it the real way (e.g. rewrite history so a test genuinely goes `pending` → `passing`), never by relaxing the gate. Honest red beats fake green every time.
 
 ---
 
@@ -122,9 +124,9 @@ When you've done something for one tool, do it for all of them.
 3. If it's a pattern: is there enforcement that all tools must follow it?
 4. If no enforcement exists → add enforcement first (update standards, add a check)
 5. Apply the pattern to the next tool
-6. Repeat until all tools comply
+6. Repeat until every tool has it, or until the remaining ones need work you are deferring
 
-Exit: all tools have the improvement, and enforcement prevents regression.
+Exit: the pattern is enforced, and every tool either has the improvement or is visibly red for it.
 
 ---
 
@@ -148,17 +150,17 @@ After changing tool versions or submodule pointers, regenerate the umbrella vers
 ### Adding a new cross-cutting concern
 
 1. **Improve process first.** Write down what the concern IS and WHY it matters.
-2. Define compliance as an objective predicate where possible.
+2. Define the aspect as an objective predicate where possible.
 3. Add a Rust concern module in `crates/standards/src/concerns/<concern>.rs` with the concern definition in the module docs, any review instructions it exports, and the checker in a `#[cfg(test)]` module.
 4. Keep `crates/standards/src/concerns/mod.rs` in sync so the concern registry and agentic concern list match the modules.
-5. Ask whether the concern should also apply to the workspace itself (`crates/`, `docs/`, and other root-owned code). If yes, encode workspace compliance in the checker instead of enforcing only on tool repos.
+5. Ask whether the concern should also apply to the workspace itself (`crates/`, `docs/`, and other root-owned code). If yes, check the workspace in the checker instead of checking only tool repos.
 6. Add checker tests that prove both success and failure. Prefer explicit fixtures for pure/mechanical checks so the checker is validated for true positives and true negatives, not just exercised on the live repo.
-7. Land the enforcement. Red tests are the visible work queue.
-8. Bring tools into compliance one by one via the generalize loop.
+7. Land the enforcement. The new red is the map filling in, and landing a concern nothing yet satisfies is a good outcome.
+8. Raise tools onto it one by one via the generalize loop.
 
 The concern is not real until enforcement exists. Prose in AGENTS.md is not enforcement.
 
-### Bringing a tool into compliance
+### Raising a tool onto a concern
 
 Two tracks run in parallel: mechanical fixes and agentic review.
 
@@ -183,7 +185,7 @@ Review loop:
 6. Implementer shapes findings into an implementation backlog, grouping by design area rather than by concern where that is more efficient.
 7. Implementer fixes in stages, verifying each stage.
 8. After any fix, implementer requests a fresh independent review agent for the affected concern(s). Do not reuse the implementer as the reviewer.
-9. Exit: every applicable manual concern has a current clean attestation in `state.json`, so the standards tests go green.
+9. Exit: every applicable manual concern either has a current clean attestation in `state.json` or has findings you are deliberately deferring.
 
 Rules:
 
@@ -206,8 +208,8 @@ Tool order: trunc → tdd-ratchet → dotsync → tb → oc (simplest first).
 3. Create the tool repo (follow existing patterns — MIT license, AGENTS.md, docs/, .github/workflows/)
 4. Add it as a submodule under `tools/`
 5. Add it to `standards::TOOLS`
-6. Run the umbrella's `cargo ratchet` and use the pending concern tests as the compliance backlog
-7. Bring it into compliance concern by concern via the generalize loop
+6. Run the umbrella's `cargo ratchet` to see where the new tool sits on each concern
+7. Raise it onto them one by one via the generalize loop, deferring whatever cannot be done properly yet
 8. Update the umbrella site (`docs/index.html`) and cross-references in sibling tools
 
 ### Archiving a tool
@@ -230,8 +232,8 @@ If archiving interrupts a public surface, unarchive the repository, relocate or 
 
 A concern is not enforced until two things exist:
 
-1. **Definition** — what compliance means, precisely
-2. **Checker** — a Rust test that can verify compliance mechanically
+1. **Definition** — what the aspect is, precisely
+2. **Checker** — a Rust test that observes it mechanically
 
 Without both, it's aspiration. Aspiration does not prevent drift.
 
@@ -247,7 +249,7 @@ Run the ratcheted standards suite:
 cargo ratchet
 ```
 
-Passing tests are the compliance state. Failing tests are the TODO list. `crates/standards/src/concerns/mod.rs` tracks the concern registry and which concerns are agentic.
+The suite is the map: each test reports where the ecosystem sits on one aspect. `crates/standards/src/concerns/mod.rs` tracks the concern registry and which concerns are agentic.
 
 ---
 
@@ -255,7 +257,7 @@ Passing tests are the compliance state. Failing tests are the TODO list. `crates
 
 ```bash
 # Fast checks (lint, format, build, tests — immediate feedback)
-cargo ratchet                         # standards stay pending until every applicable tool complies
+cargo ratchet                         # standards stay pending until every applicable tool is raised onto them
 cargo fmt --check --all              # formatting
 cargo clippy --all -- -D warnings    # linting
 cargo test -p trunc                  # tool tests (fast — spawns binary, checks output)
