@@ -63,7 +63,7 @@ mod tests {
         }
 
         if !failures.is_empty() {
-            panic!("code-review non-compliant:\n  {}", failures.join("\n  "));
+            panic!("code-review findings:\n  {}", failures.join("\n  "));
         }
     }
 }

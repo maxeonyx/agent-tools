@@ -51,10 +51,7 @@ mod tests {
         }
 
         if !failures.is_empty() {
-            panic!(
-                "vision-and-process non-compliant:\n  {}",
-                failures.join("\n  ")
-            );
+            panic!("vision-and-process findings:\n  {}", failures.join("\n  "));
         }
     }
 }

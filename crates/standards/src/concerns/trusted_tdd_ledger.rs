@@ -7,7 +7,7 @@
 //! ledger to a separately privileged job, revalidate the transition against the
 //! current pull-request head, and create a non-force ledger-only bot commit.
 //!
-//! Compliance is structural because the security boundary is the workflow
+//! The check is structural because the security boundary is the workflow
 //! definition itself. GitHub Actions syntax is independently exercised by the
 //! actionlint-backed environment concern.
 
@@ -50,10 +50,7 @@ mod tests {
         }
 
         if !failures.is_empty() {
-            panic!(
-                "trusted-tdd-ledger non-compliant:\n  {}",
-                failures.join("\n  ")
-            );
+            panic!("trusted-tdd-ledger findings:\n  {}", failures.join("\n  "));
         }
     }
 

@@ -40,7 +40,7 @@ mod tests {
 
         if !failures.is_empty() {
             panic!(
-                "ecosystem-independence non-compliant:\n  {}",
+                "ecosystem-independence findings:\n  {}",
                 failures.join("\n  ")
             );
         }

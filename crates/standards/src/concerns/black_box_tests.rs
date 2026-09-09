@@ -40,7 +40,7 @@ mod tests {
         }
 
         if !failures.is_empty() {
-            panic!("tests-present non-compliant:\n  {}", failures.join("\n  "));
+            panic!("tests-present findings:\n  {}", failures.join("\n  "));
         }
     }
 

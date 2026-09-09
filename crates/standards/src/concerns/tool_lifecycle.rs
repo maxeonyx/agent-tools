@@ -2,7 +2,7 @@
 //!
 //! Archived tools are historical products, not deleted or silently abandoned
 //! active products. Their source, final release, and explanatory site remain
-//! public, while maintained-tool checks stop requiring new compliance work.
+//! public, while maintained-tool checks stop applying to them.
 
 pub const NOT_APPLICABLE: &[&str] = &[];
 
@@ -47,7 +47,7 @@ mod tests {
         }
 
         if !failures.is_empty() {
-            panic!("tool-lifecycle non-compliant:\n  {}", failures.join("\n  "));
+            panic!("tool-lifecycle findings:\n  {}", failures.join("\n  "));
         }
     }
 

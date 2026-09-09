@@ -4,9 +4,9 @@
 //! the outputs developers and CI depend on.
 //!
 //! Local machines and agents should not depend on ad hoc system packages like
-//! `cc`. Compliance keeps the structural devenv files and `enterTest` entrypoint
-//! checks, and adds outcome evidence by running a build inside the repo's devenv
-//! shell.
+//! `cc`. The check covers the structural devenv files and the `enterTest`
+//! entrypoint, and adds outcome evidence by running a build inside the repo's
+//! devenv shell.
 
 /// Tools where this concern does not apply.
 pub const NOT_APPLICABLE: &[&str] = &[];
@@ -53,7 +53,7 @@ mod tests {
         }
 
         if !failures.is_empty() {
-            panic!("devenv-check non-compliant:\n  {}", failures.join("\n  "));
+            panic!("devenv-check findings:\n  {}", failures.join("\n  "));
         }
     }
 

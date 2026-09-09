@@ -7,8 +7,8 @@
 //! a CI issue in one tool, you should be able to apply the same fix across all
 //! tools without re-learning each pipeline.
 //!
-//! Compliance is primarily release evidence: the current GitHub Release must
-//! expose the expected Linux binary asset for the tool. Workflow YAML markers
+//! The evidence is primarily the release itself: the current GitHub Release
+//! should expose the expected Linux binary asset for the tool. Workflow YAML markers
 //! remain secondary diagnostics because they explain why artifact evidence may
 //! be missing, but they are not the proof by themselves.
 
@@ -65,10 +65,7 @@ mod tests {
         }
 
         if !failures.is_empty() {
-            panic!(
-                "release-pipeline non-compliant:\n  {}",
-                failures.join("\n  ")
-            );
+            panic!("release-pipeline findings:\n  {}", failures.join("\n  "));
         }
     }
 

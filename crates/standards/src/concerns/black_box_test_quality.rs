@@ -81,7 +81,7 @@ mod tests {
 
         if !failures.is_empty() {
             panic!(
-                "black-box-test-quality non-compliant:\n  {}",
+                "black-box-test-quality findings:\n  {}",
                 failures.join("\n  ")
             );
         }

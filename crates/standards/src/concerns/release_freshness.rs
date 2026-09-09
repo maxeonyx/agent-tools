@@ -5,7 +5,7 @@
 //! tool commit recorded in this workspace.
 //!
 //! If `main` moves without a fresh release, install instructions and
-//! auto-update checks serve stale binaries. Compliance here is intentionally
+//! auto-update checks serve stale binaries. The evidence here is intentionally
 //! remote: local tags are not enough, because users install from GitHub
 //! Releases and Pages.
 
@@ -106,10 +106,7 @@ mod tests {
         }
 
         if !failures.is_empty() {
-            panic!(
-                "release-freshness non-compliant:\n  {}",
-                failures.join("\n  ")
-            );
+            panic!("release-freshness findings:\n  {}", failures.join("\n  "));
         }
     }
 

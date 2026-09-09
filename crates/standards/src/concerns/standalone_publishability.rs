@@ -4,8 +4,8 @@
 //! repo, not this umbrella workspace, so release builds must not depend on
 //! workspace-relative path crates that are missing in the standalone checkout.
 //!
-//! Compliance means each tool repo advertises a standalone CI build and can be
-//! cloned and built from its own checkout. Workspace-relative path dependency
+//! Each tool repo should advertise a standalone CI build and be cloneable and
+//! buildable from its own checkout. Workspace-relative path dependency
 //! scanning remains useful diagnostic evidence, but the build outcome is the
 //! policy.
 
@@ -64,7 +64,7 @@ mod tests {
 
         if !failures.is_empty() {
             panic!(
-                "standalone-publishability non-compliant:\n  {}",
+                "standalone-publishability findings:\n  {}",
                 failures.join("\n  ")
             );
         }

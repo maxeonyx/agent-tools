@@ -8,7 +8,7 @@
 //! accidental reasons. The ratchet catches tests that don't test anything real,
 //! regressions, and silent test removal.
 //!
-//! To comply, `cargo ratchet` must be the test entrypoint in the umbrella and
+//! So `cargo ratchet` should be the test entrypoint in the umbrella and
 //! every maintained tool, and plain `cargo test` must be rejected by a
 //! gatekeeper. The umbrella cannot recursively invoke its own complete ratchet
 //! while this concern is running, so its check proves the committed ledger,
@@ -67,7 +67,7 @@ mod tests {
         }
 
         if !failures.is_empty() {
-            panic!("tdd-ratchet non-compliant:\n  {}", failures.join("\n  "));
+            panic!("tdd-ratchet findings:\n  {}", failures.join("\n  "));
         }
     }
 
@@ -152,7 +152,7 @@ mod tests {
 
         if !failures.is_empty() {
             panic!(
-                "tdd-ratchet CI pattern non-compliant:\n  {}",
+                "tdd-ratchet CI pattern findings:\n  {}",
                 failures.join("\n  ")
             );
         }

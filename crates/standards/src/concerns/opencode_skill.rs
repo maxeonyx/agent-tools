@@ -39,7 +39,7 @@ mod tests {
         }
 
         if !failures.is_empty() {
-            panic!("opencode-skill non-compliant:\n  {}", failures.join("\n  "));
+            panic!("opencode-skill findings:\n  {}", failures.join("\n  "));
         }
     }
 }

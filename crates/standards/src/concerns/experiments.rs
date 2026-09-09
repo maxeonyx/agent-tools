@@ -42,7 +42,7 @@ mod tests {
         }
 
         if !failures.is_empty() {
-            panic!("experiments non-compliant:\n  {}", failures.join("\n  "));
+            panic!("experiments findings:\n  {}", failures.join("\n  "));
         }
     }
 

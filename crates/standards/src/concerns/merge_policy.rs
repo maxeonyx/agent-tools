@@ -18,7 +18,7 @@ Required review method:
    that can observe its merge settings.
 3. Verify `archived` is false, `allow_merge_commit` is true,
    `allow_squash_merge` is false, and `allow_rebase_merge` is false.
-4. Treat missing or inaccessible fields as a finding; do not infer compliance.
+4. Treat missing or inaccessible fields as a finding; do not infer that a setting is correct.
 5. Report the repositories and fields inspected. Record the attestation only
    when every repository in the target is clean.
 "#;
@@ -67,7 +67,7 @@ mod tests {
         }
 
         if !failures.is_empty() {
-            panic!("merge-policy non-compliant:\n  {}", failures.join("\n  "));
+            panic!("merge-policy findings:\n  {}", failures.join("\n  "));
         }
     }
 

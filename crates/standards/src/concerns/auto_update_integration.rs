@@ -5,7 +5,7 @@
 //! checks are useful structural backstops, but they cannot prove that users
 //! actually receive a working update.
 //!
-//! Compliance therefore installs the previous Linux release in a temporary
+//! The check therefore installs the previous Linux release in a temporary
 //! prefix, points its forced-update hook at the binary built from the pinned
 //! source, runs the old binary, verifies its bytes were replaced, and executes
 //! the installed binary again to verify the new version. Tagged release assets
@@ -66,7 +66,7 @@ mod tests {
 
         if !failures.is_empty() {
             panic!(
-                "auto-update-integration non-compliant:\n  {}",
+                "auto-update-integration findings:\n  {}",
                 failures.join("\n  ")
             );
         }

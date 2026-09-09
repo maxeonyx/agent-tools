@@ -21,7 +21,7 @@ Required review method:
 4. For maintained tools (all targets except `help-test`), run
    `gh api repos/OWNER/REPO/environments/github-pages/deployment-branch-policies`
    and verify a branch policy named `*` permits validated integration branches.
-5. Treat missing or inaccessible fields as a finding; do not infer compliance.
+5. Treat missing or inaccessible fields as a finding; do not infer that a setting is correct.
 6. Report the endpoints and fields inspected. Record the attestation only when
    every required setting is clean.
 "#;
@@ -62,10 +62,7 @@ mod tests {
         }
 
         if !failures.is_empty() {
-            panic!(
-                "integration-policy non-compliant:\n  {}",
-                failures.join("\n  ")
-            );
+            panic!("integration-policy findings:\n  {}", failures.join("\n  "));
         }
     }
 

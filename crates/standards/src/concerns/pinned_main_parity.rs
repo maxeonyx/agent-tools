@@ -3,7 +3,7 @@
 //! The workspace should not pin submodule commits that are behind a tool
 //! repository's remote `main`.
 //!
-//! Compliance means the commit recorded in this workspace is either exactly the
+//! The commit recorded in this workspace should be either exactly the
 //! current remote `origin/main` commit or a descendant of it. That allows
 //! in-flight local commits while rejecting stale pins.
 
@@ -103,10 +103,7 @@ mod tests {
         }
 
         if !failures.is_empty() {
-            panic!(
-                "pinned-main-parity non-compliant:\n  {}",
-                failures.join("\n  ")
-            );
+            panic!("pinned-main-parity findings:\n  {}", failures.join("\n  "));
         }
     }
 

@@ -159,7 +159,7 @@ mod tests {
 
         if !failures.is_empty() {
             panic!(
-                "concern-module-coverage non-compliant:\n  {}",
+                "concern-module-coverage findings:\n  {}",
                 failures.join("\n  ")
             );
         }

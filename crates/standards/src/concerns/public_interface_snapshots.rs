@@ -69,7 +69,7 @@ mod tests {
 
         if !failures.is_empty() {
             panic!(
-                "public-interface-snapshots non-compliant:\n  {}",
+                "public-interface-snapshots findings:\n  {}",
                 failures.join("\n  ")
             );
         }

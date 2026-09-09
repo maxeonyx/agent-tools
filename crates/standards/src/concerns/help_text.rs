@@ -109,7 +109,7 @@ mod tests {
         ));
 
         if !failures.is_empty() {
-            panic!("help-text non-compliant:\n  {}", failures.join("\n  "));
+            panic!("help-text findings:\n  {}", failures.join("\n  "));
         }
     }
 }

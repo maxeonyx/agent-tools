@@ -3,7 +3,7 @@
 //! Every published tool should expose the same version information through its
 //! CLI and its website package.
 //!
-//! Compliance means:
+//! For each tool:
 //! - the published tool website serves `/version.json`
 //! - `tool --version` prints `<binary> <version>`
 //! - `tool --version --json` prints machine-readable JSON with `package`,
@@ -159,10 +159,7 @@ mod tests {
         check_workspace_live_json(&mut failures);
 
         if !failures.is_empty() {
-            panic!(
-                "version-artifacts non-compliant:\n  {}",
-                failures.join("\n  ")
-            );
+            panic!("version-artifacts findings:\n  {}", failures.join("\n  "));
         }
     }
 

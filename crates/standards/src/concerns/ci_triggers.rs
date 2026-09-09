@@ -46,7 +46,7 @@ mod tests {
         }
 
         if !failures.is_empty() {
-            panic!("ci-triggers non-compliant:\n  {}", failures.join("\n  "));
+            panic!("ci-triggers findings:\n  {}", failures.join("\n  "));
         }
     }
 

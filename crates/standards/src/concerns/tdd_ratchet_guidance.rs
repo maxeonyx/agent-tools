@@ -41,7 +41,7 @@ mod tests {
 
         if !failures.is_empty() {
             panic!(
-                "tdd-ratchet-guidance non-compliant:\n  {}",
+                "tdd-ratchet-guidance findings:\n  {}",
                 failures.join("\n  ")
             );
         }

@@ -1,8 +1,8 @@
 //! Workspace standards enforcement.
 //!
 //! This crate has no runtime purpose. Its concern modules define cross-cutting
-//! standards and their mechanical tests fail until every applicable tool
-//! complies. Run with `cargo ratchet` from the workspace root.
+//! standards, and their mechanical tests report where every applicable tool
+//! sits on each one. Run with `cargo ratchet` from the workspace root.
 
 use std::path::{Path, PathBuf};
 

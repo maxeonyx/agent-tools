@@ -62,10 +62,7 @@ mod tests {
         let failures = concerns::review_attestation_failures("interactive-usage", NOT_APPLICABLE);
 
         if !failures.is_empty() {
-            panic!(
-                "interactive-usage non-compliant:\n  {}",
-                failures.join("\n  ")
-            );
+            panic!("interactive-usage findings:\n  {}", failures.join("\n  "));
         }
     }
 }

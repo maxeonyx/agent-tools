@@ -6,8 +6,8 @@
 //! Shared config means one set of rules and one muscle memory when moving across
 //! tools.
 //!
-//! Compliance means each tool passes `cargo fmt --check` when run from that
-//! tool's repository, so rustfmt uses the effective configuration for the
+//! Each tool should pass `cargo fmt --check` when run from that tool's
+//! repository, so rustfmt uses the effective configuration for the
 //! checkout under test. Tool-local rustfmt configuration is reported as a drift
 //! diagnostic, but formatting output is the policy.
 
@@ -71,7 +71,7 @@ mod tests {
         }
 
         if !failures.is_empty() {
-            panic!("code-standards non-compliant:\n  {}", failures.join("\n  "));
+            panic!("code-standards findings:\n  {}", failures.join("\n  "));
         }
     }
 

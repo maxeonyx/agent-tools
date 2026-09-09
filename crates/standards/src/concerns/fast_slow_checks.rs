@@ -83,10 +83,7 @@ mod tests {
         }
 
         if !failures.is_empty() {
-            panic!(
-                "fast-slow-checks non-compliant:\n  {}",
-                failures.join("\n  ")
-            );
+            panic!("fast-slow-checks findings:\n  {}", failures.join("\n  "));
         }
     }
 

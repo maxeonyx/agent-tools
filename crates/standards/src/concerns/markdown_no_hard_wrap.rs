@@ -10,7 +10,7 @@
 //! Max's design note `markdown-nowrap-lead-by-example.md` also asks the harness
 //! to lead by example, since it injects markdown context and skills of its own.
 //!
-//! Compliance means no line is a column-wrap continuation of the line above it.
+//! So no line should be a column-wrap continuation of the line above it.
 //! The checker looks for the fingerprint a wrapping tool leaves behind: inside
 //! one paragraph, every line fills to a consistent width and each break happens
 //! exactly where the next word stopped fitting. Deliberate one-line-per-thought
@@ -91,7 +91,7 @@ mod tests {
 
         if !failures.is_empty() {
             panic!(
-                "markdown-no-hard-wrap non-compliant:\n  {}\n\nFix with, from the repo holding the file:\n  npx prettier@3 --write --prose-wrap never --embedded-language-formatting off <file>",
+                "markdown-no-hard-wrap findings:\n  {}\n\nFix with, from the repo holding the file:\n  npx prettier@3 --write --prose-wrap never --embedded-language-formatting off <file>",
                 failures.join("\n  ")
             );
         }

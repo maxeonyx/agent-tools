@@ -61,7 +61,7 @@ mod tests {
         let failures = concerns::review_attestation_failures("injectable-io", NOT_APPLICABLE);
 
         if !failures.is_empty() {
-            panic!("injectable-io non-compliant:\n  {}", failures.join("\n  "));
+            panic!("injectable-io findings:\n  {}", failures.join("\n  "));
         }
     }
 }

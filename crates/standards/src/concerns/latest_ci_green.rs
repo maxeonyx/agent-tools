@@ -4,8 +4,8 @@
 //! `main` CI run.
 //!
 //! Release and website checks validate public artifacts. They do not prove the
-//! current recorded tool head passed its own repository integration. Compliance
-//! here is remote: the exact merge commit must carry the successful
+//! current recorded tool head passed its own repository integration. The
+//! evidence here is remote: the exact merge commit should carry the successful
 //! `integrated-ci` commit status written after the one-run pipeline publishes.
 
 /// Tools where this concern does not apply.
@@ -91,10 +91,7 @@ mod tests {
         }
 
         if !failures.is_empty() {
-            panic!(
-                "latest-ci-green non-compliant:\n  {}",
-                failures.join("\n  ")
-            );
+            panic!("latest-ci-green findings:\n  {}", failures.join("\n  "));
         }
     }
 

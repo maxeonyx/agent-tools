@@ -3,8 +3,8 @@
 //! Public install commands should resolve to downloadable assets.
 //!
 //! Pages can deploy successfully while still advertising a binary path that was
-//! never produced. Compliance means every documented `https://*.maxeonyx.com`
-//! release URL in the umbrella site and tool docs returns a successful response.
+//! never produced. Every documented `https://*.maxeonyx.com` release URL in the
+//! umbrella site and tool docs should return a successful response.
 //! When `STANDARDS_DOWNLOAD_INSTALL_BINARIES=1` is set, advertised binaries are
 //! also downloaded and executed with `--version --json`.
 
@@ -69,7 +69,7 @@ mod tests {
 
         if !failures.is_empty() {
             panic!(
-                "website-install-links non-compliant:\n  {}",
+                "website-install-links findings:\n  {}",
                 failures.join("\n  ")
             );
         }

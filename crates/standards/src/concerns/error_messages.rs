@@ -56,7 +56,7 @@ mod tests {
         let failures = concerns::review_attestation_failures("error-messages", NOT_APPLICABLE);
 
         if !failures.is_empty() {
-            panic!("error-messages non-compliant:\n  {}", failures.join("\n  "));
+            panic!("error-messages findings:\n  {}", failures.join("\n  "));
         }
     }
 }

@@ -6,8 +6,8 @@
 //! them. Max's user-level rule states it directly: whenever a repository has an
 //! `AGENTS.md`, it also gets a `CLAUDE.md` containing `@AGENTS.md`.
 //!
-//! Compliance means every directory holding an `AGENTS.md` also holds a
-//! `CLAUDE.md` with `@AGENTS.md` on a line of its own. That is Claude Code's
+//! So every directory holding an `AGENTS.md` should also hold a `CLAUDE.md`
+//! with `@AGENTS.md` on a line of its own. That is Claude Code's
 //! import syntax, resolved relative to the file it appears in, so the same
 //! one-line body works at any depth. One line and no prose is the point: the
 //! alias cannot drift from what it aliases.
@@ -72,7 +72,7 @@ mod tests {
 
         if !failures.is_empty() {
             panic!(
-                "claude-md-alias non-compliant:\n  {}\n\nFix with, from the directory holding AGENTS.md:\n  printf '@AGENTS.md\\n' > CLAUDE.md",
+                "claude-md-alias findings:\n  {}\n\nFix with, from the directory holding AGENTS.md:\n  printf '@AGENTS.md\\n' > CLAUDE.md",
                 failures.join("\n  ")
             );
         }

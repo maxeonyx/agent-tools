@@ -78,7 +78,7 @@ mod tests {
         }
 
         if !failures.is_empty() {
-            panic!("landing-page non-compliant:\n  {}", failures.join("\n  "));
+            panic!("landing-page findings:\n  {}", failures.join("\n  "));
         }
     }
 
