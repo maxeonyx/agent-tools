@@ -7,6 +7,8 @@ description: When creating a new CLI tool for AI agent workflows, or setting up 
 
 Use this pattern for lightweight, docs-first CLI tool repos in the maxeonyx ecosystem.
 
+The umbrella ([maxeonyx/agent-tools](https://github.com/maxeonyx/agent-tools)) tracks cross-cutting concerns as executable checks — one independent aspect of quality each — so the ecosystem's quality waterline can be raised deliberately. A red check tells you where a repo sits on one aspect. Raise it the proper way or leave it red and say why; prefer deferring to a hacky green. There is time.
+
 ## Goal
 
 Ship a small, discoverable tool repository with:

@@ -4,6 +4,8 @@ Shared development workspace for [maxeonyx agent-tools](https://tools.maxeonyx.c
 
 All tools are developed from this workspace. Individual repos exist for CI, releases, and Pages.
 
+Cross-cutting concerns live here as executable checks — one independent aspect of quality each — mapping where every tool sits so the ecosystem's quality waterline can be raised deliberately.
+
 ## Maintained tools
 
 | Tool | Binary | Repo | Site |
