@@ -48,7 +48,7 @@
     "standards::standards$concerns::markdown_no_hard_wrap::tests::fixture_wrapped_list_item_is_rejected": "passing",
     "standards::standards$concerns::markdown_no_hard_wrap::tests::fixture_wrapped_paragraph_is_rejected": "passing",
     "standards::standards$concerns::markdown_no_hard_wrap::tests::generated_devenv_profiles_are_skipped": "passing",
-    "standards::standards$concerns::markdown_no_hard_wrap::tests::markdown_no_hard_wrap": "pending",
+    "standards::standards$concerns::markdown_no_hard_wrap::tests::markdown_no_hard_wrap": "passing",
     "standards::standards$concerns::merge_policy::tests::history_rewriting_fixture_fails": "passing",
     "standards::standards$concerns::merge_policy::tests::merge_only_fixture_passes": "passing",
     "standards::standards$concerns::merge_policy::tests::merge_policy_attestations": "pending",
