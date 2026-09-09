@@ -12,6 +12,14 @@ The ledger bot writes to the pull request's **head branch**, so do not merge wit
 
 It commits even when the ledger is unchanged, so every ledger run moves the head SHA. Dispatch a tool's integration run only once the ledger run for that push has finished. Dispatch first and the bot's commit lands after `Ready` was recorded, leaving the required status on a commit that is no longer the head, so auto-merge waits for a check that will never arrive and the Merge job fails.
 
+### Repairing a ledger history
+
+The history check judges each snapshot against the `renames` recorded in that snapshot's own `.test-status.json`, so a commit that renamed ledger keys without recording them is a violation no forward commit can settle, as is a test first recorded `passing` in the commit that introduced it. Repair means rewriting those commits, which needs the user's explicit approval.
+
+Replay the branch with `git commit-tree`, keeping every original tree, message, author and committer and substituting only the edited ledger blobs. Record the renames in the commit that renamed the keys, and record a grandfathered test as `pending` in the commit that introduced it — the next ledger commit already promotes it, and `pending` means not yet earned, not observed failing. Commits before the earliest edit then keep their SHA, every other commit keeps a byte-identical tree, and `cargo ratchet` proves the result before anything is pushed.
+
+Push a dated `backup/…-main-<date>` tag of the current tip before swapping. Every tag after the earliest edited commit has to be re-pointed at the commit that now holds the tree it named; GitHub's signatures on its own merge commits are lost; older releases refuse a `target_commitish` update with a 404 and keep naming their pre-rewrite commit; and `main`'s protection has to allow force pushes for the swap. Restore the exact protection JSON afterwards, with `"app_id": -1` for a required check that any app may report.
+
 ## The goal
 
 Every tool in this suite should benefit from every improvement made to any tool. When you add auto-update to one tool, all tools get it. When you improve help text patterns, all tools get it. When you fix a CI problem, all tools get the fix. The workspace enforces this by making cross-cutting work the natural path and tool-specific work the exception.
