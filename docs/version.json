@@ -2,7 +2,7 @@
   "site": "agent-tools",
   "tools": {
     "trunc": "0.4.13",
-    "tb": "0.1.30",
+    "tb": "0.1.31",
     "dotsync": "0.8.0",
     "tdd-ratchet": "1.1.6",
     "oc": "0.3.23",
