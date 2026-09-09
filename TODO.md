@@ -17,7 +17,7 @@
   - a reusable tool for defining, running, and triaging cross-cutting concern checks across a workspace or repo family
   - library layer: concern definitions, common check helpers, attestation schema, fixture harnesses, and applicability logic
   - config layer: repo inventory, concern applicability, website/binary metadata, CI/release locators, and policy knobs
-  - runner/CLI: execute checks, surface failures as backlog, and support setup/bootstrap for a new repo family
+  - runner/CLI: execute checks, report where each repo sits on each concern, and support setup/bootstrap for a new repo family
   - agentic integration: headless use of a chosen agentic tool for manual-review concerns, with pluggable review backends rather than hard-coding one assistant
   - packaging goal: another repo should adopt `crosscut` by configuration and fixtures, not by copying `agent-tools`
   - later, when `crosscut` is a real Rust library with a public API, add semver-compatibility enforcement via `cargo semver-checks`; do not treat that as a current concern for this repo until there is an actual reusable library surface to preserve
