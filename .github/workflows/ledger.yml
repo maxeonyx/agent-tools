@@ -69,6 +69,7 @@ jobs:
           ref: ${{ steps.target.outputs.head_sha }}
           fetch-depth: 0
           path: pull-request
+          submodules: recursive
           persist-credentials: false
 
       # The write job judges the proposed ledger against the committed one, so

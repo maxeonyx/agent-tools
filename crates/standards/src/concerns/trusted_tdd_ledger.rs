@@ -126,6 +126,10 @@ mod tests {
         ));
         for (needle, message) in [
             (
+                "submodules: recursive",
+                "must check out the nested repositories the concerns inspect",
+            ),
+            (
                 "cachix/install-nix-action@",
                 "must install Nix before entering the declared devenv",
             ),
