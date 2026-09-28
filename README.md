@@ -15,7 +15,7 @@ Cross-cutting concerns live in [`crosscut/concerns/`](crosscut/concerns) as [Cro
 | dotsync | `dotsync` | [maxeonyx/dotsync](https://github.com/maxeonyx/dotsync) | [dotsync.maxeonyx.com](https://dotsync.maxeonyx.com) |
 | tdd-ratchet | `cargo-ratchet` | [maxeonyx/tdd-ratchet-rs](https://github.com/maxeonyx/tdd-ratchet-rs) | [tdd-ratchet.maxeonyx.com](https://tdd-ratchet.maxeonyx.com) |
 | agent-harness | (experimental) | [maxeonyx/agent-harness](https://github.com/maxeonyx/agent-harness) | [agent-harness.maxeonyx.com](https://agent-harness.maxeonyx.com) |
-| CrossCut | `crosscut` | [maxeonyx/crosscut](https://github.com/maxeonyx/crosscut) | [maxeonyx.github.io/crosscut](https://maxeonyx.github.io/crosscut/) |
+| CrossCut | `crosscut` | [maxeonyx/crosscut](https://github.com/maxeonyx/crosscut) | [crosscut.maxeonyx.com](https://crosscut.maxeonyx.com) |
 
 ## Old tools
 
