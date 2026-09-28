@@ -27,6 +27,10 @@ The concern applies strongly to the umbrella and to tb, dotsync, trunc and tdd-r
 
 Not in scope: product documentation for end users. The `installed-reality` concern covers install instructions.
 
+- **Mechanical rungs** (cheap, run first):
+  - `CLAUDE.md` should be the one line `@AGENTS.md` next to every `AGENTS.md`: `find . -name AGENTS.md -not -path '*/target/*' -not -path '*/fixtures/*' -execdir sh -c 'grep -qx "@AGENTS.md" CLAUDE.md 2>/dev/null || pwd' \;`
+  - Markdown prose is not hard-wrapped (Max's rule). Judge by eye in the files you read; a paragraph broken at a steady column is the tell. The retired `markdown_no_hard_wrap` checker (450 lines, in git history before 2026-09-28) is the fallback if this ever needs to be mechanical again.
+
 ## Current view — 2026-09-28
 
 The concern applies strongly. The guidance is detailed and mostly earnest, and it contains at least one command that does damage when followed, several untrue statements, and a large share of procedure that exists only to work around the ledger and CI design.

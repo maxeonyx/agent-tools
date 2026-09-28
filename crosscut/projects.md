@@ -6,7 +6,7 @@ The umbrella and its submodules are most of it, but not all of it. Several conce
 
 All of these are public repositories under the `maxeonyx` GitHub account. Each has its own CI, releases and Pages site. In a full umbrella checkout they are pinned as submodules.
 
-- **agent-tools** (this umbrella), at the checkout root. It is the control plane: `crates/standards` (the older concern machinery), `state.json`, the dispatch-only `ledger.yml`, and the site at tools.maxeonyx.com (`docs/`). Its `.codex/config.toml` sets `approval_policy = "never"` and `sandbox_mode = "danger-full-access"` for any Codex session opened here.
+- **agent-tools** (this umbrella), at the checkout root. It is the coordination point: submodule pins, `docs/version.json`, the site at tools.maxeonyx.com (`docs/`), and these concerns. It has no code of its own beyond two site scripts. Only Max installs and uses these tools today (Max, 2026-09-28).
 - **trunc** (`tools/trunc`, maxeonyx/trunc): head/tail truncation for pipe output. Stateless.
 - **tmux-bridge** (`tools/tb`, maxeonyx/tmux-bridge, binary `tb`): lets agents drive the user's live tmux server. Its tests talk to a real tmux server.
 - **dotsync** (`tools/dotsync`, maxeonyx/dotsync): an agent-first dotfile manager built on jj-lib and gix. It writes into `$HOME` and keeps a hidden repo in `~/.local/share/dotsync/repo`. It is the only tool that holds durable user state, and it is by far the most active repository.

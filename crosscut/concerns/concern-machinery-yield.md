@@ -1,36 +1,28 @@
-# What does the umbrella's concern machinery cost, and what does it actually let us see?
+# Is the umbrella's concern machinery earning its keep?
 
 ## Why this matters here
 
-agent-tools exists to make the ecosystem's quality visible (`VISION.md`). Its owner intends to evolve the current machinery in place until it is an application of CrossCut. That machinery is `crates/standards`: 35 concern modules and about 6.6k lines of Rust, run as tests under the TDD ratchet, with `NOT_APPLICABLE` lists, review attestations in `state.json`, a dispatch-only trusted ledger workflow, and the process prose in the root `AGENTS.md`.
+The umbrella once spent about a quarter of its commits and most of its CI time on concern machinery: a ratcheted standards suite, attestations and a ledger. That machinery answered fewer questions than it generated, and it was retired on 2026-09-28. Its replacement is this `crosscut/` directory, and the same failure can happen again, only more slowly: concerns nobody reads, views that grow into reports, helper scripts that turn into a second standards crate, or process that creeps back into `AGENTS.md`.
 
-The machinery is itself the largest recurring cost in the umbrella. Whether it pays for itself is the question that decides what the migration keeps, what it changes, and what it deletes. This is CrossCut applying itself to itself, so the same question applies to this `crosscut/` directory as it grows.
-
-The concern applies strongly to the umbrella, and to each tool's copy of the ledger and CI template. "Better" means every mechanism produces a view that someone reads and acts on, at a cost that is proportionate. Anything that does not should be named as a candidate for deletion or redesign.
+This applies strongly while the umbrella is new to CrossCut. Better means every concern here produces a view that someone reads, and sometimes acts on, at a cost that is obviously smaller than what it shows. The whole directory should stay smaller than the problems it looks at.
 
 ## How to look
 
-1. **Could parts disappear?** For each concern module, ask three things:
-   - Would a redesign remove the question?
-   - Is the property already structural? For example, a CLAUDE.md alias could simply be generated.
-   - Is it dead? `auto_update` is an empty test recorded as `passing`, and it is kept as a "historical registry alias".
-2. **Cost, deterministic:**
-   - Share of umbrella commits spent on the machinery: `git log --since=<3 months ago> --format=%s | grep -ciE 'ledger|ratchet|tdd|pending|status'`, pointer bumps (`grep -ciE '^point|^pin'`), and `git log --format= --name-only | sort | uniq -c | sort -rn | head`.
-   - CI wall time per workflow: `gh api "repos/maxeonyx/<repo>/actions/runs?per_page=100&created=>YYYY-MM-DD"`, then sum `updated_at - run_started_at` by workflow name.
-   - The size of `AGENTS.md`, and how much of it is ledger mechanics.
-3. **Yield, deterministic:**
-   - Run `cargo nextest run -p standards --no-fail-fast` in the umbrella devenv. This skips the ratchet, so it does not write the umbrella ledger. It still has side effects, so budget for them. It takes about 10 minutes. It rewrites `devenv.lock` in the umbrella and in five submodules, and `tools/tb/.test-status.json` as well; restore them afterwards. It can also leave `tb-help-*` sessions in the tmux server of whoever runs it. Compare the output with `.test-status.json`:
-     - Which concern tests are `pending`, and have been for how long?
-     - Which ones recorded as `passing` are red today?
-     - Why is each one red: code, or external state that moved?
-   - Count current attestations in `state.json` against the applicable (target, agentic concern) pairs.
-4. **Judgment:** read three or four concern modules end to end, and ask the following.
-   - Does the result tell a human where each tool sits, or only give one bit for the whole ecosystem?
-   - Does the mechanism measure the property, or a source-text proxy for it? agent-tools#31 already asks this question.
-   - Would the question survive as a CrossCut concern file? That means one question, a "How to look", and a dated view.
-   - What would be lost if the module were deleted?
+1. **Cost, deterministic:**
+   - `git log --since='3 months ago' --format=%s -- crosscut/ | wc -l` against all umbrella commits over the same period.
+   - Size: `wc -w crosscut/concerns/*.md`, and any helper scripts under `crosscut/concerns/*/`.
+   - Refresh cost, if a refresh log or CI run exists.
+2. **Yield, judgment:** for each concern, read its last two or three views (`git log -p -- crosscut/concerns/<slug>.md`), and ask:
+   - Did anything change between views? Did anyone act on one, as shown by commits, PRs or issues that cite it?
+   - Is the view the length of its conclusions, or of the investigation behind them?
+   - Is the question still live? Has part of it become structural, or answered by a tool, so that it could shrink?
+3. **Residue of the old machinery:** look for anything still serving the retired ratchet.
+   - `grep -rn -E 'standards::|state\.json|review-attest|NOT_APPLICABLE' --include=*.md --include=*.yml --include=*.py . tools/*/` (excluding `target/`).
+   - Published `tools/*/docs/reviews/*.json`.
+   - Process text in `AGENTS.md` that polices concerns rather than explaining the work.
+4. **Drift towards enforcement:** does any file here now read as a standard, a gate or a score? Does any carrier of the CrossCut doctrine drop its requirement to carry the doctrine forward?
 
-Not in scope: whether tdd-ratchet is a good product. That is tdd-ratchet's own business.
+Not in scope: each tool's own TDD ratchet on its own tests. That is the tool's business.
 
 ## Current view — 2026-09-28
 

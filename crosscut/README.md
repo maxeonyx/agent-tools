@@ -4,7 +4,7 @@ Each file in `concerns/` is an engineering question we decided is worth being ab
 
 These are visibility and food for thought, not obligations. Any of them can be acted on, deferred, accepted as a trade-off, designed away, or ignored. A view that reports bad news is a successful view. Nothing here is a standard, a gate or a score.
 
-This directory is where agent-tools starts to become an application of CrossCut. The older concern machinery, `crates/standards` with its ratchet ledger, attestations in `state.json` and the process in the root `AGENTS.md`, is still in place. Here it is treated as evidence, not authority. One of the concerns (`concern-machinery-yield`) looks at that machinery directly. None of these files depends on it, and none of them feeds it.
+agent-tools is an application of CrossCut. These files replaced the older concern machinery (`crates/standards`, its ratchet ledger and its review attestations), which was retired on 2026-09-28 and remains in git history. `concern-machinery-yield` keeps asking whether this directory is earning its keep.
 
 To refresh a concern, follow its "How to look" section and replace its "Current view" section, by hand or with a coding agent. The CrossCut tool (`crosscut refresh`) can do this headless, but nothing here depends on it. Read the previous view before you replace it. Git keeps the old one.
 
