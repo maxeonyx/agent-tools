@@ -31,27 +31,39 @@ Not in scope: vulnerabilities in Rust dependencies. That is `cargo audit` territ
 
 ## Current view — 2026-09-28
 
-The concern applies strongly. The ledger's trust boundary has been built carefully. The release gate beside it is much weaker, and the result is unverified binaries.
+The concern applies strongly. The real release boundary is the `maxeonyx` account and anything that holds its credentials. `Ready` and branch protection protect `main`'s history, but not what users download.
 
-- **The release gate runs unpinned code from another repository (observed).** The `ci.yml` of trunc, tb, dotsync, agent-harness and help-test runs `git clone --depth=1 https://github.com/maxeonyx/tdd-ratchet-rs` at whatever `main` is, then `cargo install --path` on it, inside the job that posts `Ready` and goes on to merge and release.
-  - The ledger workflow pins tdd-ratchet `v1.1.6`. The gate and the ledger can therefore run different ratchets.
-  - A push to tdd-ratchet `main` changes every sibling's gate on its next run, without any sibling commit.
-  - oc, the archived tool, is the only one that pins a rev.
-- **Actions are pinned by tag (observed).** 38 `actions/checkout@v6`, 17 `dtolnay/rust-toolchain@stable`, and `taiki-e/install-action`, `Swatinem/rust-cache`, `raven-actions/actionlint` and others are all pinned by tag. Only the umbrella's two cachix actions are pinned by SHA. trunc's and agent-harness's `pages.yml` use older major versions than their siblings.
-- **The required check is self-posted, and its binding differs (observed).** Each workflow posts `Ready` through the statuses API with `GITHUB_TOKEN`. trunc binds the check to app 15368 (GitHub Actions). tb, dotsync, tdd-ratchet, agent-harness and help-test have `app_id: null`, so any token with `statuses: write` can satisfy it. `enforce_admins` is on everywhere.
-- **The ledger's rules exist twice (observed, from the survey):** once in Rust inside tdd-ratchet, and once as about 60 lines of jq in each sibling's `ledger.yml`. All five tool ledgers (trunc, tb, dotsync, tdd-ratchet, agent-harness) lack the skip-when-unchanged step that the umbrella has, per `trusted-tdd-ledger` findings; `TODO.md` says four.
-- **The user's end of the chain (observed):**
-  - Install is `curl -Lo ~/.local/bin/<bin> https://<tool>.maxeonyx.com/releases/...`, with no checksum and no signature.
-  - trunc's `pages.yml` runs `gh release download ... || true`. A failed download would therefore deploy a site without binaries, and installs would 404. That is inferred from the code, and no such deploy has been observed.
-  - Skills are also curl-installed into `~/.config/opencode/skills/`. A skill is a prompt that agents follow, so it is part of the chain too.
-- **Secrets (observed):** only `secrets.GITHUB_TOKEN` is referenced, 37 times. There are no personal access tokens (PATs) and no deploy keys in the workflows. That is good. The blast radius is the account itself, not a secret that could leak.
+- **A pushed branch can publish without a merge (inferred from settings, high confidence, not tried).** Each tool's `ci.yml` grants `contents`, `statuses`, `pages` and `id-token: write` at workflow level. Each tool's `github-pages` environment allows deploys from any branch (`*`); only the umbrella's is limited to `main`. A branch carrying an edited `ci.yml` can be dispatched and create a release and Pages deploy. Even unedited, the PR's own code (tests, `build.rs`) runs in `ready`/`build` with that write token, left in `.git/config` because `persist-credentials` is on by default, so it could post its own `Ready`.
+  - Against accidents the gate is real. Against deliberately bad code it is ritual.
+  - The ledger is the exception: it has `permissions: {}`, credential-less checkouts and same-repo heads only.
+- **The gate's ratchet is unpinned, and the mismatch has grown (observed).** Five `ci.yml` still `git clone --depth=1` tdd-ratchet `main`, now v1.1.7. The ledgers pin `v1.1.6`, and the umbrella pins the v1.1.7 submodule. Only oc pins a rev. `TODO.md` item 3 tracks this.
+- **No action is pinned by SHA anywhere now (observed).** The umbrella's two SHA-pinned cachix actions went with its ledger (950b649). Every repository has `allowed_actions: all` and `sha_pinning_required: false`. `taiki-e/install-action@nextest` and `dtolnay/rust-toolchain@master` (x2) are moving refs by design.
+- **Repository settings are good defaults (observed):** `default_workflow_permissions: read` and `can_approve_pull_request_reviews: false` everywhere. There are no tag rulesets, and `enforce_admins` is on wherever `main` is protected. oc's `main` is unprotected. The umbrella's `main` requires no checks, and it now has only Pages CI.
+- **The `Ready` binding is unchanged (observed):** app 15368 on trunc, and `app_id: null` on tb, dotsync, tdd-ratchet, agent-harness and help-test.
+- **Template drift is mostly intended (observed).** The `ci.yml` diffs are the binary names, tb's tmux install, dotsync's release guard, the ratchet self-install, and help-test being source-only. Four `ledger.yml` files are identical; tdd-ratchet's intentionally uses the base SHA. trunc's and agent-harness's `pages.yml` still use `checkout@v4`, `configure-pages@v5` and `deploy-pages@v4`.
+- **The user's end of the chain:**
+  - The served binaries match their releases (observed today). For trunc, tb, dotsync, agent-harness and cargo-ratchet, the served file's SHA-256 equals GitHub's asset `digest` for the release.
+  - There is still no `SHA256SUMS` (it 404s), no provenance attestation, and no check in the install snippet.
+  - All six `pages.yml` files have `gh release download ... || true`, not only trunc's.
+- **This machine (observed):**
+  - The installed trunc 0.2.0, tb 0.1.12 and `~/.cargo/bin/cargo-ratchet` 1.0.3 are far behind their releases (0.4.13, 0.1.32, 1.1.7). Their origin can no longer be checked.
+  - dotsync matches its release.
+  - The local `gh` holds an OAuth token for the account, so any agent run here holds release authority too.
 - **Unknown:**
-  - Actions settings at repository and account level, such as whether the default token permissions are read-only and whether fork PR workflows need approval. I did not read `actions/permissions`.
-  - Whether 2FA is on the account, which only Max can say.
-  - Whether the single-account posture is deliberate. It probably is.
+  - `zizmor` and `actionlint` were not run. Neither is on `PATH` outside the devenv.
+  - Whether 2FA is on the account (only Max knows).
+  - Which agents or machines hold account tokens.
+  - Whether the branch-can-publish path is an accepted trade-off.
 - **Worth considering:**
-  - Pin the gate's ratchet to the same tag as the ledger. This is one line in five files, and it removes the gate/ledger mismatch.
-  - Publish `SHA256SUMS` with each release.
-  - Move to one reusable workflow before the next fix has to be applied six times.
-  - Pin actions by SHA with a Dependabot or Renovate bump. This matters most once auto-update ships.
-- **Since last view:** first view.
+  - Deploy Pages only from a `main`-triggered workflow, so the environment can be `main`-only. This is the design rung, and it closes the headline path.
+  - Scope write permissions per job, and give the `ready` and `build` jobs `persist-credentials: false`.
+  - Turn on `sha_pinning_required` and add Dependabot. A structural switch beats a grep.
+  - Pin the gate's ratchet.
+  - Check the published digest in install snippets, and consider `actions/attest-build-provenance`.
+- **Since last view:**
+  - The umbrella ledger is retired, and the SHA pins went with it.
+  - Actions settings and environments are now observed.
+  - Served binaries are verified against their digests.
+  - `|| true` turns out to be everywhere.
+  - The ratchet now spans three versions.
+- **Noticed along the way:** stale installed binaries belong to `release-coherence` and auto-update. The ledger-import hole in `TODO.md` item 4 belongs to `trusted-tdd-ledger`.

@@ -26,40 +26,44 @@ Not in scope: each tool's own TDD ratchet on its own tests. That is the tool's b
 
 ## Current view — 2026-09-28
 
-The concern applies strongly. The cost is high and visible. The yield is real for the mechanical checks. The judgment half produces almost no views, and the ratchet model distorts several of the others.
+The last view was acted on the same day it was written: the ratchet machinery is gone, and `crosscut/` now costs very little. The open question has moved from cost to whether the views get read and stay short. Half the concerns have no view yet, and the three views that exist predate the retirement.
 
-- **Cost (observed):**
-  - 242 umbrella commits since 2026-06-01. About 64 of them are about the ledger, ratchet or status, 56 are pointer or pin bumps, and 30 edit `AGENTS.md`.
-  - In the last month the umbrella's ledger dispatches took 25 runs and about 366 minutes of wall time. The rest of the umbrella's CI took 7 minutes, and each tool's CI took 19 to 141 minutes.
-  - The repositories are public, so the cost is latency and agent waiting, not money (inferred).
-  - `AGENTS.md` is 23 KB. Its first section, on ratchet and ledger mechanics and history repair, runs to about 4.4 KB of dense procedure before "The goal".
-- **The judgment rung is effectively empty (observed):**
-  - There are 9 agentic concerns across 6 targets.
-  - `state.json` holds 4 attestations, all for tdd-ratchet and all for commit `06d8fc99` (2026-09-02). All 4 are now stale, because 19 commits have landed since, one of them a CLAUDE.md alias.
-  - Freshness is defined as "the attestation names the latest commit that touches anything except `docs/reviews` and `state.json`". The ledger bot's own commits, which touch `.test-status.json`, therefore invalidate every attestation. So does any one-line change.
-  - As defined, the attestation set can never all be current at once (inferred).
-  - agent-tools#28, to complete the attestations, has been open since 2026-09-02.
-  - The review prompts point to skills (`thermonuclear-review`, `error-handling`) that exist only in `~/.config/opencode/skills` on Max's machine. No repository contains them, so a headless reviewer has no access to them.
-  - `review-attest` refuses `help-test` as a target, yet `integration-policy` and `merge-policy` expect help-test attestations.
-- **Results are one bit per concern (observed).** Each concern is a single test, and it panics with a list of findings. The ledger therefore records `pending` for "tb is missing one attestation" and `pending` for "every tool is missing everything", with no difference between them. The finding lists in the panic output are the actual map, and nothing persists them.
-- **External state inside a ratchet (observed):**
-  - `release_freshness`, `pinned_main_parity` and `version_artifacts` are recorded `passing`. All three fail locally today, for one reason: dotsync released v0.10.0 and v0.10.1, and the umbrella still pins v0.9.1.
-  - The ratchet treats passing → failing as a regression. So a child release makes the umbrella's ratchet red, with no change in the umbrella.
-  - The same class of problem explains why the umbrella's own `tdd_ratchet` concern "stays pending" in CI: tb's tests share host tmux state (`TODO.md`, tmux-bridge#11). This run reproduced it locally. No tmux server was running beforehand, so the first test started one, and the two tb prefix tests then failed as "previously passing test now fails". `TODO.md` describes this as a CI-only failure. That is true only when a developer's server predates the run.
-  - Time-dependent observations fit a dated view better than they fit a ratchet (inferred).
-- **Applicability is barely used (observed).** 31 of the 35 `NOT_APPLICABLE` lists are empty. `merge_policy` lists `wmux`, which is not in the inventory. The doctrine's "not applicable is not good" is not violated here. It is simply not being exercised.
-- **Divergent sources of truth (observed):**
-  - `AGENTS.md` says attestations live only in `state.json`, while tools still carry `docs/reviews/*.json`. Those files are published to Pages, and tb's names a commit that does not exist on GitHub.
-  - `docs/version.json` lists oc 0.3.23, which was never released. oc's newest release is v0.3.20.
-  - `README.md` omits agent-harness from "Maintained tools", although `MAINTAINED_TOOLS` includes it.
-- **What works (observed):**
-  - The mechanical, fixture-backed checks are clear and quick, and they find real things. Examples are `claude-md-alias` (help-test lacks CLAUDE.md), `trusted-tdd-ledger` (5 tool ledgers lack the skip-when-unchanged step), and `pinned-main-parity`.
-  - The "red is information" framing in `VISION.md` is close to CrossCut's doctrine already.
+- **The previous view led to action (observed).** The retirement commit `950b649` deleted `crates/standards` (35 modules, about 7k lines), the umbrella ledger workflow, `.test-status.json` and `state.json`. It quotes Max: "machinery for the machinery… interpreted as compliance." The same first CrossCut pass produced tmux-bridge#12 and tdd-ratchet-rs#15, which are pinned in `8548e03`.
+- **Cost now (observed):**
+  - 2 of 204 umbrella commits in the last 3 months touch `crosscut/`, and both were made today.
+  - No helper scripts.
+  - Umbrella CI is `pages.yml` only, so the concerns cost nothing in CI.
+  - `AGENTS.md` went from 23 KB to 14.6 KB. Its CrossCut section is three short paragraphs of explanation.
+  - There is no refresh log, so the refresh cost is unknown. `crosscut` is not on `PATH` here, so `crosscut list` could not be run.
+- **Size:**
+  - The 8 concern files hold about 5,300 words, and about 2,300 of those are Current view text.
+  - Four concerns (`changeability`, `cli-experience`, `release-coherence`, `standalone-repos`) have no view yet.
+  - The three existing views are 592, 518 and 389 words. This concern's previous view was 807 words, the length of the investigation rather than its conclusions.
+- **Views out of date after the retirement (observed):**
+  - The views of `agent-guidance`, `ci-supply-chain` and `installed-reality` were written at `d76ac76`, before the retirement.
+  - They still describe things that are gone. For example, `agent-guidance` still describes a 4.4 KB first section of `AGENTS.md` about ledger procedure, which no longer exists.
+  - This is expected until they are refreshed, but a reader today would be misled.
+- **Leftovers from the old machinery:**
+  - The grep over md/yml/py/nix/toml, excluding `target/` and `crosscut/`, finds nothing.
+  - `docs/reviews/*.json` files are still there in dotsync (4), trunc (3) and oc (3).
+  - dotsync's and trunc's copies are still public: `/reviews/code-quality.json` returns 200 on both sites.
+  - Removing them is already in `TODO.md` for the next PR in each of those tools. oc's are deliberately left, because oc is archived.
+  - `target/standards-fixtures` remains locally. It is gitignored, so it does no harm.
+- **Signs of drift towards enforcement (judgment):** none structural.
+  - `crosscut/README.md` and `AGENTS.md:13` both carry the doctrine and the requirement to pass it on.
+  - The concern files contain no pass/fail language.
+  - Two lines in `AGENTS.md` read as mild obligations and are worth watching:
+    - line 35, "Update… the relevant CrossCut concern, IMMEDIATELY";
+    - line 116, "Exit: every tool has the improvement, or the ones that don't are named in the relevant concern's view".
+  - The tools' ledger procedure that remains in `AGENTS.md` (line 130) belongs to each tool's own ratchet, which is out of scope here.
+- **"How to look" needs updating (for reconsideration, not changed in this refresh):**
+  - The 3-month commit ratio mostly measures history from before CrossCut, so a since-retirement window would say more.
+  - The grep command fails under zsh with "no matches found" unless its `--include` globs are quoted.
+- **Unknowns:**
+  - Whether anyone reads the views. They are a day old, and only Max can say.
+  - The refresh cost per concern (no log).
 - **Worth considering:**
-  - Keep the fixture-backed mechanical checks as the deterministic rung beneath CrossCut concern files, and stop ratcheting their results.
-  - Move time-dependent checks, such as freshness, parity and live sites, into dated views.
-  - Replace attestations with the dated "Current view" of a concern file, which already records its date and evidence.
-  - Delete dead modules such as `auto_update`.
-  - The largest single simplification may be letting the umbrella stop ratcheting concern outcomes at all. That would remove most of the ledger dispatches and much of `AGENTS.md`. That is Max's call.
-- **Local run, 2026-09-28:** `cargo nextest run -p standards` took 610 s. 105 tests ran: 86 passed and 19 failed. 15 of the failures match the ledger's `pending` entries, and the rest are the three freshness tests above plus `tdd_ratchet_gatekeeper`, which refuses to run outside the ratchet by design.
-- **Since last view:** first view.
+  - Refresh the three views that predate the retirement before they are relied on.
+  - Keep views near their conclusions. Around 400 words looks like a reasonable ceiling here.
+  - Delete the dotsync and trunc review JSON files, as `TODO.md` already plans.
+- **Since last view:** the concern machinery described last time has been retired. This concern now asks about `crosscut/` itself, and its cost has fallen from a large share of CI and commits to almost nothing.

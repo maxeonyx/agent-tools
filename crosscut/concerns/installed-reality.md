@@ -23,22 +23,35 @@ Not in scope: development builds inside a clone.
 
 ## Current view — 2026-09-28
 
-This applies strongly, and the current state is weak. The repositories are well ahead of what actually runs.
+The tdd-ratchet crates.io trap is fixed in its own README and site, but the umbrella site at tools.maxeonyx.com still leads with `cargo install tdd-ratchet`. On Max's machine, trunc, tb and cargo-ratchet are still well behind their releases.
 
-- **Max's dev machine (observed):**
-  - `~/.local/bin/trunc` is 0.2.0, installed 2026-02-08. The current release is 0.4.13.
-  - `~/.local/bin/tb` is 0.1.12, installed 2026-05-16. The current release is 0.1.31.
-  - `~/.cargo/bin/cargo-ratchet` is 1.0.3. The ledger pins 1.1.6. The umbrella `AGENTS.md` warns about exactly this hazard, but the warning did not remove it.
-  - dotsync is 0.10.1, installed 2026-09-27. That is current, and newer than the umbrella's pin of 0.9.1.
-  - The pattern suggests that tools get reinstalled only while they are being actively developed (inferred).
-- **No update path exists (observed).** No maintained tool contains an update command or update code. The survey grepped `src` for `self_update`, `releases/latest` and `api.github.com`. `auto-update-integration` is `pending`, and it expects `libraries/agent-tools-updater`, which does not exist.
-- **The primary tdd-ratchet install instruction installs a Feb 2026 version (observed).** Both `tools/tdd-ratchet/README.md` and the live site (tdd-ratchet.maxeonyx.com) lead with `cargo install tdd-ratchet`. crates.io's newest version is 0.1.0, from 2026-02-16, with 91 downloads. Anyone who follows the first instruction gets a ratchet that is a whole major version behind, and gets it silently.
-- **The Pages curl installs are current, but unverified (observed):** `trunc.maxeonyx.com/releases/trunc-x86_64-linux` returns 200 and `version.json` says 0.4.13. There is no checksum and no signature. tb's README offers a second path, through GitHub `releases/latest`.
-- **oc is archived, but its binary is still served** from oc.maxeonyx.com. Whether anyone still runs it is unknown.
-- **Unknown:** other machines, Windows, and whether anyone besides Max installs these tools. Only Max can answer that.
+- **Max's dev machine (observed with `command -v`, `--version` and `ls`):**
+  - `~/.local/bin/trunc` is 0.2.0, installed 2026-02-08. The site says 0.4.13. No change since the last view.
+  - `~/.local/bin/tb` is 0.1.12, installed 2026-05-16. The site says 0.1.32, one release further ahead than at the last view.
+  - `~/.cargo/bin/cargo-ratchet` is 1.0.3, with a file date of 2026-08-30. The site and the ledger pin now say 1.1.7. This is still the hazard the umbrella `AGENTS.md` warns about.
+  - `~/.local/bin/dotsync` is 0.11.0, installed today. It matches the site and is two minor versions newer than the umbrella's pin and `docs/version.json` (0.9.1).
+  - agent-harness and oc are not installed.
+  - This supports the earlier inference: a tool gets reinstalled only while it is being worked on.
+- **The crates.io path is half fixed (observed):**
+  - Today's tdd-ratchet commit `c5f8c68` makes its README and live site lead with the Pages binary, then `cargo install --git … --locked`, and says outright that crates.io's 0.1.0 is unmaintained.
+  - The umbrella's `docs/index.html:200` (served live at tools.maxeonyx.com) still shows `cargo install tdd-ratchet` first. crates.io is unchanged: max_version 0.1.0, 91 downloads.
+  - Someone arriving from the umbrella site still gets, silently, a ratchet a whole major version behind.
+- **The Pages curl installs are current (observed):** every documented `/releases/<bin>-x86_64-linux` URL returns 200, and every site's `version.json` matches the umbrella pins, except dotsync's.
+  - There are still no checksums; `cargo-ratchet-x86_64-linux.sha256` returns 404.
+  - `cargo install --git` with no tag (tb, tdd-ratchet) builds whatever is on the main branch, not a release (inferred from the command).
+- **Skills are an install target that drifts too (observed):**
+  - The installed opencode skills for tmux-bridge and tdd-ratchet differ from each tool's `docs/SKILL.md`. tb's differs only in its description line. tdd-ratchet's differs by about 160 diff lines, and the repo copy was last changed 2026-08-31.
+  - No trunc, dotsync or agent-harness skill is installed, even though each ships a `docs/SKILL.md`.
+  - An `oc` skill is still installed, dated 2026-04-06.
+- **No update path exists (observed in the last view, not re-surveyed today).** `auto-update-integration` and agent-tools#31 are still the plan.
+- **oc:** it is archived, but oc.maxeonyx.com now serves both `version.json` (0.3.23) and `/releases/oc-x86_64-linux` (200). That contradicts `projects.md`, which gives v0.3.20 and says oc has no release path. Whether anyone runs it is unknown.
+- **Unknown:** other machines, Windows (agent-tools#3), and whether anyone besides Max installs these tools. Only Max can answer these, and this headless refresh could not ask.
 - **Worth considering:**
-  - Reinstall on this machine. That is a minute of work, but it is only local relief.
-  - Remove `cargo install tdd-ratchet` from the README and the site, or publish current versions to crates.io. This is the highest-leverage, lowest-cost fix.
-  - Treat auto-update as the structural answer, and at that point move the weight of this concern onto the integrity of the update channel.
-- **Since last view:** first view.
-- **Noticed along the way:** a local run of the umbrella's standards suite rewrites `devenv.lock` in the umbrella and in five submodules, through `devenv_check`. On this machine that happened even though its devenv matches the one CI pins (1.4.1). That is one more way the working tree drifts under agents.
+  - Change the umbrella site's tdd-ratchet card to match the tdd-ratchet README. That is a one-line edit and closes the last public crates.io trap. Yanking or republishing on crates.io is the structural version of the same fix.
+  - Reinstall trunc, tb and cargo-ratchet on this machine. It takes a minute and is local relief only.
+  - Fold skill installation into whatever becomes the update mechanism, since skills go stale the same way binaries do.
+- **Since last view:** the tdd-ratchet README and site were fixed. dotsync went to 0.11.0 and was installed. The tb and tdd-ratchet releases moved on (0.1.32 and 1.1.7) while the installed copies did not. Skill drift and the oc binary were checked for the first time.
+- **Noticed along the way:**
+  - The umbrella's own `docs/version.json` lags dotsync by two releases, so the umbrella site under-reports what it offers. That may belong to `release-freshness`.
+  - `jq`, which "How to look" uses, is not installed on this machine. I used `python3` instead.
+  - `projects.md`'s description of oc looks out of date.

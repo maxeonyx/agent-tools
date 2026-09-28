@@ -33,22 +33,39 @@ Not in scope: product documentation for end users. The `installed-reality` conce
 
 ## Current view — 2026-09-28
 
-The concern applies strongly. The guidance is detailed and mostly earnest, and it contains at least one command that does damage when followed, several untrue statements, and a large share of procedure that exists only to work around the ledger and CI design.
+**Better than this morning, but the procedure isn't fully written down.** Today's rewrite fixed the damaging tb sweep, the broken umbrella commands and the Codex config. What remains: the umbrella and child files don't agree on when to wait for the ledger bot, when to merge `main` and when to dispatch. They also never say what to do with the `.test-status.json` that local runs change.
 
-- **Damaging when followed (observed):** `tools/tb/AGENTS.md` lines 96–106 tell agents, after any `cargo ratchet` or `cargo nextest` run, to sweep leaked sessions with `tmux ls | grep -oE '^tb-[^:]*' | … kill-session`. Real tb sessions are also named `tb-{id}` (the same file, "Session naming"). Test mode uses `tbtest-` (`src/main.rs`). So the sweep kills the user's live tb sessions, which may include the session the agent itself is working through. In the other direction, running the umbrella suite on 2026-09-28 left two `tb-help-run-*` / `tb-help-launch-*` sessions in the live tmux server. That is exactly the leak the paragraph describes, and the sessions carry the real `tb-` prefix. They were killed by exact name. A test-only prefix already exists, so the sweep could target `tbtest-` and the leaking `tb-help-*` prefixes, or the harness could reap its own sessions (tmux-bridge#11).
-- **Untrue or drifted (observed):**
-  - The umbrella's "Commands" section says `cargo test -p trunc` and `cargo test --test '*' -p trunc`. These fail, because the root workspace has only `standards` as a member.
-  - The "Git identity" rule names the personal identity, yet 76 of 242 umbrella commits since June, and 72 in dotsync, use a work-domain address. This may be deliberate. That is a question for Max.
-  - The rule that attestation state lives only in `state.json` sits alongside `docs/reviews/*.json` files that remain in every tool.
-  - tb says "96 tests" and points the skill URL at `maxeonyx.github.io`, while every other page uses the canonical domain.
-  - The README omits agent-harness from the maintained tools.
-- **Procedure that exists because of the design (observed):** 21 lines of the umbrella file are about the ledger or ratchet. Its first section is about 4.4 KB, covering ledger dispatch, timing and history repair. dotsync and agent-harness carry the same dispatch-race paragraph word for word. These traps are timing rules that an agent must remember, and nothing enforces them.
-- **Tone and pull (observed):** the umbrella file has "IMPROVE PROCESS FIRST … THE FIRST JOB" and "LEAVING TESTS RED IS A SUPERPOWER" in capitals, plus "Pushing is safe … Commit and push frequently". The last of these is repeated in trunc, tdd-ratchet and oc, and many coding harnesses default to the opposite. How capitals like these affect current models is unknown, but they may make agents rewrite process when they should be doing the task (inferred).
-- **Permission posture (observed):** the umbrella's checked-in `.codex/config.toml` sets `approval_policy = "never"` and `sandbox_mode = "danger-full-access"`. So any Codex session opened in any clone of this public repository runs without approvals. Combined with guidance that tells agents to push, dispatch workflows and rewrite history, that session can reach everything the `gh` login can reach. This may well be deliberate for Max's machine. It is worth seeing because it travels with the repository.
-- **Good:** most rules carry their reason, and the incident history often names the commit, as in dotsync's `39f73c6` example. That makes a claim checkable.
+This view is a second pass on the same day. The umbrella was rewritten in `950b649`, and `52190c1` and `8548e03` also landed.
+
+- **Fixed since the earlier view (observed):**
+  - tb's sweep (`tools/tb/AGENTS.md:96–106`, at v0.1.32) now matches only `tbtest-|tb-help-|tb-test-runner-`, which are the prefixes the tests actually generate. It also explains why a `^tb-` sweep would be dangerous.
+  - The umbrella "Commands" section no longer uses `cargo test -p trunc`. It says the umbrella has no Cargo workspace, and every command it lists points at something that exists: `devenv test` runs actionlint, and `generate-version-json.py` has a `TOOLS` list.
+  - `.codex/config.toml` is gone, and no child checks in a `.codex/` or `.claude/settings` directory.
+  - "Pushing is safe" now appears only in the umbrella.
+  - The umbrella's ledger/ratchet share dropped from 21 matching lines to 5.
+- **Still damaging or risky (observed):**
+  - `tests/common/mod.rs:582–594` `cleanup_session` also kills `tb-{id}`, the real-session name. The harness does the thing the guidance warns against, although only for a specific id.
+  - The four children's ledger workflows pin tdd-ratchet `v1.1.6`, while the umbrella pins `v1.1.7`.
+- **Still untrue or drifted (observed):**
+  - tb says "96 tests", but `.test-status.json` has 99.
+  - tb's skill URL still points at `maxeonyx.github.io/tmux-bridge`.
+  - Umbrella commits since June: 165 personal, 76 work-domain. dotsync: 276 personal, 76 work-domain. Everything committed today uses the personal address, so this may already be settled. Whether the older work-domain commits were deliberate is Max's call.
+  - `docs/reviews/*.json` remains in dotsync, oc and trunc. They are no longer contradicted by a `state.json` rule, but nothing explains them either.
+  - `CLAUDE.md` is missing next to `AGENTS.md` in oc and help-test, and the mechanical check found both. oc is archived, so low stakes. For help-test, it matters only if Claude Code gets opened there.
+- **Fresh-agent dry run (judgment, one agent, task "make tb's session reaping crash-proof and bump the pointer"):** its plan was broadly correct and safe. Where it got stuck:
+  - Umbrella :19 says to use an exclusive clone, while :125 says "work in `tools/<name>/` within this workspace".
+  - :183 says to "carry unrelated umbrella changes" along with a pointer bump, and it wasn't clear whose changes that means.
+  - tb :7 says an expected red test "keeps CI green", while the umbrella celebrates red. It is the same word used in two senses.
+  - No file says that `cargo ratchet` / `devenv test` rewrite `.test-status.json` locally and that the change must be discarded. A plain `git add -A` then fails the ledger check. The agent's claim rests on `cargo ratchet --help`. I checked the other claims I relied on, but not this one.
+  - The agent had to work out from `ledger.yml` and `ci.yml:41` that pushing the merge of `main` needs its own bot wait before dispatch, and it couldn't tell whether a later bot commit can race the dispatch.
+  - It found the dotsync 2026-08-12 story (:129) and "IMPROVE PROCESS FIRST" (:27–35) useless for acting.
+- **Procedure that exists because of the design (observed):** the word-for-word "wait for the bot commit" paragraph now appears in tb, trunc, dotsync and agent-harness. tdd-ratchet has a variant and still carries the "delete `.tdd-ratchet.json` in the next commit" trap.
+- **Tone:** the capitalised "IMPROVE PROCESS FIRST … THE FIRST JOB" and "LEAVING TESTS RED IS A SUPERPOWER" sections remain. Their effect on current agents is still unknown.
+- **Good:** no prose is hard-wrapped. The umbrella now points concern work at CrossCut and carries its doctrine. The paths these files mention exist.
 - **Worth considering:**
-  - Fix the tb sweep now. This is the highest leverage, and it takes one line.
-  - Remove the commands that no longer work.
-  - When a trap is designed away, delete its paragraph along with it.
-  - Treat a fresh-agent dry run as this concern's refresh.
-- **Since last view:** first view.
+  - The ledger bot's wait/pull/dispatch sequence is the one trap left in every tool. Have the dispatched CI wait for, or itself run, the ledger step, so the paragraph can be deleted from all five files.
+  - Say in one place that local ratchet runs change `.test-status.json` and that the change must be restored. Better still, make local runs not write it.
+  - Reconcile umbrella :19 with :125.
+  - Drop the `tb-{id}` kill from `cleanup_session`, or confirm that it's safe.
+- **Since last view:** the umbrella went from 314 to 211 lines, the Codex config was removed, the tb sweep and the umbrella commands were fixed, and "Pushing is safe" was dropped from the children. The dispatch-race paragraph spread from two children to four.
+- **Noticed along the way:** the children pin `v1.1.6` of the tdd-ratchet ledger while the umbrella pins `v1.1.7`. That version skew across repositories may belong in a pin-consistency concern, if one exists or gets created.

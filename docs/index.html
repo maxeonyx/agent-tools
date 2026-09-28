@@ -197,11 +197,12 @@ chmod +x ~/.local/bin/dotsync</pre>
           <a href="https://tdd-ratchet.maxeonyx.com">Site</a>
           <a href="https://github.com/maxeonyx/tdd-ratchet-rs">Repo</a>
         </p>
-        <pre class="install">cargo install tdd-ratchet
-
-# Alternative: bare binary release (Linux x86_64)
+        <pre class="install"># Linux x86_64, latest release
 curl -Lo ~/.local/bin/cargo-ratchet https://tdd-ratchet.maxeonyx.com/releases/cargo-ratchet-x86_64-linux
-chmod +x ~/.local/bin/cargo-ratchet</pre>
+chmod +x ~/.local/bin/cargo-ratchet
+
+# Alternative: build from source (crates.io has only an old 0.1.0)
+cargo install --git https://github.com/maxeonyx/tdd-ratchet-rs --locked</pre>
       </article>
 
       <article class="card">
