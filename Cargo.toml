@@ -4,6 +4,7 @@ members = [
 ]
 exclude = [
     "tools/agent-harness",
+    "tools/crosscut",
     "tools/dotsync",
     "tools/oc",
     "tools/tb",
