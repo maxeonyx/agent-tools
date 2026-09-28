@@ -1,32 +1,7 @@
 # TODO
 
-- The umbrella's `tdd_ratchet` concern is red only because of tb, and only in CI. `tb::start$start::uses_tb_prefix_when_test_mode_not_set` and its `tbtest` twin pass on a machine with a clean tmux server and fail on a GitHub runner, where the server the tests talk to was started by another test's `tb` — maxeonyx/tmux-bridge#11. A local umbrella ratchet therefore shows the concern passing and a dispatched ledger run keeps it `pending`. Do not read that as ledger drift.
-- Roll the write job's skip-when-unchanged step into the four tool `ledger.yml` files. The umbrella and the `trusted-tdd-ledger` pass fixture have it; trunc, tb, tdd-ratchet, and agent-harness are red for it, and each still commits an identical tree, which moves the head SHA for no reason and voids any `Ready` status recorded against the previous head.
-- Give `trusted-tdd-ledger` a `fail-dispatched` fixture pair for the dispatch shape. The tool shape has pass/fail fixtures; the dispatch shape the umbrella now uses is only covered live, by the concern check reading the umbrella's own workflow. Needs a red/green commit pair because it adds test names.
+- Roll the write job's skip-when-unchanged step into the four tool `ledger.yml` files. The retired umbrella ledger had it; trunc, tb, tdd-ratchet, and agent-harness lack it, and each still commits an identical tree, which moves the head SHA for no reason and voids any `Ready` status recorded against the previous head (seen again on tdd-ratchet#15, 2026-09-28). Better still: make the ledger one reusable workflow in tdd-ratchet, so the copies cannot drift.
 - Close the ledger-import hole in the write job's transition check: it compares the proposed ledger only against the ledger committed at the head it is about to move, so a branch that merges an older bot-written ledger from elsewhere can present a downgrade as a legitimate transition. Comparing against `main`'s ledger as well would catch it, but would also read a branch that predates a promotion as a downgrade, so the fix needs a merge-base rule rather than a second baseline.
-- Stop the umbrella ratchet from rewriting tool ledgers. `tdd-ratchet` runs each tool's ratchet in place, so a workspace run leaves `tools/<name>/.test-status.json` modified and an agent can commit a hand-written ledger into a tool repo by accident. Run those checks against a temporary copy, or in a check-only mode that never writes.
-- Give tool repos a `cargo-ratchet` that comes from the pinned ratchet version rather than `PATH`. The umbrella and tdd-ratchet build the shim from source, which a standalone tool repo cannot do without coupling to this workspace; fetching the published release inside the devenv would keep `ecosystem-independence` intact.
-- Add a website-package concern for path independence: every website package should build and deploy correctly under an arbitrary root path rather than assuming `/`. This should be enforced mechanically against the packaged site, not just documented.
-- Add workspace self-coverage where it is materially useful, rather than a blanket "self-coverage" concern:
-  - apply `code-review` to this repo's own substantive code (`crates/standards`, shared crates, and root-owned package/build logic)
-  - enforce version artifacts on the umbrella site package too, since it is a site
-  - keep `devenv-check` and `vision-and-process` applying to the workspace
-  - do not add a separate workspace `latest-ci-green` concern; the repo's own CI state is already the top-level signal
-- Add `concern-module-coverage`:
-  - every concern module must have a precise definition, a checker, registry wiring, and documented applicability or non-applicability reasoning where relevant
-  - every concern must have fixture-backed tests that prove both true positives and true negatives
-  - use one or more fixture repos/directories that intentionally fail in different ways so concern tests validate detection accuracy rather than only happy paths
-  - roll the fixture pattern through older concerns incrementally until every checker has explicit pass/fail fixtures or an equally rigorous live-environment justification
-- Expand the reusable package idea as `crosscut`:
-  - a reusable tool for defining, running, and triaging cross-cutting concern checks across a workspace or repo family
-  - library layer: concern definitions, common check helpers, attestation schema, fixture harnesses, and applicability logic
-  - config layer: repo inventory, concern applicability, website/binary metadata, CI/release locators, and policy knobs
-  - runner/CLI: execute checks, report where each repo sits on each concern, and support setup/bootstrap for a new repo family
-  - agentic integration: headless use of a chosen agentic tool for manual-review concerns, with pluggable review backends rather than hard-coding one assistant
-  - packaging goal: another repo should adopt `crosscut` by configuration and fixtures, not by copying `agent-tools`
-  - later, when `crosscut` is a real Rust library with a public API, add semver-compatibility enforcement via `cargo semver-checks`; do not treat that as a current concern for this repo until there is an actual reusable library surface to preserve
-- Move review attestations out of the dependent repos and into this one (Max, 2026-08-18: *"I feel like it should move to the parent repo rather than in the dependant repos"* — deferred at the time, not urgent):
-  - today each tool carries its own `docs/reviews/*.json`, written by `crates/standards/src/review_attest.rs`, each holding one `reviewed_commit` hash — dotsync has four, trunc/tb/oc/tdd-ratchet three each, agent-harness none
-  - `docs/` is deployed verbatim to Pages, so this internal bookkeeping is published (e.g. `dotsync.maxeonyx.com/reviews/code-quality.json`); it is four commit hashes, so the issue is that it is neither documentation nor anyone's business, not that it is sensitive
-  - dotsync's four attest commit `c700883` from May, which now predates four cull waves, a harness extraction, a test split and 31 pending tests — a stale attestation answers "is this still reviewed?" with yes when the honest answer is no
-  - when this moves, clear dotsync's rather than refresh them: the next-gen rewrite deletes large parts of what was attested, so re-attesting before it lands would be attesting code that is about to go
+- Give tool repos a `cargo-ratchet` that comes from the pinned ratchet version rather than `PATH`. tdd-ratchet builds its shim from source; a standalone tool repo cannot do that without coupling to this workspace, so fetch the published release inside the devenv. Today five tool `ci.yml` files `git clone` tdd-ratchet `main` inside the job that merges and releases.
+- Consider a CrossCut concern for site path independence: does every site still work when served under a path other than `/`? CrossCut's site was, before it moved to crosscut.maxeonyx.com.
+- Delete `docs/reviews/*.json` from dotsync and trunc in each one's next PR. They are published review attestations from the retired umbrella concern ratchet; tb's and tdd-ratchet's went in their 2026-09-28 PRs. oc is archived, so leave its three files unless it is ever unarchived.

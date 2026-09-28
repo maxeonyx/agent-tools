@@ -2,33 +2,17 @@
 
 This is the control plane for coordinating the maxeonyx agent-tool suite. Cross-cutting work is easiest here, while every child repository remains a complete standalone development, CI, and release context in its own right.
 
-## TDD ratchet — read before testing
-
-Run `cargo ratchet`, not plain `cargo test`, in the umbrella and every maintained tool, and run it inside the repository's devenv, where `cargo-ratchet` is a shim built from source. Outside the devenv it is whatever binary sits on `PATH`: a 1.0.0 left over from an old `cargo install` reported this workspace green while its history checks were red. A new test must be red when first introduced and committed as `pending`; that expected red test keeps CI green. A new test must not pass when first introduced—doing so makes the ratchet and CI red.
-
-Only the trusted ledger workflow's bot commit writes `.test-status.json`, and only when you dispatch it: `gh workflow run ledger.yml --ref main -f target=<pull-request-number|main>`. `--ref main` is not optional — a dispatch runs the workflow definition of the ref it names, so this one refuses every other ref, because a branch must not get to validate its own ledger with its own rules. `target=main` validates `main` and commits the ledger onto `main`, which is what keeps direct pushes from leaving the ledger stale; a pull request number validates that pull request's head and commits onto its head branch. Umbrella work can take either route — `main` accepts direct pushes and refuses force-pushes and deletions.
-
-A run costs about 20 minutes, so defer and batch: dispatch once for a batch of commits, and only when a local ratchet run has already convinced you it will pass. A red commit and its green fix are still two dispatches — the first records `pending`, the second the promotion to `passing`. A run that finds the committed ledger already correct records nothing.
-
-Retiring a test takes one more commit. Name it under `removals` in `.tdd-ratchet.json` and commit that alongside the deletion; the bot consumes the instruction in a single run, so delete `.tdd-ratchet.json` in the next commit. A leftover instruction fails every later ratchet run with `removal target is not present in committed status`.
-
-The bot writes to the branch it validated, so do not merge with `--delete-branch` while its run is still going: the write step ends in `gh: Not Found` and `Reference does not exist`, and whatever the run wanted to record is lost. Merge, let the run finish, then delete the branch.
-
-A ledger commit moves the head SHA, and tool ledgers still commit even when nothing changed. Dispatch a tool's integration run only once the ledger run for that push has finished. Dispatch first and the bot's commit lands after `Ready` was recorded, leaving the required status on a commit that is no longer the head, so auto-merge waits for a check that will never arrive and the Merge job fails.
-
-### Repairing a ledger history
-
-The history check judges each snapshot against the `renames` recorded in that snapshot's own `.test-status.json`, so a commit that renamed ledger keys without recording them is a violation no forward commit can settle, as is a test first recorded `passing` in the commit that introduced it. Repair means rewriting those commits, which needs the user's explicit approval.
-
-Replay the branch with `git commit-tree`, keeping every original tree, message, author and committer and substituting only the edited ledger blobs. Record the renames in the commit that renamed the keys, and record a grandfathered test as `pending` in the commit that introduced it — the next ledger commit already promotes it, and `pending` means not yet earned, not observed failing. Commits before the earliest edit then keep their SHA, every other commit keeps a byte-identical tree, and `cargo ratchet` proves the result before anything is pushed.
-
-Push a dated `backup/…-main-<date>` tag of the current tip before swapping. Every tag after the earliest edited commit has to be re-pointed at the commit that now holds the tree it named; GitHub's signatures on its own merge commits are lost; older releases refuse a `target_commitish` update with a 404 and keep naming their pre-rewrite commit; and `main`'s protection has to allow force pushes for the swap. Restore the exact protection JSON afterwards, with `"app_id": -1` for a required check that any app may report. Commit statuses stay on the SHAs they were posted to, so the replacement tip carries no `integrated-ci` and `latest-ci-green` fails on it: land an integration run on the rewritten `main` before bumping the umbrella pointer at it.
-
 ## The goal
 
 Every tool in this suite should benefit from every improvement made to any tool. When you add auto-update to one tool, all tools get it. When you improve help text patterns, all tools get it. When you fix a CI problem, all tools get the fix. The workspace enforces this by making cross-cutting work the natural path and tool-specific work the exception.
 
-The concern suite is the map of where that has and has not happened. Each concern is one independent aspect of quality, checked across every applicable repo, so the ecosystem's quality waterline can be raised deliberately — see `VISION.md`.
+## Cross-cutting concerns: CrossCut
+
+This umbrella is an application of [CrossCut](tools/crosscut/skill/SKILL.md). The questions worth asking again across the suite live in `crosscut/concerns/`, one Markdown file each: the question, why it matters here, how to look, and the latest dated view. `crosscut list` shows them; `crosscut refresh` updates the views headless. To add, change or delete a concern, use the CrossCut skill (`establish` and `reconsider` modes). Read its doctrine before touching `crosscut/`.
+
+Concerns are visibility and food for thought, not gates: nothing here ratchets, scores or attests them, and a view that finds bad news has done its job. Anything that passes this on (this file, a delegated agent's instructions, a rewrite) must carry the CrossCut doctrine forward together with its requirement to carry both the doctrine and that requirement forward again.
+
+When you finish a piece of work here, spend a moment on CrossCut's `generalize` question: does this reveal something about the other tools, or a concern nobody is watching? Usually the answer is no; say so and move on.
 
 ## Concurrent development
 
@@ -36,7 +20,7 @@ Mutable work belongs in an exclusive full clone under the sibling `agent-tools-w
 
 After creating a clone, run every branch, push, and PR command with the new clone as the explicit working directory. A shell stays in the parent directory after `git clone`; chaining `git switch` or `git push` without changing directories can mutate the workspace-wrapper repository instead of the new clone.
 
-Initialize only the tool and library submodules the task needs. Root Cargo membership is limited to the standards crate so uninitialized submodules remain valid locally; run component commands from their own repository directory. Standards inspect only initialized tools locally, but `CI=true` requires and checks the complete configured inventory.
+Initialize only the tool and library submodules the task needs, and run component commands from their own repository directory. The umbrella has no Cargo workspace of its own.
 
 When child and umbrella branches both move a submodule pointer, never resolve the gitlink conflict by choosing one side. Merge the child histories first and pin their common descendant. Tool commits and PRs land before the umbrella pointer PR. Prefer merge commits; do not rebase or force-push by default. Rewrite history only when it is genuinely unusable; if replacement is necessary, manually rebuild the branch and explicitly swap it rather than using a brittle routine rebase workflow.
 
@@ -48,15 +32,15 @@ Agents ignore process. They barrel past it into implementation. This rule exists
 
 If a mistake happened, the process should have prevented it. Fix the process. If a step was confusing, the process should have been clearer. Fix the process. If something was skipped, the process should have enforced it. Fix the process. If you're about to do work and the process doesn't describe how, STOP. Write the process first. Then follow it.
 
-Update this file, the standards, or the concern checks IMMEDIATELY when you notice a gap. Process fixes are high leverage, and the entire point of this project. They compound. Implementation fixes are local. They are needed but don't compound.
+Update this file, or the relevant CrossCut concern, IMMEDIATELY when you notice a gap. Process fixes are high leverage, and the entire point of this project. They compound. Implementation fixes are local. They are needed but don't compound.
 
 ---
 
 ## LEAVING TESTS RED IS A SUPERPOWER
 
-Red tests, red standards, red CI, failing concerns — these are **expected and good** here. They are the honest, visible record of where the ecosystem sits on each aspect. Red is a resting state, not a debt. Do not be uncomfortable with it.
+Red tests and red CI are **expected and good** here. They are the honest, visible record of where things sit. Red is a resting state, not a debt. Do not be uncomfortable with it.
 
-The wrong instinct — the one to fight — is making red go green by papering over it: grandfathering a failing test, adding a carve-out or `NOT_APPLICABLE` exemption to dodge a concern, moving a ratchet baseline to swallow a violation, or marking something passing that isn't. That hides the work and corrupts the signal. **Never make red green except by genuinely doing the work.**
+The wrong instinct — the one to fight — is making red go green by papering over it: grandfathering a failing test, adding a carve-out, moving a ratchet baseline to swallow a violation, or marking something passing that isn't. That hides the work and corrupts the signal. **Never make red green except by genuinely doing the work.**
 
 **You do not need to make anything green. Prefer to defer over fixing hackily: green is earned the proper way only, there is time, and it is fine to leave something red and say why.** If a test should fail, let it fail loudly. If you fix a violation, fix it the real way (e.g. rewrite history so a test genuinely goes `pending` → `passing`), never by relaxing the gate. Honest red beats fake green every time.
 
@@ -125,12 +109,11 @@ When you've done something for one tool, do it for all of them.
 
 1. Look at what you just did for one tool
 2. Identify what's tool-specific vs what's a pattern all tools should follow
-3. If it's a pattern: is there enforcement that all tools must follow it?
-4. If no enforcement exists → add enforcement first (update standards, add a check)
-5. Apply the pattern to the next tool
-6. Repeat until every tool has it, or until the remaining ones need work you are deferring
+3. If it's a pattern: can it be made structural (a shared library, one reusable workflow) so tools cannot drift? If not, and it is worth re-asking, is there a CrossCut concern that keeps it visible?
+4. Apply the pattern to the next tool
+5. Repeat until every tool has it, or until the remaining ones need work you are deferring
 
-Exit: the pattern is enforced, and every tool either has the improvement or is visibly red for it.
+Exit: every tool has the improvement, or the ones that don't are named in the relevant concern's view with the reason.
 
 ---
 
@@ -144,64 +127,11 @@ Exit: the pattern is enforced, and every tool either has the improvement or is v
 4. After review: does this change represent a pattern other tools should follow? If yes → generalize loop
 5. Run the child repository's `devenv test`; its actionlint check is the local proof that GitHub can parse the workflow. Commit and push the tool branch, open a PR, and merge current child `main` into that branch.
    - **Run `git status --short` after every commit** and confirm nothing you meant to commit is left behind. A 2026-08-12 dotsync session corrupted three commits' worth of TDD history because `git add -u <pathspec>` _restricts_ staging to that pathspec (it does not mean "everything tracked plus this") — the ratchet flips landed in commits that didn't contain their work, and only a reviewer's history audit caught it. If commit messages describe work, the diff must contain that work.
-6. Explicitly dispatch the source workflow with `gh workflow run ci.yml --ref <feature-branch> -f pr_number=<number>`. It serializes integration, records the required Ready check, auto-merges, publishes the artifacts it already built, and records `integrated-ci` on the exact merge commit. It merges with `--delete-branch`, and GitHub closes any pull request whose base branch is deleted, so retarget every `gh pr list --base <feature-branch>` to `main` before dispatching.
-7. **Observe the whole dispatched run and reconcile it against your intent — do NOT chase green.** The bar is not "CI is green"; the bar is "CI is in the state I intended, and I understand every red." Red CI is often the correct desired state. Confirm the PR merge, release, Pages deployment, and exact-commit `integrated-ci` status before updating the umbrella pointer. Never relax a gate merely to turn a red green.
+6. Each tool's own TDD ratchet and trusted ledger are described in its AGENTS.md. A push to a tool PR triggers that tool's ledger workflow, which may add a bot commit to the branch: wait for it, pull it, and only then dispatch integration, or `Ready` lands on a commit that is no longer the head. Integration also refuses a version that is already released, so bump `package.version` (and `docs/version.json`) in any PR, even a docs-only one.
+7. Explicitly dispatch the source workflow with `gh workflow run ci.yml --ref <feature-branch> -f pr_number=<number>`. It serializes integration, records the required Ready check, auto-merges, publishes the artifacts it already built, and records `integrated-ci` on the exact merge commit. It merges with `--delete-branch`, and GitHub closes any pull request whose base branch is deleted, so retarget every `gh pr list --base <feature-branch>` to `main` before dispatching.
+8. **Observe the whole dispatched run and reconcile it against your intent — do NOT chase green.** The bar is not "CI is green"; the bar is "CI is in the state I intended, and I understand every red." Red CI is often the correct desired state. Confirm the PR merge, release, Pages deployment, and exact-commit `integrated-ci` status before updating the umbrella pointer. Never relax a gate merely to turn a red green.
 
 Standard release targets are `x86_64-unknown-linux-gnu` and `x86_64-pc-windows-msvc` only. Do not add musl, macOS, or aarch64 release targets unless the user explicitly reopens that support. `oc` is intentionally Linux-only for now.
-
-### Adding a new cross-cutting concern
-
-1. **Improve process first.** Write down what the concern IS and WHY it matters.
-2. Define the aspect as an objective predicate where possible.
-3. Add a Rust concern module in `crates/standards/src/concerns/<concern>.rs` with the concern definition in the module docs, any review instructions it exports, and the checker in a `#[cfg(test)]` module.
-4. Keep `crates/standards/src/concerns/mod.rs` in sync so the concern registry and agentic concern list match the modules.
-5. Ask whether the concern should also apply to the workspace itself (`crates/`, `docs/`, and other root-owned code). If yes, check the workspace in the checker instead of checking only tool repos.
-6. Add checker tests that prove both success and failure. Prefer explicit fixtures for pure/mechanical checks so the checker is validated for true positives and true negatives, not just exercised on the live repo.
-7. Land the enforcement. The new red is the map filling in, and landing a concern nothing yet satisfies is a good outcome.
-8. Raise tools onto it one by one via the generalize loop.
-
-The concern is not real until enforcement exists. Prose in AGENTS.md is not enforcement.
-
-### Raising a tool onto a concern
-
-Two tracks run in parallel: mechanical fixes and agentic review.
-
-**Mechanical fixes** (ecosystem-independence, tdd-ratchet, tests-present, etc.): Pick one concern, fix it, run the test, see it pass. Simple loop.
-
-**Agentic review pass** (code-review, error-messages, help-text, injectable-io, black-box-test-quality): Manual concerns require independent review. A review agent can only do two things:
-
-- If the target satisfies the concern, record the attestation with `review-attest`.
-- If the target does not satisfy the concern, return detailed findings. It does not implement fixes and it does not write partial review state.
-
-Only `state.json` records successful manual review state. Findings are the review agent's handoff back to the implementer; keep them in the conversation or the implementation backlog unless the user explicitly asks to persist review notes.
-
-Manual concerns may be reviewed one concern at a time or batched for one target. When batched, the review agent evaluates each applicable concern independently and records only the concerns that are clean. Findings are grouped by concern. An implementer may batch findings across concerns and fix them by design area, but after any fix the implementer must call a separate review agent before recording or refreshing any attestation.
-
-Review loop:
-
-1. Pick a tool. Derive applicable agentic concerns from NOT_APPLICABLE lists.
-2. Implementer requests an independent review agent with the relevant `review-attest prompt` output.
-3. Review agent evaluates the target against the applicable REVIEW_INSTRUCTIONS.
-4. If clean: review agent records the attestation and reports what it reviewed.
-5. If not clean: review agent returns detailed findings by concern and does not record an attestation.
-6. Implementer shapes findings into an implementation backlog, grouping by design area rather than by concern where that is more efficient.
-7. Implementer fixes in stages, verifying each stage.
-8. After any fix, implementer requests a fresh independent review agent for the affected concern(s). Do not reuse the implementer as the reviewer.
-9. Exit: every applicable manual concern either has a current clean attestation in `state.json` or has findings you are deliberately deferring.
-
-Rules:
-
-- Review and implementation are different agent sessions. The agent that made a fix cannot attest to that fix.
-- Applicability is precomputed from NOT_APPLICABLE lists, not debated during the review.
-- Mechanical failures can join the implementation backlog if the same change fixes them.
-- Do not hand-write attestation files. Trigger the review prompt explicitly, perform the review, then record the attestation explicitly.
-- Attestation command:
-  - prompt: `cargo run -p standards --bin review-attest -- prompt <workspace|tool> <concern>`
-  - record: `cargo run -p standards --bin review-attest -- record <workspace|tool> <concern>`
-- Attestation state is centralized in `state.json` at the workspace root.
-- `state.json` entries are keyed by reviewed repo and concern; they are process state, not product docs.
-
-Tool order: trunc → tdd-ratchet → dotsync → tb → oc (simplest first).
 
 ### Adding a new tool
 
@@ -209,66 +139,33 @@ Tool order: trunc → tdd-ratchet → dotsync → tb → oc (simplest first).
 2. If the tool starts from external design/process notes, import those notes into the tool repo as source material and create a process handoff before product implementation. The handoff records the active loop, first verification target, user-gated decisions, and what is explicitly experimental.
 3. Create the tool repo (follow existing patterns — MIT license, AGENTS.md, docs/, .github/workflows/)
 4. Add it as a submodule under `tools/`
-5. Add it to `standards::TOOLS`
-6. Run the umbrella's `cargo ratchet` to see where the new tool sits on each concern
-7. Raise it onto them one by one via the generalize loop, deferring whatever cannot be done properly yet
-8. Update the umbrella site (`docs/index.html`) and cross-references in sibling tools
+5. Add it to `TOOLS` in `scripts/generate-version-json.py` once it publishes a `docs/version.json`
+6. Refresh the concerns in `crosscut/concerns/` that should now cover it (`crosscut refresh`), and note in each view what the new tool changes
+7. Update the umbrella site (`docs/index.html`) and cross-references in sibling tools
 
 ### Archiving a tool
 
 Archiving is a reversible lifecycle transition, not deletion. Preserve the source, final releases, and historical explanation while removing the tool from active maintenance obligations.
 
-1. Add or update lifecycle enforcement before changing the tool.
-2. Change the tool README, skill, and site from active installation guidance to a historical showcase explaining why development ended.
-3. Fix any known presentation defect that would undermine the preserved showcase.
-4. Merge and deploy the tool's historical site while the repository is still writable.
-5. Move the tool from maintained to archived inventory, retain its submodule pin and final version metadata, and move it to the umbrella site's old-tools section.
-6. Verify the source, final release, historical site, and umbrella links.
-7. Archive the GitHub repository last, then verify those public surfaces again.
+1. Change the tool README, skill, and site from active installation guidance to a historical showcase explaining why development ended.
+2. Fix any known presentation defect that would undermine the preserved showcase.
+3. Merge and deploy the tool's historical site while the repository is still writable.
+4. Move the tool from maintained to archived inventory, retain its submodule pin and final version metadata, and move it to the umbrella site's old-tools section.
+5. Verify the source, final release, historical site, and umbrella links.
+6. Archive the GitHub repository last, then verify those public surfaces again.
 
-If archiving interrupts a public surface, unarchive the repository, relocate or repair the preserved material, verify it, and archive again. To revive a tool, explicitly unarchive it, move it back to maintained inventory, restore active documentation and CI, and bring every applicable concern current before publishing new work.
-
----
-
-## Enforcement
-
-A concern is not enforced until two things exist:
-
-1. **Definition** — what the aspect is, precisely
-2. **Checker** — a Rust test that observes it mechanically
-
-Without both, it's aspiration. Aspiration does not prevent drift.
-
-Prefer outcome and evidence checks over file-shape checks. When multiple concerns need the same observation — live site response, release metadata, version output, build result, downloaded binary behavior — factor that observation into reusable evidence so one standards run observes it once and each concern interprets the evidence in its own policy language.
-
-### Current standards
-
-Defined in `crates/standards/src/concerns/*.rs`.
-
-Run the ratcheted standards suite:
-
-```bash
-cargo ratchet
-```
-
-The suite is the map: each test reports where the ecosystem sits on one aspect. `crates/standards/src/concerns/mod.rs` tracks the concern registry and which concerns are agentic.
+If archiving interrupts a public surface, unarchive the repository, relocate or repair the preserved material, verify it, and archive again. To revive a tool, explicitly unarchive it, move it back to maintained inventory, restore active documentation and CI, and refresh the concerns that cover it before publishing new work.
 
 ---
 
 ## Commands
 
 ```bash
-# Fast checks (lint, format, build, tests — immediate feedback)
-cargo ratchet                         # standards stay pending until every applicable tool is raised onto them
-cargo fmt --check --all              # formatting
-cargo clippy --all -- -D warnings    # linting
-cargo test -p trunc                  # tool tests (fast — spawns binary, checks output)
-
-# Slow checks (black-box tests — spawn binaries, real filesystem)
-cargo test --test '*' -p trunc       # example: trunc integration tests
-
-# Per-tool verification (TDD ratchet)
-cd tools/<name> && cargo ratchet
+devenv test                               # umbrella: actionlint over the Pages workflow
+crosscut list                             # the concerns and how old each view is
+crosscut refresh [slug...]                # refresh views headless (six at a time)
+python3 scripts/generate-version-json.py  # after any pointer or version change
+(cd tools/<name> && devenv test)          # a tool's own checks, in its own directory
 ```
 
 ---
@@ -278,13 +175,12 @@ cd tools/<name> && cargo ratchet
 1. Make changes in `tools/<name>/`
 2. Commit and push to the tool's own repo/branch
 3. Open the child PR, merge current child `main`, and explicitly dispatch its serialized integration workflow
-4. Wait for that workflow to merge, release, deploy, and attest its merge commit
+4. Wait for that workflow to merge, release, deploy, and record `integrated-ci` on its merge commit
 5. Fast-forward the child checkout to the merged `main`
 6. From workspace root: `git add tools/<name>`, regenerate `docs/version.json` with `python3 scripts/generate-version-json.py` — never by hand — and commit both together
 7. Push, and let the Pages workflow deploy the site — it runs on any `docs/` push and takes about twenty seconds
-8. Dispatch the ledger against `main` once the batch of pointer bumps is done
 
-Step 7 is the one thing not to defer. `version-artifacts` compares the live site against `docs/version.json` on merged `main`, so an undeployed pointer bump reads as a red concern everywhere until the site catches up. `release-freshness` and `pinned-main-parity` compare the pinned commit against the tool's published release and remote `main`, so a release with no pointer bump reads red the same way. Land the pointer bump before starting other umbrella work, and carry unrelated umbrella changes with it if a branch is already open.
+Do not defer step 7: until it runs, the live umbrella site names versions that `main` no longer pins. Land a pointer bump before starting other umbrella work, and carry unrelated umbrella changes with it if a branch is already open.
 
 ---
 
@@ -293,8 +189,9 @@ Step 7 is the one thing not to defer. `version-artifacts` compares the live site
 | Content | Location |
 | --- | --- |
 | Development process, loops, discipline | This file |
-| Cross-cutting standards definitions and enforcement | `crates/standards/src/concerns/*.rs` |
-| Concern registry / agentic concern visibility | `crates/standards/src/concerns/mod.rs` |
+| Cross-cutting concerns (questions, how to look, dated views) | `crosscut/concerns/*.md` |
+| The projects those concerns look at | `crosscut/projects.md` |
+| CrossCut itself (skill, CLI, doctrine) | `tools/crosscut/` |
 | Shared Rust libraries | Independent repos pinned under `libraries/` |
 | Tool-specific product/architecture facts | `tools/<name>/AGENTS.md` |
 | Tool CI, releases, Pages | Tool's own repo |

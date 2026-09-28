@@ -1,3 +1,0 @@
-# Shared formatting rules for all agent-tools.
-# Each tool repo should symlink or copy this file.
-edition = "2024"

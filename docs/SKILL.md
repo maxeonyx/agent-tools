@@ -7,7 +7,7 @@ description: When creating a new CLI tool for AI agent workflows, or setting up 
 
 Use this pattern for lightweight, docs-first CLI tool repos in the maxeonyx ecosystem.
 
-The umbrella ([maxeonyx/agent-tools](https://github.com/maxeonyx/agent-tools)) tracks cross-cutting concerns as executable checks — one independent aspect of quality each — so the ecosystem's quality waterline can be raised deliberately. A red check tells you where a repo sits on one aspect. Raise it the proper way or leave it red and say why; prefer deferring to a hacky green. There is time.
+The umbrella ([maxeonyx/agent-tools](https://github.com/maxeonyx/agent-tools)) keeps cross-cutting concerns visible as [CrossCut](https://github.com/maxeonyx/crosscut) concern files: questions worth asking again, with dated views of where each repo sits. They are food for thought, not gates. Improve things the proper way or leave them and say why; prefer deferring to a hack. There is time.
 
 ## Goal
 
@@ -78,7 +78,7 @@ Include a small ecosystem footer section linking:
 ### Distribution: GitHub releases vs cargo publish
 
 - **End-user tools** (trunc, tmux-bridge, dotsync, oc): distribute as **bare binaries via tool Pages release paths** (`https://<tool>.maxeonyx.com/releases/<asset>`), backed by GitHub Releases.
-- **Developer tools** (tdd-ratchet / cargo-ratchet): offer both bare binary download via Pages release path and `cargo install tdd-ratchet`.
+- **Developer tools** (tdd-ratchet / cargo-ratchet): offer both bare binary download via Pages release path and `cargo install --git <repo> --locked`. Never recommend a crates.io install unless the crate there is the current release: `cargo install tdd-ratchet` still installs a February 0.1.0.
 - **Release asset naming**: `<binary>-<arch>-<os>` for unix (e.g. `trunc-x86_64-linux`), `<binary>-<arch>-<os>.exe` for windows. No tarballs or zips — bare binaries only.
 
 ## OpenCode skill installation
