@@ -14,7 +14,7 @@ All of these are public repositories under the `maxeonyx` GitHub account. Each h
 - **agent-harness** (`tools/agent-harness`, maxeonyx/agent-harness): an experimental workbench, mostly design and process documents. It releases binaries to Pages.
 - **oc** (`tools/oc`, maxeonyx/oc): archived on GitHub. Its v0.3.20 binary is still served from oc.maxeonyx.com. It does not build from source as it stands, because its path dependencies were removed from the umbrella.
 - **help-test** (`libraries/help-test`, maxeonyx/help-test): a shared dev-dependency that runs `--help` examples. It is consumed by git tag.
-- **crosscut** (`tools/crosscut`): CrossCut itself. It is out of scope for these concerns and handled separately.
+- **crosscut** (`tools/crosscut`, maxeonyx/crosscut): CrossCut itself, a skill plus a thin CLI. Its site is crosscut.maxeonyx.com. It is a sibling like the others, and its own `crosscut/` looks at it from the inside.
 
 ## Not repositories
 
