@@ -29,16 +29,9 @@ pub fn libraries_dir() -> PathBuf {
 
 pub const LIBRARIES: &[&str] = &["help-test"];
 
-pub const TOOLS: &[&str] = &[
-    "trunc",
-    "tb",
-    "dotsync",
-    "tdd-ratchet",
-    "oc",
-    "agent-harness",
-];
+pub const TOOLS: &[&str] = &["trunc", "tb", "dotsync", "tdd-ratchet", "oc"];
 
-pub const MAINTAINED_TOOLS: &[&str] = &["trunc", "tb", "dotsync", "tdd-ratchet", "agent-harness"];
+pub const MAINTAINED_TOOLS: &[&str] = &["trunc", "tb", "dotsync", "tdd-ratchet"];
 
 pub const ARCHIVED_TOOLS: &[&str] = &["oc"];
 
